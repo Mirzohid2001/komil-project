@@ -1,6 +1,6 @@
 {% extends 'base.html' %}
 
-{% block title %}Личный кабинет{% endblock %}
+{% block title %}Shaxsiy kabinet{% endblock %}
 
 {% block extra_css %}
 <style>
@@ -213,26 +213,26 @@
         <div class="profile-nav">
           <nav class="nav flex-column">
             <a href="{% url 'accounts:profile' %}" class="nav-link {% if request.resolver_match.url_name == 'profile' %}active{% endif %}">
-              <i class="fas fa-user"></i> Мой профиль
+              <i class="fas fa-user"></i> Mening profilim
             </a>
             <a href="{% url 'accounts:profile_edit' %}" class="nav-link {% if request.resolver_match.url_name == 'profile_edit' %}active{% endif %}">
-              <i class="fas fa-edit"></i> Редактировать
+              <i class="fas fa-edit"></i> Tahrirlash
             </a>
             <a href="{% url 'accounts:change_password' %}" class="nav-link {% if request.resolver_match.url_name == 'change_password' %}active{% endif %}">
-              <i class="fas fa-key"></i> Сменить пароль
+              <i class="fas fa-key"></i> Parolni o'zgartirish
             </a>
             <a href="{% url 'accounts:favorites' %}" class="nav-link {% if request.resolver_match.url_name == 'favorites' %}active{% endif %}">
-              <i class="fas fa-bookmark"></i> Избранное
+              <i class="fas fa-bookmark"></i> Saqlanganlar
             </a>
             <a href="{% url 'accounts:activity_history' %}" class="nav-link {% if request.resolver_match.url_name == 'activity_history' %}active{% endif %}">
-              <i class="fas fa-history"></i> История активности
+              <i class="fas fa-history"></i> Faollik tarixi
             </a>
             <div class="border-top my-3"></div>
             <a href="{% url 'blog:home' %}" class="nav-link">
-              <i class="fas fa-home"></i> На главную
+              <i class="fas fa-home"></i> Bosh sahifaga
             </a>
             <a href="{% url 'accounts:logout' %}" class="nav-link text-danger">
-              <i class="fas fa-sign-out-alt"></i> Выйти
+              <i class="fas fa-sign-out-alt"></i> Chiqish
             </a>
           </nav>
         </div>
@@ -242,7 +242,7 @@
     <!-- Content -->
     <div class="col-lg-9">
       <div class="profile-content">
-        <h2 class="mb-4 fw-bold">{% block profile_title %}Личный кабинет{% endblock %}</h2>
+        <h2 class="mb-4 fw-bold">{% block profile_title %}Shaxsiy kabinet{% endblock %}</h2>
         
         {% if messages %}
           {% for message in messages %}

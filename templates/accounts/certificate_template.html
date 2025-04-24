@@ -1,0 +1,233 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Сертификат об окончании</title>
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700&family=Playfair+Display:wght@700&display=swap" rel="stylesheet">
+    <style>
+        @page {
+            size: 297mm 210mm;
+            margin: 0;
+        }
+        body {
+            font-family: 'Montserrat', sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: white;
+            position: relative;
+            color: #333;
+        }
+        .certificate-container {
+            width: 297mm;
+            height: 210mm;
+            position: relative;
+            overflow: hidden;
+        }
+        .background {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: -1;
+            background-color: #f9f9f9;
+        }
+        .pattern {
+            position: absolute;
+            top: 0;
+            right: 0;
+            width: 35%;
+            height: 100%;
+            background-color: #4f46e5;
+            clip-path: polygon(20% 0, 100% 0, 100% 100%, 0 100%);
+            opacity: 0.9;
+        }
+        .border {
+            position: absolute;
+            top: 15mm;
+            left: 15mm;
+            right: 15mm;
+            bottom: 15mm;
+            border: 2px solid #e5e7eb;
+        }
+        .content {
+            position: relative;
+            padding: 25mm 25mm 25mm 25mm;
+            text-align: center;
+            display: flex;
+            flex-direction: column;
+            height: calc(100% - 50mm);
+            justify-content: space-between;
+        }
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10mm;
+        }
+        .logo {
+            width: 50mm;
+        }
+        .certificate-number {
+            font-size: 10pt;
+            text-align: right;
+            color: #6b7280;
+        }
+        .title {
+            font-family: 'Playfair Display', serif;
+            font-size: 32pt;
+            font-weight: 700;
+            margin-top: 0;
+            margin-bottom: 5mm;
+            color: #1f2937;
+        }
+        .subtitle {
+            font-size: 14pt;
+            font-weight: 500;
+            margin-top: 0;
+            margin-bottom: 15mm;
+            color: #4b5563;
+        }
+        .recipient-name {
+            font-family: 'Playfair Display', serif;
+            font-size: 24pt;
+            font-weight: 700;
+            margin-bottom: 5mm;
+            color: #4f46e5;
+        }
+        .course-name {
+            font-size: 16pt;
+            font-weight: 600;
+            margin-top: 5mm;
+            margin-bottom: 10mm;
+            color: #1f2937;
+        }
+        .description {
+            font-size: 11pt;
+            line-height: 1.5;
+            margin-bottom: 10mm;
+            color: #4b5563;
+            max-width: 70%;
+            margin-left: auto;
+            margin-right: auto;
+        }
+        .details {
+            display: flex;
+            justify-content: space-around;
+            width: 80%;
+            margin: 0 auto 10mm auto;
+        }
+        .detail-item {
+            display: flex;
+            flex-direction: column;
+        }
+        .detail-label {
+            font-size: 10pt;
+            color: #6b7280;
+            margin-bottom: 2mm;
+        }
+        .detail-value {
+            font-size: 12pt;
+            font-weight: 600;
+            color: #1f2937;
+        }
+        .footer {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-end;
+            margin-top: 10mm;
+        }
+        .verification {
+            text-align: left;
+            font-size: 9pt;
+            color: #6b7280;
+        }
+        .verification a {
+            color: #4f46e5;
+            text-decoration: none;
+        }
+        .signature {
+            text-align: center;
+        }
+        .signature img {
+            height: 20mm;
+            margin-bottom: 2mm;
+        }
+        .signature-name {
+            font-weight: 600;
+            font-size: 12pt;
+            margin-bottom: 1mm;
+        }
+        .signature-title {
+            font-size: 10pt;
+            color: #6b7280;
+        }
+        .qr-code {
+            text-align: right;
+        }
+        .qr-code img {
+            width: 20mm;
+            height: 20mm;
+        }
+    </style>
+</head>
+<body>
+    <div class="certificate-container">
+        <div class="background">
+            <div class="pattern"></div>
+        </div>
+        <div class="border"></div>
+        <div class="content">
+            <div class="header">
+                <img src="{{ logo_url }}" alt="Лого" class="logo">
+                <div class="certificate-number">Сертификат № {{ certificate.unique_id }}</div>
+            </div>
+            
+            <div>
+                <h1 class="title">Сертификат</h1>
+                <p class="subtitle">об успешном окончании курса</p>
+                
+                <h2 class="recipient-name">{{ certificate.user.get_full_name }}</h2>
+                <p class="course-name">{{ certificate.name }}</p>
+                
+                <p class="description">
+                    {{ certificate.description }}
+                </p>
+                
+                <div class="details">
+                    <div class="detail-item">
+                        <span class="detail-label">Дата выдачи</span>
+                        <span class="detail-value">{{ certificate.issue_date|date:"d.m.Y" }}</span>
+                    </div>
+                    <div class="detail-item">
+                        <span class="detail-label">Длительность</span>
+                        <span class="detail-value">{{ certificate.duration }}</span>
+                    </div>
+                    <div class="detail-item">
+                        <span class="detail-label">Успеваемость</span>
+                        <span class="detail-value">{{ certificate.score }}%</span>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="footer">
+                <div class="verification">
+                    Подлинность данного сертификата можно проверить по адресу:<br>
+                    <a href="{{ verification_url }}">{{ verification_url }}</a>
+                </div>
+                
+                <div class="signature">
+                    <img src="{{ signature_url }}" alt="Подпись">
+                    <div class="signature-name">{{ certificate.instructor }}</div>
+                    <div class="signature-title">Преподаватель курса</div>
+                </div>
+                
+                <div class="qr-code">
+                    <img src="{{ qr_code_url }}" alt="QR-код для проверки">
+                </div>
+            </div>
+        </div>
+    </div>
+</body>
+</html> 

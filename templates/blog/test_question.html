@@ -1,0 +1,183 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}{{ question.text|truncatechars:30 }}{% endblock %}
+
+{% block extra_css %}
+<style>
+  .option-label {
+    display: block;
+    padding: 1rem;
+    border-radius: 12px;
+    border: 2px solid #e5e7eb;
+    margin-bottom: 1rem;
+    cursor: pointer;
+    transition: all 0.2s ease;
+  }
+  
+  .option-label:hover {
+    border-color: #c7d2fe;
+    background-color: #f5f7ff;
+  }
+  
+  .option-input {
+    display: none;
+  }
+  
+  .option-input:checked + .option-label {
+    border-color: #4f46e5;
+    background-color: #eef2ff;
+  }
+  
+  .test-progress {
+    height: 8px;
+    border-radius: 4px;
+    overflow: hidden;
+  }
+  
+  .timer {
+    font-size: 1.2rem;
+    color: #1e293b;
+  }
+  
+  .test-header {
+    position: sticky;
+    top: 0;
+    background: white;
+    z-index: 100;
+    padding: 1rem 0;
+    border-bottom: 1px solid #eaeaea;
+  }
+  
+  .question-content {
+    min-height: 50vh;
+  }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container">
+  <!-- Test sarlavhasi va jarayon -->
+  <div class="test-header mb-4">
+    <div class="row align-items-center">
+      <div class="col-md-8">
+        <h2 class="mb-3">{{ test.title }}</h2>
+        <div class="d-flex justify-content-between align-items-center mb-2">
+          <span>Savol {{ current }} dan {{ total }}</span>
+          <span id="timer" class="timer fw-bold"><i class="fas fa-clock me-2"></i> <span id="minutes">{{ test.time_limit }}</span>:<span id="seconds">00</span></span>
+        </div>
+        <div class="progress test-progress">
+          <div class="progress-bar bg-primary" role="progressbar" style="width: {{ progress }}%" aria-valuenow="{{ progress }}" aria-valuemin="0" aria-valuemax="100"></div>
+        </div>
+      </div>
+      <div class="col-md-4 d-flex justify-content-end">
+        <button type="button" class="btn btn-outline-danger" data-bs-toggle="modal" data-bs-target="#exitTestModal">
+          <i class="fas fa-times me-2"></i> Testni to'xtatish
+        </button>
+      </div>
+    </div>
+  </div>
+  
+  <!-- Savol -->
+  <div class="card border-0 shadow-sm mb-4">
+    <div class="card-body p-4">
+      <div class="question-content mb-4">
+        <h3 class="mb-4">{{ question.text }}</h3>
+        
+        <form method="post" id="questionForm">
+          {% csrf_token %}
+          {% for option in options %}
+            <div class="option">
+              <input type="radio" name="option" value="{{ option.id }}" id="option-{{ option.id }}" class="option-input" required>
+              <label for="option-{{ option.id }}" class="option-label">{{ option.text }}</label>
+            </div>
+          {% endfor %}
+        </form>
+      </div>
+      
+      <div class="d-flex justify-content-between">
+        <button type="button" class="btn btn-outline-secondary" disabled>
+          <i class="fas fa-chevron-left me-2"></i> Oldingi
+        </button>
+        <button type="submit" form="questionForm" class="btn btn-primary">
+          Keyingi savol <i class="fas fa-chevron-right ms-2"></i>
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Testdan chiqishni tasdiqlash modali -->
+<div class="modal fade" id="exitTestModal" tabindex="-1" aria-labelledby="exitTestModalLabel" aria-hidden="true">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="exitTestModalLabel">Testni to'xtatish?</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body">
+        <p>Siz rostdan ham testni to'xtatmoqchimisiz? Sizning jarayoningiz yo'qoladi.</p>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Bekor qilish</button>
+        <a href="{% url 'blog:test_list' %}" class="btn btn-danger">Ha, testni to'xtatish</a>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+  document.addEventListener('DOMContentLoaded', function() {
+    // Test uchun vaqt hisoblagichi
+    const startTime = new Date("{{ started_at|date:'c' }}");
+    const timeLimit = {{ test.time_limit }}; // daqiqalarda
+    const timerDisplay = document.getElementById('timer');
+    const minutesDisplay = document.getElementById('minutes');
+    const secondsDisplay = document.getElementById('seconds');
+    
+    function updateTimer() {
+      const now = new Date();
+      const elapsedTime = Math.floor((now - startTime) / 1000); // soniyalarda
+      const remainingTime = (timeLimit * 60) - elapsedTime;
+      
+      if (remainingTime <= 0) {
+        // Vaqt tugadi - avtomatik ravishda formani yuboramiz
+        document.getElementById('questionForm').submit();
+        return;
+      }
+      
+      const minutes = Math.floor(remainingTime / 60);
+      const seconds = remainingTime % 60;
+      
+      minutesDisplay.textContent = String(minutes).padStart(2, '0');
+      secondsDisplay.textContent = String(seconds).padStart(2, '0');
+      
+      // Vaqt tugashiga oz qolganida ogohlantirish
+      if (remainingTime < 60) {
+        timerDisplay.classList.add('text-danger');
+        timerDisplay.classList.add('animate__animated', 'animate__pulse', 'animate__infinite');
+      } else if (remainingTime < 300) { // 5 daqiqadan kam
+        timerDisplay.classList.add('text-warning');
+      }
+    }
+    
+    // Har soniyada vaqt hisoblagichini yangilash
+    updateTimer();
+    setInterval(updateTimer, 1000);
+    
+    // Foydalanuvchining tasodifan sahifadan chiqib ketishini oldini olish
+    window.addEventListener('beforeunload', function(e) {
+      const confirmationMessage = 'Siz rostdan ham sahifadan chiqishni xohlaysizmi? Testdagi jarayoningiz yo\'qoladi.';
+      (e || window.event).returnValue = confirmationMessage;
+      return confirmationMessage;
+    });
+    
+    // Forma yuborilganda ogohlantirishni o'chirish
+    document.getElementById('questionForm').addEventListener('submit', function() {
+      window.removeEventListener('beforeunload', function() {});
+    });
+  });
+</script>
+{% endblock %} 

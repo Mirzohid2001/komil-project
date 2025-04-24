@@ -1,0 +1,400 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Test tahlili{% endblock %}
+
+{% block extra_css %}
+<style>
+  .chart-container {
+    height: 300px;
+    margin-bottom: 2rem;
+  }
+  
+  .stats-card {
+    border-radius: 16px;
+    overflow: hidden;
+    transition: all 0.3s ease;
+  }
+  
+  .stats-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1);
+  }
+  
+  .stat-item {
+    text-align: center;
+    padding: 1.5rem;
+  }
+  
+  .stat-value {
+    font-size: 2.5rem;
+    font-weight: bold;
+    margin-bottom: 0.5rem;
+    color: #4f46e5;
+  }
+  
+  .stat-label {
+    color: #6b7280;
+    font-size: 0.875rem;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+  }
+  
+  .role-stat {
+    border-radius: 12px;
+    overflow: hidden;
+    background: white;
+    margin-bottom: 1rem;
+    padding: 1rem;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  }
+  
+  .role-stat-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 0.5rem;
+  }
+  
+  .progress-container {
+    position: relative;
+    height: 10px;
+    background-color: #f3f4f6;
+    border-radius: 5px;
+    overflow: hidden;
+  }
+  
+  .progress-bar {
+    height: 100%;
+    border-radius: 5px;
+  }
+  
+  .test-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 1rem;
+    border-radius: 8px;
+    background-color: white;
+    margin-bottom: 0.5rem;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  }
+  
+  .test-title {
+    font-weight: 600;
+    margin-bottom: 0.25rem;
+  }
+  
+  .test-meta {
+    color: #6b7280;
+    font-size: 0.875rem;
+  }
+  
+  .test-score {
+    font-size: 1.5rem;
+    font-weight: bold;
+  }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container">
+  <!-- Sarlavha va asosiy ko'rsatkichlar -->
+  <div class="row mb-4">
+    <div class="col-12">
+      <div class="d-flex justify-content-between align-items-center mb-4">
+        <h1 class="mb-0"><i class="fas fa-chart-line text-primary me-2"></i> Test tahlili</h1>
+        <div>
+          <a href="{% url 'blog:test_list' %}" class="btn btn-outline-primary">
+            <i class="fas fa-arrow-left me-2"></i> Testlar ro'yxatiga
+          </a>
+        </div>
+      </div>
+      
+      <!-- Asosiy ko'rsatkichlar -->
+      <div class="row g-4 mb-5">
+        <div class="col-md-4">
+          <div class="card border-0 shadow-sm h-100 stats-card">
+            <div class="card-body stat-item">
+              <div class="stat-value text-primary">{{ total_tests_taken }}</div>
+              <div class="stat-label">Topshirilgan testlar</div>
+            </div>
+          </div>
+        </div>
+        <div class="col-md-4">
+          <div class="card border-0 shadow-sm h-100 stats-card">
+            <div class="card-body stat-item">
+              <div class="stat-value text-success">{{ total_users }}</div>
+              <div class="stat-label">Faol foydalanuvchilar</div>
+            </div>
+          </div>
+        </div>
+        <div class="col-md-4">
+          <div class="card border-0 shadow-sm h-100 stats-card">
+            <div class="card-body stat-item">
+              <div class="stat-value text-info">{{ total_tests }}</div>
+              <div class="stat-label">Jami testlar</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+  
+  <!-- Test dinamikasi grafigi -->
+  <div class="row mb-5">
+    <div class="col-12">
+      <div class="card border-0 shadow-sm">
+        <div class="card-body p-4">
+          <h3 class="card-title mb-4">Test dinamikasi</h3>
+          <div class="chart-container">
+            <canvas id="testsChart"></canvas>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+  
+  <!-- Rollar va testlar bo'yicha statistika -->
+  <div class="row g-4 mb-5">
+    <!-- Rollar bo'yicha statistika -->
+    <div class="col-lg-6">
+      <div class="card border-0 shadow-sm h-100">
+        <div class="card-body p-4">
+          <h3 class="card-title mb-4">Rollar bo'yicha statistika</h3>
+          
+          {% if role_stats %}
+            <div class="role-stats">
+              {% for stat in role_stats %}
+                <div class="role-stat">
+                  <div class="role-stat-header">
+                    <h5 class="mb-0">{{ stat.role_display }}</h5>
+                    <span class="badge bg-primary rounded-pill">{{ stat.count }} testlar</span>
+                  </div>
+                  <div class="d-flex justify-content-between mb-2">
+                    <span>Muvaffaqiyatli: {{ stat.passed }} ({{ stat.pass_rate|floatformat:1 }}%)</span>
+                    <span>O'rt. ball: {{ stat.avg_score|floatformat:1 }}%</span>
+                  </div>
+                  <div class="progress-container">
+                    <div class="progress-bar bg-primary" style="width: {{ stat.avg_score }}%"></div>
+                  </div>
+                </div>
+              {% endfor %}
+            </div>
+          {% else %}
+            <div class="text-center py-4">
+              <p class="text-muted">Ko'rsatish uchun ma'lumot yo'q</p>
+            </div>
+          {% endif %}
+        </div>
+      </div>
+    </div>
+    
+    <!-- Eng mashhur testlar -->
+    <div class="col-lg-6">
+      <div class="card border-0 shadow-sm h-100">
+        <div class="card-body p-4">
+          <ul class="nav nav-tabs mb-4" id="testsTabs" role="tablist">
+            <li class="nav-item" role="presentation">
+              <button class="nav-link active" id="hardest-tab" data-bs-toggle="tab" data-bs-target="#hardest" type="button" role="tab" aria-controls="hardest" aria-selected="true">
+                Eng qiyin testlar
+              </button>
+            </li>
+            <li class="nav-item" role="presentation">
+              <button class="nav-link" id="easiest-tab" data-bs-toggle="tab" data-bs-target="#easiest" type="button" role="tab" aria-controls="easiest" aria-selected="false">
+                Eng oson testlar
+              </button>
+            </li>
+          </ul>
+          
+          <div class="tab-content" id="testsTabsContent">
+            <!-- Eng qiyin testlar -->
+            <div class="tab-pane fade show active" id="hardest" role="tabpanel" aria-labelledby="hardest-tab">
+              {% if hardest_tests %}
+                {% for test in hardest_tests %}
+                  <div class="test-item">
+                    <div>
+                      <div class="test-title">{{ test.title }}</div>
+                      <div class="test-meta">
+                        <span>{{ test.get_role_display }}</span> • 
+                        <span>Urinishlar soni: {{ test.attempts }}</span> • 
+                        <span>Topshirilgan: {{ test.passed }}/{{ test.attempts }}</span>
+                      </div>
+                    </div>
+                    <div class="test-score text-danger">{{ test.avg_score|floatformat:1 }}%</div>
+                  </div>
+                {% endfor %}
+              {% else %}
+                <div class="text-center py-4">
+                  <p class="text-muted">Ko'rsatish uchun ma'lumot yo'q</p>
+                </div>
+              {% endif %}
+            </div>
+            
+            <!-- Eng oson testlar -->
+            <div class="tab-pane fade" id="easiest" role="tabpanel" aria-labelledby="easiest-tab">
+              {% if easiest_tests %}
+                {% for test in easiest_tests %}
+                  <div class="test-item">
+                    <div>
+                      <div class="test-title">{{ test.title }}</div>
+                      <div class="test-meta">
+                        <span>{{ test.get_role_display }}</span> • 
+                        <span>Urinishlar soni: {{ test.attempts }}</span> • 
+                        <span>Topshirilgan: {{ test.passed }}/{{ test.attempts }}</span>
+                      </div>
+                    </div>
+                    <div class="test-score text-success">{{ test.avg_score|floatformat:1 }}%</div>
+                  </div>
+                {% endfor %}
+              {% else %}
+                <div class="text-center py-4">
+                  <p class="text-muted">Ko'rsatish uchun ma'lumot yo'q</p>
+                </div>
+              {% endif %}
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+  
+  <!-- Eng mashhur foydalanuvchilar -->
+  <div class="row mb-4">
+    <div class="col-12">
+      <div class="card border-0 shadow-sm">
+        <div class="card-body p-4">
+          <h3 class="card-title mb-4">Eng mashhur foydalanuvchilar</h3>
+          
+          {% if top_users %}
+            <div class="table-responsive">
+              <table class="table">
+                <thead>
+                  <tr>
+                    <th style="width: 50px;">#</th>
+                    <th>Foydalanuvchi</th>
+                    <th>Rola</th>
+                    <th>Topshirilgan testlar</th>
+                    <th>O'rt. ball</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {% for user in top_users %}
+                    <tr>
+                      <td>{{ forloop.counter }}</td>
+                      <td>
+                        <div class="d-flex align-items-center">
+                          {% if user.profile_image %}
+                            <img src="{{ user.profile_image.url }}" alt="{{ user.username }}" 
+                                 class="rounded-circle me-2" width="32" height="32">
+                          {% else %}
+                            <div class="rounded-circle me-2 bg-primary text-white d-flex align-items-center justify-content-center"
+                                 style="width: 32px; height: 32px;">
+                              {{ user.username|first|upper }}
+                            </div>
+                          {% endif %}
+                          <div>{{ user.get_full_name|default:user.username }}</div>
+                        </div>
+                      </td>
+                      <td>{{ user.get_role_display }}</td>
+                      <td>{{ user.tests_taken }}</td>
+                      <td>
+                        <div class="d-flex align-items-center">
+                          <div class="progress flex-grow-1 me-2" style="height: 8px;">
+                            <div class="progress-bar bg-success" style="width: {{ user.avg_score }}%"></div>
+                          </div>
+                          <div class="fw-bold">{{ user.avg_score|floatformat:1 }}%</div>
+                        </div>
+                      </td>
+                    </tr>
+                  {% endfor %}
+                </tbody>
+              </table>
+            </div>
+          {% else %}
+            <div class="text-center py-4">
+              <p class="text-muted">Ko'rsatish uchun ma'lumot yo'q</p>
+            </div>
+          {% endif %}
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+  document.addEventListener('DOMContentLoaded', function() {
+    // Test dinamikasi grafigi
+    const dailyData = {{ daily_data_json|safe }};
+    
+    const ctx = document.getElementById('testsChart').getContext('2d');
+    new Chart(ctx, {
+      type: 'line',
+      data: dailyData,
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        interaction: {
+          mode: 'index',
+          intersect: false,
+        },
+        scales: {
+          x: {
+            title: {
+              display: true,
+              text: 'Sana'
+            }
+          },
+          y: {
+            beginAtZero: true,
+            title: {
+              display: true,
+              text: 'Miqdor'
+            },
+            grid: {
+              drawBorder: false
+            }
+          },
+          y1: {
+            beginAtZero: true,
+            position: 'right',
+            title: {
+              display: true,
+              text: 'Foiz'
+            },
+            min: 0,
+            max: 100,
+            grid: {
+              drawOnChartArea: false
+            }
+          }
+        },
+        plugins: {
+          legend: {
+            position: 'top',
+          },
+          tooltip: {
+            callbacks: {
+              label: function(context) {
+                let label = context.dataset.label || '';
+                if (label) {
+                  label += ': ';
+                }
+                if (context.dataset.yAxisID === 'y1') {
+                  label += context.parsed.y + '%';
+                } else {
+                  label += context.parsed.y;
+                }
+                return label;
+              }
+            }
+          }
+        }
+      },
+    });
+  });
+</script>
+{% endblock %} 

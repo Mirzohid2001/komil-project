@@ -1,0 +1,912 @@
+{% extends 'base.html' %}
+{% load static blog_extras %}
+
+{% block title %}{{ test.title }} - Test{% endblock %}
+
+{% block extra_css %}
+<style>
+  .question-container {
+    border-radius: 8px;
+    border: 1px solid #e2e8f0;
+    background-color: white;
+    margin-bottom: 1.5rem;
+    overflow: hidden;
+  }
+  
+  .question-header {
+    background-color: #f8fafc;
+    padding: 1rem;
+    border-bottom: 1px solid #e2e8f0;
+  }
+  
+  .question-body {
+    padding: 1.5rem;
+  }
+  
+  .timer-container {
+    position: sticky;
+    top: 1rem;
+    z-index: 100;
+  }
+  
+  .answer-option {
+    border: 1px solid #e2e8f0;
+    border-radius: 6px;
+    padding: 0.75rem 1rem;
+    margin-bottom: 0.75rem;
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+  
+  .answer-option:hover {
+    border-color: #3b82f6;
+    background-color: #f0f9ff;
+  }
+  
+  .answer-option.selected {
+    border-color: #3b82f6;
+    background-color: #eff6ff;
+    box-shadow: 0 0 0 1px #3b82f6;
+  }
+  
+  .navigation-container {
+    position: sticky;
+    bottom: 1rem;
+    background-color: white;
+    border-radius: 8px;
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+    padding: 1rem;
+    margin-top: 2rem;
+  }
+  
+  .timer {
+    width: 120px;
+    height: 120px;
+    position: relative;
+    margin: 0 auto;
+  }
+  
+  .timer-text {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    text-align: center;
+  }
+  
+  #timer-progress {
+    transform: rotate(-90deg);
+    transform-origin: 50% 50%;
+    transition: all 1s linear;
+  }
+  
+  .timer-circle {
+    fill: none;
+    stroke-width: 8;
+    stroke-linecap: round;
+  }
+  
+  .timer-background {
+    stroke: #e2e8f0;
+  }
+  
+  .timer-progress {
+    stroke: #3b82f6;
+  }
+  
+  .animated-pulse {
+    animation: pulse 1.5s infinite;
+  }
+  
+  .animated-pulse-danger {
+    animation: pulse-danger 1.5s infinite;
+  }
+  
+  @keyframes pulse {
+    0% {
+      opacity: 1;
+    }
+    50% {
+      opacity: 0.5;
+    }
+    100% {
+      opacity: 1;
+    }
+  }
+  
+  @keyframes pulse-danger {
+    0% {
+      opacity: 1;
+      transform: scale(1);
+    }
+    50% {
+      opacity: 0.8;
+      transform: scale(1.05);
+    }
+    100% {
+      opacity: 1;
+      transform: scale(1);
+    }
+  }
+  
+  .bg-gradient-primary {
+    background: linear-gradient(135deg, #4e73df 0%, #224abe 100%);
+  }
+  
+  .bg-gradient-danger {
+    background: linear-gradient(135deg, #e74a3b 0%, #be2617 100%);
+  }
+  
+  @keyframes pulse-zoom {
+    0% {
+      transform: scale(1);
+      opacity: 0.8;
+    }
+    50% {
+      transform: scale(1.1);
+      opacity: 1;
+    }
+    100% {
+      transform: scale(1);
+      opacity: 0.8;
+    }
+  }
+  
+  .animated-pulse {
+    animation: pulse-zoom 2s infinite;
+  }
+  
+  .animated-pulse-danger {
+    animation: pulse-zoom 1.5s infinite;
+  }
+  
+  .opacity-10 {
+    opacity: 0.1;
+  }
+  
+  .modal.fade .modal-dialog {
+    transition: transform 0.3s ease-out, opacity 0.3s;
+    transform: scale(0.9);
+    opacity: 0;
+  }
+  
+  .modal.show .modal-dialog {
+    transform: scale(1);
+    opacity: 1;
+  }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+  <form id="testForm" method="post" action="{% url 'blog:submit_test' test.id %}" class="test-form">
+    {% csrf_token %}
+    <input type="hidden" name="start_time" value="{{ start_time|date:'c' }}">
+    <input type="hidden" name="remaining_time" id="remainingTimeInput" value="{{ test.time_limit }}">
+    
+    <div class="row">
+      <!-- Asosiy savollar maydonchasi -->
+      <div class="col-lg-8">
+        <div class="card border-0 shadow-sm mb-4">
+          <div class="card-body p-4">
+            <div class="d-flex align-items-center mb-3">
+              <div class="bg-primary text-white rounded-circle p-2 me-3">
+                <i class="fas fa-clipboard-list fa-2x"></i>
+              </div>
+              <div>
+                <h1 class="h3 fw-bold mb-0">{{ test.title }}</h1>
+                <p class="text-muted mb-0">{{ test.question_set.count }} ta savol - {{ test.time_limit }} daqiqa</p>
+              </div>
+            </div>
+            
+            <div class="progress mb-2" style="height: 6px;">
+              <div class="progress-bar" id="progressBar" role="progressbar" style="width: 0%;" aria-valuenow="0" aria-valuemin="0" aria-valuemax="100"></div>
+            </div>
+            <div class="d-flex justify-content-between align-items-center mb-3">
+              <span class="text-muted small">Jarayon: <span id="progressText">0/{{ questions|length }}</span></span>
+              <button type="submit" class="btn btn-primary btn-sm">
+                <i class="fas fa-check me-1"></i> Testni yakunlash
+              </button>
+            </div>
+          </div>
+        </div>
+        
+        {% for question in questions %}
+          <div class="question-container card border-0 shadow-sm mb-4" id="question-{{ forloop.counter }}">
+            <div class="card-header bg-light border-0">
+              <div class="d-flex justify-content-between align-items-center">
+                <div class="d-flex align-items-center">
+                  <span class="badge rounded-pill bg-primary me-2 px-3 py-2">{{ forloop.counter }}</span>
+                  <h3 class="h6 mb-0 fw-bold">Savol {{ forloop.counter }}/{{ questions|length }}</h3>
+                </div>
+                {% if question.points %}
+                  <span class="badge rounded-pill bg-success px-3 py-2">{{ question.points }} ball</span>
+                {% endif %}
+              </div>
+            </div>
+            <div class="card-body p-4">
+              <div class="question-text mb-4">
+                <p class="mb-0">{{ question.text|linebreaks }}</p>
+              </div>
+              
+              <div class="question-answers">
+                {% if question.question_type == 'multiple_choice' %}
+                  {% for choice in question.choice_set.all %}
+                    <div class="answer-option d-flex align-items-center mb-3 rounded-3 p-3" data-choice-id="{{ choice.id }}">
+                      <div class="form-check mb-0">
+                        <input 
+                          class="form-check-input me-2" 
+                          type="radio" 
+                          name="question_{{ question.id }}" 
+                          id="choice_{{ choice.id }}" 
+                          value="{{ choice.id }}">
+                        <label class="form-check-label w-100" for="choice_{{ choice.id }}">
+                          {{ choice.text }}
+                        </label>
+                      </div>
+                    </div>
+                  {% endfor %}
+                {% elif question.question_type == 'multiple_answer' %}
+                  {% for choice in question.choice_set.all %}
+                    <div class="answer-option d-flex align-items-center mb-3 rounded-3 p-3" data-choice-id="{{ choice.id }}">
+                      <div class="form-check mb-0">
+                        <input 
+                          class="form-check-input me-2" 
+                          type="checkbox" 
+                          name="question_{{ question.id }}" 
+                          id="choice_{{ choice.id }}" 
+                          value="{{ choice.id }}">
+                        <label class="form-check-label w-100" for="choice_{{ choice.id }}">
+                          {{ choice.text }}
+                        </label>
+                      </div>
+                    </div>
+                  {% endfor %}
+                {% elif question.question_type == 'text_answer' %}
+                  <div class="mb-3">
+                    <textarea 
+                      class="form-control" 
+                      name="question_{{ question.id }}" 
+                      rows="4" 
+                      placeholder="Javobingizni shu yerga yozing..."></textarea>
+                  </div>
+                {% else %}
+                  {% for option in question.options.all %}
+                    <div class="answer-option d-flex align-items-center mb-3 rounded-3 p-3" data-option-id="{{ option.id }}">
+                      <div class="form-check mb-0">
+                        <input 
+                          class="form-check-input me-2" 
+                          type="radio" 
+                          name="question_{{ question.id }}" 
+                          id="option_{{ option.id }}" 
+                          value="{{ option.id }}">
+                        <label class="form-check-label w-100" for="option_{{ option.id }}">
+                          {{ option.text }}
+                        </label>
+                      </div>
+                    </div>
+                  {% endfor %}
+                {% endif %}
+              </div>
+            </div>
+          </div>
+        {% endfor %}
+        
+        <!-- Navigatsiya paneli -->
+        <div class="navigation-container card border-0 shadow mb-4">
+          <div class="card-body p-3">
+            <div class="row">
+              <div class="col-md-7 mb-3 mb-md-0">
+                <div class="btn-group btn-group-sm navigation-buttons" role="group">
+                  <button type="button" id="prevBtn" class="btn btn-outline-primary" disabled>
+                    <i class="fas fa-chevron-left me-1"></i> Oldingi
+                  </button>
+                  
+                  {% for i in questions|length|get_range %}
+                    <button type="button" class="btn btn-outline-secondary question-nav-btn" data-question="{{ forloop.counter }}">
+                      {{ forloop.counter }}
+                    </button>
+                  {% endfor %}
+                  
+                  <button type="button" id="nextBtn" class="btn btn-outline-primary">
+                    Keyingi <i class="fas fa-chevron-right ms-1"></i>
+                  </button>
+                </div>
+              </div>
+              <div class="col-md-5 d-flex justify-content-md-end align-items-center">
+                <button type="submit" class="btn btn-primary w-100 w-md-auto">
+                  <i class="fas fa-check-circle me-2"></i> Testni yakunlash
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      
+      <!-- O'ng panel -->
+      <div class="col-lg-4">
+        <div class="timer-container card border-0 shadow-sm mb-4">
+          <div class="card-body p-4">
+            <div class="text-center mb-3">
+              <h4 class="fw-bold"><i class="fas fa-stopwatch me-2"></i>Qolgan vaqt</h4>
+              <p class="text-muted small mb-0">Test yakunlanishiga qolgan vaqt</p>
+            </div>
+            
+            <div class="timer mb-3">
+              <svg width="120" height="120" viewBox="0 0 120 120">
+                <circle class="timer-circle timer-background" cx="60" cy="60" r="54" />
+                <circle class="timer-circle timer-progress" id="timer-progress" cx="60" cy="60" r="54" stroke-dasharray="339.292" stroke-dashoffset="0" />
+              </svg>
+              <div class="timer-text">
+                <div id="timer-value" class="h3 mb-0 fw-bold">00:00</div>
+                <div class="text-muted small">qoldi</div>
+              </div>
+            </div>
+            
+            <div class="alert alert-primary border-0 shadow-sm">
+              <div class="d-flex">
+                <div class="me-3">
+                  <i class="fas fa-info-circle fa-2x text-primary"></i>
+                </div>
+                <div>
+                  <h6 class="fw-bold mb-1">Test haqida</h6>
+                  <p class="small mb-0">Test yakunlanganda natijalar avtomatik ravishda hisoblanadi.</p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+        
+        <!-- Test progress -->
+        <div class="card border-0 shadow-sm mb-4">
+          <div class="card-body p-4">
+            <div class="d-flex justify-content-between align-items-center mb-3">
+              <h5 class="fw-bold mb-0"><i class="fas fa-tasks me-2"></i>Test jarayoni</h5>
+              <span class="badge bg-success px-3 py-2" id="progress-percent">0%</span>
+            </div>
+            
+            <div class="progress mb-3" style="height: 10px;">
+              <div class="progress-bar bg-success" id="progressBarLarge" role="progressbar" style="width: 0%;"></div>
+            </div>
+            
+            <div class="d-flex justify-content-between text-muted small">
+              <span>Javob berilmagan</span>
+              <span id="progressTextLarge">0/{{ questions|length }}</span>
+            </div>
+          </div>
+        </div>
+        
+        <!-- Qo'shimcha eslatmalar -->
+        <div class="card border-0 shadow-sm mb-4">
+          <div class="card-body p-4">
+            <h5 class="fw-bold mb-3"><i class="fas fa-lightbulb me-2 text-warning"></i>Eslatmalar</h5>
+            
+            <ul class="list-group list-group-flush">
+              <li class="list-group-item border-0 ps-0">
+                <div class="d-flex">
+                  <div class="me-3">
+                    <div class="bg-primary bg-opacity-10 rounded-circle p-2">
+                      <i class="fas fa-check text-primary"></i>
+                    </div>
+                  </div>
+                  <p class="small mb-0">Har bir savolga e'tibor bilan javob bering.</p>
+                </div>
+              </li>
+              <li class="list-group-item border-0 ps-0">
+                <div class="d-flex">
+                  <div class="me-3">
+                    <div class="bg-primary bg-opacity-10 rounded-circle p-2">
+                      <i class="fas fa-clock text-primary"></i>
+                    </div>
+                  </div>
+                  <p class="small mb-0">Vaqtni boshqaring, har bir savolga o'rtacha {{ test.time_limit|stringformat:'.0f' }} daqiqa.</p>
+                </div>
+              </li>
+              <li class="list-group-item border-0 ps-0">
+                <div class="d-flex">
+                  <div class="me-3">
+                    <div class="bg-primary bg-opacity-10 rounded-circle p-2">
+                      <i class="fas fa-sync-alt text-primary"></i>
+                    </div>
+                  </div>
+                  <p class="small mb-0">Keyinroq qaytib javob berish uchun savolni o'tkazib yuborishingiz mumkin.</p>
+                </div>
+              </li>
+            </ul>
+          </div>
+        </div>
+      </div>
+    </div>
+  </form>
+</div>
+
+<!-- Testni yakunlashni tasdiqlash uchun modal -->
+<div class="modal fade" id="submitConfirmModal" tabindex="-1" data-bs-backdrop="static" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered modal-lg">
+    <div class="modal-content border-0 shadow-lg" style="border-radius: 16px; overflow: hidden;">
+      <div class="modal-header border-0 p-0">
+        <div class="w-100 bg-gradient-primary text-white p-4" style="background: linear-gradient(120deg, #4e73df, #6f42c1);">
+          <h4 class="modal-title fw-bold mb-1 d-flex align-items-center">
+            <i class="fas fa-clipboard-check fa-lg me-3"></i>
+            <span>Testni yakunlashni tasdiqlash</span>
+          </h4>
+          <p class="mb-0 ms-5 text-white-50">Javoblaringizni tekshirishdan oldin tasdiqlang</p>
+        </div>
+        <button type="button" class="btn-close btn-close-white position-absolute end-0 top-0 m-3" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      
+      <div class="modal-body p-0">
+        <div class="p-4">
+          <div class="row">
+            <div class="col-md-6 mb-4 mb-md-0">
+              <div class="alert alert-warning border-0 shadow-sm" style="border-radius: 12px; background: linear-gradient(to right, #fff9c4, #fffde7);">
+                <div class="d-flex align-items-center mb-3">
+                  <div class="me-3">
+                    <div class="rounded-circle d-flex align-items-center justify-content-center" style="width: 48px; height: 48px; background: rgba(255, 193, 7, 0.2);">
+                      <i class="fas fa-exclamation-triangle text-warning fa-lg"></i>
+                    </div>
+                  </div>
+                  <h5 class="fw-bold mb-0">Diqqat!</h5>
+                </div>
+                <p class="mb-0 ps-5 text-dark">Test yakunlangandan so'ng, uni qayta topshira olmaysiz. Barcha javoblaringizni tekshirdingizmi?</p>
+              </div>
+              
+              <div class="mt-4">
+                <div class="d-flex align-items-center mb-3">
+                  <i class="fas fa-info-circle fa-lg text-primary me-3"></i>
+                  <h5 class="fw-bold mb-0">Testni yakunlash</h5>
+                </div>
+                <p class="text-muted ps-5">Javoblaringiz tekshirilgandan so'ng, natijalar avtomatik ravishda hisoblanadi va sizga ko'rsatiladi.</p>
+                <hr class="my-4">
+                <div class="d-flex justify-content-end">
+                  <button type="button" class="btn btn-outline-secondary me-2" data-bs-dismiss="modal">
+                    <i class="fas fa-arrow-left me-2"></i>Testni davom ettirish
+                  </button>
+                  <button type="button" id="confirmSubmit" class="btn btn-primary px-4" style="background: linear-gradient(120deg, #4e73df, #6f42c1); border: none;">
+                    <i class="fas fa-check me-2"></i>Testni yakunlash
+                  </button>
+                </div>
+              </div>
+            </div>
+            
+            <div class="col-md-6 d-flex flex-column">
+              <div class="card border-0 shadow-sm h-100" style="border-radius: 12px; background: linear-gradient(135deg, #f5f7ff, #ffffff);">
+                <div class="card-body d-flex flex-column">
+                  <div class="text-center mb-4">
+                    <div class="display-3 text-primary mb-3">
+                      <i class="fas fa-tasks animated-pulse"></i>
+                    </div>
+                    <h4 class="fw-bold">Test yakunlansinmi?</h4>
+                  </div>
+                  
+                  <div class="row g-3 mt-auto">
+                    <div class="col-6">
+                      <div class="card h-100 border-0 shadow-sm" style="border-radius: 12px; background: linear-gradient(135deg, #e3f2fd, #ffffff);">
+                        <div class="card-body d-flex flex-column align-items-center justify-content-center p-3">
+                          <div class="rounded-circle d-flex align-items-center justify-content-center mb-2" style="width: 48px; height: 48px; background: rgba(33, 150, 243, 0.1);">
+                            <i class="fas fa-check-circle text-success fa-lg"></i>
+                          </div>
+                          <h6 class="card-title fw-bold text-center mb-1">Javob berilgan</h6>
+                          <h3 id="answeredCount" class="mb-0 fw-bold">0/{{ questions|length }}</h3>
+                        </div>
+                      </div>
+                    </div>
+                    <div class="col-6">
+                      <div class="card h-100 border-0 shadow-sm" style="border-radius: 12px; background: linear-gradient(135deg, #fff8e1, #ffffff);">
+                        <div class="card-body d-flex flex-column align-items-center justify-content-center p-3">
+                          <div class="rounded-circle d-flex align-items-center justify-content-center mb-2" style="width: 48px; height: 48px; background: rgba(255, 193, 7, 0.1);">
+                            <i class="fas fa-hourglass-half text-warning fa-lg"></i>
+                          </div>
+                          <h6 class="card-title fw-bold text-center mb-1">Qolgan vaqt</h6>
+                          <h3 id="remainingTime" class="mb-0 fw-bold">00:00</h3>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Vaqt tugaganda chiqadigan modal -->
+<div class="modal fade" id="timeUpModal" tabindex="-1" data-bs-backdrop="static" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content border-0 shadow-lg" style="border-radius: 16px; overflow: hidden;">
+      <div class="modal-header border-0 p-0">
+        <div class="w-100 text-white p-4" style="background: linear-gradient(120deg, #f44336, #ff9800);">
+          <h4 class="modal-title fw-bold mb-1 d-flex align-items-center">
+            <i class="fas fa-clock fa-lg me-3"></i>
+            <span>Vaqt tugadi!</span>
+          </h4>
+          <p class="mb-0 ms-5 text-white-50">Test vaqti yakunlandi</p>
+        </div>
+      </div>
+      
+      <div class="modal-body p-4">
+        <div class="text-center mb-4">
+          <div class="position-relative mx-auto" style="width: 120px; height: 120px;">
+            <div class="position-absolute top-0 start-0 w-100 h-100 d-flex align-items-center justify-content-center">
+              <i class="fas fa-clock text-danger fa-5x opacity-10"></i>
+            </div>
+            <div class="position-absolute top-0 start-0 w-100 h-100 d-flex align-items-center justify-content-center animated-pulse-danger">
+              <i class="fas fa-clock text-danger fa-5x"></i>
+            </div>
+          </div>
+          <h3 class="fw-bold mt-4">Test vaqti tugadi!</h3>
+          <p class="text-muted mb-0">Javoblaringiz avtomatik ravishda tekshirish uchun yuboriladi.</p>
+        </div>
+        
+        <div class="card border-0 shadow-sm mt-4" style="border-radius: 12px; background: linear-gradient(135deg, #f5f5f5, #ffffff);">
+          <div class="card-body p-4">
+            <div class="d-flex align-items-center mb-3">
+              <div class="rounded-circle d-flex align-items-center justify-content-center me-3" style="width: 48px; height: 48px; background: rgba(76, 175, 80, 0.1);">
+                <i class="fas fa-check-double text-success fa-lg"></i>
+              </div>
+              <div>
+                <h5 class="card-title fw-bold mb-0">Siz javob bergan savollar</h5>
+                <p class="text-muted small mb-0">Umumiy {{ questions|length }} ta savoldan</p>
+              </div>
+            </div>
+            <div class="text-center py-3">
+              <h1 id="timeUpAnsweredCount" class="display-3 fw-bold mb-0" style="color: #4e73df; text-shadow: 2px 2px 4px rgba(0,0,0,0.05);">0/{{ questions|length }}</h1>
+            </div>
+          </div>
+        </div>
+      </div>
+      
+      <div class="modal-footer border-0 p-3">
+        <button type="button" id="timeUpSubmit" class="btn btn-primary w-100 py-3" style="border-radius: 12px; background: linear-gradient(120deg, #4e73df, #6f42c1); border: none;">
+          <i class="fas fa-paper-plane me-2"></i>Natijalarni ko'rish
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+  document.addEventListener('DOMContentLoaded', function() {
+    const testForm = document.getElementById('testForm');
+    const questions = document.querySelectorAll('.question-container');
+    const navButtons = document.querySelectorAll('.question-nav-btn');
+    const prevBtn = document.getElementById('prevBtn');
+    const nextBtn = document.getElementById('nextBtn');
+    const progressBar = document.getElementById('progressBar');
+    const progressText = document.getElementById('progressText');
+    const progressBarLarge = document.getElementById('progressBarLarge');
+    const progressTextLarge = document.getElementById('progressTextLarge');
+    const submitConfirmModal = new bootstrap.Modal(document.getElementById('submitConfirmModal'));
+    const timeUpModal = new bootstrap.Modal(document.getElementById('timeUpModal'));
+    const confirmSubmitBtn = document.getElementById('confirmSubmit');
+    const timeUpSubmitBtn = document.getElementById('timeUpSubmit');
+    const answeredCountEl = document.getElementById('answeredCount');
+    const timeUpAnsweredCountEl = document.getElementById('timeUpAnsweredCount');
+    const remainingTimeEl = document.getElementById('remainingTime');
+    const remainingTimeInput = document.getElementById('remainingTimeInput');
+    const timerValueEl = document.getElementById('timer-value');
+    const timerProgress = document.getElementById('timer-progress');
+    
+    // Test sahifasidan chiqishdan avval foydalanuvchini ogohlantiradigan modal
+    let customTestExitModalHTML = `
+      <div class="modal fade" id="customTestExitModal" tabindex="-1" data-bs-backdrop="static">
+        <div class="modal-dialog modal-dialog-centered">
+          <div class="modal-content border-0 shadow-lg" style="border-radius: 16px; overflow: hidden;">
+            <div class="modal-header border-0 p-0">
+              <div class="w-100 p-4" style="background: linear-gradient(120deg, #f44336, #ff9800); color: white;">
+                <h4 class="modal-title fw-bold mb-1 d-flex align-items-center">
+                  <i class="fas fa-exclamation-triangle fa-lg me-3"></i>
+                  <span>Testdan chiqmoqchimisiz?</span>
+                </h4>
+                <p class="mb-0 ms-5 text-white-50">Javoblaringiz saqlanmaydi</p>
+              </div>
+              <button type="button" class="btn-close btn-close-white position-absolute end-0 top-0 m-3" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            
+            <div class="modal-body p-4">
+              <div class="d-flex align-items-center mb-4">
+                <div class="me-3">
+                  <div class="rounded-circle d-flex align-items-center justify-content-center" style="width: 48px; height: 48px; background: rgba(244, 67, 54, 0.1);">
+                    <i class="fas fa-exclamation-circle text-danger fa-lg"></i>
+                  </div>
+                </div>
+                <div>
+                  <h5 class="fw-bold mb-2">Diqqat!</h5>
+                  <p class="mb-0">Agar siz testdan chiqsangiz, barcha javoblaringiz yo'qoladi va test yakunlanmaydi.</p>
+                </div>
+              </div>
+              
+              <div class="card border-0 shadow-sm mt-3" style="border-radius: 12px; background: linear-gradient(135deg, #fff8e1, #ffffff);">
+                <div class="card-body p-3">
+                  <div class="d-flex align-items-center">
+                    <div class="rounded-circle d-flex align-items-center justify-content-center me-3" style="width: 40px; height: 40px; background: rgba(255, 193, 7, 0.1);">
+                      <i class="fas fa-lightbulb text-warning"></i>
+                    </div>
+                    <p class="text-dark small mb-0">Testni to'g'ri yakunlash uchun "Testni yakunlash" tugmasini bosing va natijangizni ko'ring.</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+            
+            <div class="modal-footer border-0 p-3">
+              <button type="button" id="exitCancelTestBtn" class="btn btn-light px-4" data-bs-dismiss="modal">
+                Testga qaytish
+              </button>
+              <button type="button" id="exitConfirmTestBtn" class="btn btn-danger px-4" style="background: linear-gradient(120deg, #f44336, #ff9800); border: none;">
+                <i class="fas fa-sign-out-alt me-2"></i>Testni tark etish
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    `;
+    
+    // Modal HTML ni sahifaga qo'shamiz
+    document.body.insertAdjacentHTML('beforeend', customTestExitModalHTML);
+    
+    // Modal obyektini yaratamiz
+    const customTestExitModal = new bootstrap.Modal(document.getElementById('customTestExitModal'));
+    
+    // Sahifani tark etish rejasi bo'lganda modalimizni ko'rsatish
+    window.addEventListener('beforeunload', function (e) {
+      if (!testSubmitted) {
+        e.preventDefault();
+        e.returnValue = 'Testdan chiqmoqchimisiz? Javoblaringiz saqlanmaydi.';
+        customTestExitModal.show();
+        return e.returnValue;
+      }
+    });
+    
+    // Chiqishni tasdiqlash
+    document.getElementById('exitConfirmTestBtn').addEventListener('click', function() {
+      window.removeEventListener('beforeunload', beforeUnloadHandler);
+      window.location.href = '/';
+    });
+    
+    // Javoblarni yuborish holati
+    let testSubmitted = false;
+    
+    // Test topshirilganda holat o'zgaradi
+    testForm.addEventListener('submit', function() {
+      testSubmitted = true;
+    });
+    
+    // BeforeUnload event handler funksiyasi
+    function beforeUnloadHandler(e) {
+      if (!testSubmitted) {
+        e.preventDefault();
+        e.returnValue = 'Testdan chiqmoqchimisiz? Javoblaringiz saqlanmaydi.';
+        return e.returnValue;
+      }
+    }
+    
+    // Ishga tushirish
+    let currentQuestion = 1;
+    let timeLimit = parseInt("{{ test.time_limit }}"); // daqiqalarda
+    let timeRemaining = timeLimit * 60; // soniyalarda
+    let answeredQuestions = new Set();
+    
+    // Birinchi savolni ko'rsatib, qolganlarini yashirish
+    showQuestion(currentQuestion);
+    updateNavButtons();
+    
+    // Hodisalarni boshqarish
+    navButtons.forEach(btn => {
+      btn.addEventListener('click', function() {
+        const questionNum = parseInt(this.dataset.question);
+        showQuestion(questionNum);
+        updateNavButtons();
+      });
+    });
+    
+    prevBtn.addEventListener('click', function() {
+      if (currentQuestion > 1) {
+        showQuestion(currentQuestion - 1);
+        updateNavButtons();
+      }
+    });
+    
+    nextBtn.addEventListener('click', function() {
+      if (currentQuestion < questions.length) {
+        showQuestion(currentQuestion + 1);
+        updateNavButtons();
+      }
+    });
+    
+    // Javoblarni kuzatish
+    document.querySelectorAll('input[type="radio"], input[type="checkbox"]').forEach(input => {
+      input.addEventListener('change', function() {
+        const questionId = this.name.replace('question_', '');
+        answeredQuestions.add(questionId);
+        updateProgress();
+        
+        // Tanlangan variant uslubini yangilash
+        const option = this.closest('.answer-option');
+        
+        if (this.type === 'radio') {
+          // Radio uchun avval ushbu guruhning barchasini tiklash
+          document.querySelectorAll(`input[name="${this.name}"]`).forEach(radio => {
+            radio.closest('.answer-option').classList.remove('selected');
+          });
+        }
+        
+        if (this.checked) {
+          option.classList.add('selected');
+        } else {
+          option.classList.remove('selected');
+        }
+      });
+    });
+    
+    document.querySelectorAll('textarea').forEach(textarea => {
+      textarea.addEventListener('input', function() {
+        if (this.value.trim() !== '') {
+          const questionId = this.name.replace('question_', '');
+          answeredQuestions.add(questionId);
+        } else {
+          const questionId = this.name.replace('question_', '');
+          answeredQuestions.delete(questionId);
+        }
+        updateProgress();
+      });
+    });
+    
+    // Javob variantini bosganda (qulaylik uchun)
+    document.querySelectorAll('.answer-option').forEach(option => {
+      option.addEventListener('click', function() {
+        const input = this.querySelector('input');
+        if (input.type === 'radio') {
+          input.checked = true;
+          
+          // O'zgarish hodisasini qo'lda chaqirish
+          const event = new Event('change');
+          input.dispatchEvent(event);
+        } else if (input.type === 'checkbox') {
+          input.checked = !input.checked;
+          
+          // O'zgarish hodisasini qo'lda chaqirish
+          const event = new Event('change');
+          input.dispatchEvent(event);
+        }
+      });
+    });
+    
+    // Formani yuborish
+    testForm.addEventListener('submit', function(e) {
+      e.preventDefault();
+      remainingTimeInput.value = timeRemaining;
+      
+      // Modal oynani yangilash
+      answeredCountEl.textContent = `${answeredQuestions.size}/${questions.length}`;
+      remainingTimeEl.textContent = formatTime(timeRemaining);
+      submitConfirmModal.show();
+    });
+    
+    confirmSubmitBtn.addEventListener('click', function() {
+      submitConfirmModal.hide();
+      testForm.submit();
+    });
+    
+    timeUpSubmitBtn.addEventListener('click', function() {
+      timeUpModal.hide();
+      remainingTimeInput.value = 0;
+      testForm.submit();
+    });
+    
+    // Vaqt hisoblagichni ishga tushirish
+    const timer = setInterval(function() {
+      timeRemaining--;
+      updateTimer();
+      
+      if (timeRemaining <= 0) {
+        clearInterval(timer);
+        timeUpAnsweredCountEl.textContent = `${answeredQuestions.size}/${questions.length}`;
+        timeUpModal.show();
+      }
+    }, 1000);
+    
+    // Funksiyalar
+    function showQuestion(num) {
+      questions.forEach((q, index) => {
+        if (index + 1 === num) {
+          q.style.display = 'block';
+        } else {
+          q.style.display = 'none';
+        }
+      });
+      
+      currentQuestion = num;
+      
+      // Faol navigatsiya tugmasini yangilash
+      navButtons.forEach(btn => {
+        if (parseInt(btn.dataset.question) === currentQuestion) {
+          btn.classList.add('btn-primary');
+          btn.classList.remove('btn-outline-secondary');
+        } else {
+          btn.classList.remove('btn-primary');
+          btn.classList.add('btn-outline-secondary');
+        }
+      });
+    }
+    
+    function updateNavButtons() {
+      // Oldingi tugma
+      if (currentQuestion === 1) {
+        prevBtn.disabled = true;
+      } else {
+        prevBtn.disabled = false;
+      }
+      
+      // Keyingi tugma
+      if (currentQuestion === questions.length) {
+        nextBtn.disabled = true;
+      } else {
+        nextBtn.disabled = false;
+      }
+    }
+    
+    function updateProgress() {
+      const progress = (answeredQuestions.size / questions.length) * 100;
+      
+      // Asosiy jarayon indikatorlarini yangilash
+      progressBar.style.width = `${progress}%`;
+      progressText.textContent = `${answeredQuestions.size}/${questions.length}`;
+      
+      // Yangi qo'shilgan jarayon indikatorlarini yangilash
+      progressBarLarge.style.width = `${progress}%`;
+      progressTextLarge.textContent = `${answeredQuestions.size}/${questions.length}`;
+      document.getElementById('progress-percent').textContent = `${Math.round(progress)}%`;
+      
+      // Navigatsiya tugmalarini yangilash
+      navButtons.forEach(btn => {
+        const questionNum = parseInt(btn.dataset.question);
+        const questionEl = questions[questionNum - 1];
+        const questionId = questionEl.querySelector('input, textarea')?.name?.replace('question_', '');
+        
+        if (questionId && answeredQuestions.has(questionId)) {
+          btn.classList.add('btn-success');
+          btn.classList.remove('btn-outline-secondary');
+        } else if (questionNum !== currentQuestion) {
+          btn.classList.remove('btn-success');
+          btn.classList.add('btn-outline-secondary');
+        }
+      });
+    }
+    
+    function updateTimer() {
+      // Vaqt hisoblagichini yangilash
+      timerValueEl.textContent = formatTime(timeRemaining);
+      
+      // Progress doirasini yangilash
+      const totalSeconds = timeLimit * 60;
+      const percentage = timeRemaining / totalSeconds;
+      const circumference = 2 * Math.PI * 54;
+      const offset = circumference * (1 - percentage);
+      timerProgress.style.strokeDashoffset = offset;
+      
+      // Qolgan vaqtga qarab rangni o'zgartirish
+      if (timeRemaining <= 60) { // Oxirgi daqiqa
+        timerProgress.style.stroke = '#ef4444';
+        timerValueEl.classList.add('text-danger');
+      } else if (timeRemaining <= 300) { // Oxirgi 5 daqiqa
+        timerProgress.style.stroke = '#f59e0b';
+        timerValueEl.classList.add('text-warning');
+      } else {
+        timerProgress.style.stroke = '#3b82f6';
+        timerValueEl.classList.remove('text-danger', 'text-warning');
+      }
+    }
+    
+    function formatTime(seconds) {
+      const minutes = Math.floor(seconds / 60);
+      const secs = seconds % 60;
+      return `${minutes.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
+    }
+  });
+</script>
+{% endblock %} 

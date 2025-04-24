@@ -1,1 +1,203 @@
- 
+{% extends 'base.html' %}
+
+{% block title %}Аналитика просмотров видео{% endblock %}
+
+{% block content %}
+<div class="container mx-auto px-4 py-8">
+    <h1 class="text-3xl font-bold mb-6">Аналитика просмотров видео</h1>
+    
+    <!-- Общая статистика -->
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
+        <div class="bg-white p-6 rounded-lg shadow">
+            <h3 class="text-lg font-semibold mb-2">Всего видео</h3>
+            <p class="text-3xl font-bold">{{ video_posts_count }}</p>
+        </div>
+        
+        <div class="bg-white p-6 rounded-lg shadow">
+            <h3 class="text-lg font-semibold mb-2">Всего просмотров</h3>
+            <p class="text-3xl font-bold">{{ total_views }}</p>
+        </div>
+        
+        <div class="bg-white p-6 rounded-lg shadow">
+            <h3 class="text-lg font-semibold mb-2">Уникальных зрителей</h3>
+            <p class="text-3xl font-bold">{{ unique_viewers }}</p>
+        </div>
+    </div>
+    
+    <!-- Графики -->
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
+        <div class="bg-white p-6 rounded-lg shadow">
+            <h3 class="text-lg font-semibold mb-4">Просмотры по дням</h3>
+            <canvas id="dailyChart" width="400" height="300"></canvas>
+        </div>
+        
+        <div class="bg-white p-6 rounded-lg shadow">
+            <h3 class="text-lg font-semibold mb-4">Просмотры по ролям</h3>
+            <canvas id="roleChart" width="400" height="300"></canvas>
+        </div>
+    </div>
+    
+    <div class="bg-white p-6 rounded-lg shadow mb-8">
+        <h3 class="text-lg font-semibold mb-4">Просмотры по неделям</h3>
+        <canvas id="weeklyChart" width="800" height="300"></canvas>
+    </div>
+    
+    <!-- Топ-5 видео -->
+    <div class="bg-white p-6 rounded-lg shadow mb-8">
+        <h3 class="text-lg font-semibold mb-4">Топ-5 самых просматриваемых видео</h3>
+        <div class="overflow-x-auto">
+            <table class="min-w-full bg-white">
+                <thead>
+                    <tr>
+                        <th class="py-3 px-4 border-b border-gray-200 bg-gray-50 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Название</th>
+                        <th class="py-3 px-4 border-b border-gray-200 bg-gray-50 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Категория</th>
+                        <th class="py-3 px-4 border-b border-gray-200 bg-gray-50 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Роль</th>
+                        <th class="py-3 px-4 border-b border-gray-200 bg-gray-50 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Просмотры</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for video in top_videos %}
+                    <tr>
+                        <td class="py-4 px-4 border-b border-gray-200">
+                            <a href="{% url 'blog:post_detail' video.id %}" class="text-indigo-600 hover:text-indigo-900">{{ video.title }}</a>
+                        </td>
+                        <td class="py-4 px-4 border-b border-gray-200">{{ video.category.name }}</td>
+                        <td class="py-4 px-4 border-b border-gray-200">{{ video.get_role_display }}</td>
+                        <td class="py-4 px-4 border-b border-gray-200">{{ video.view_count }}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+    
+    <!-- Топ-5 зрителей -->
+    <div class="bg-white p-6 rounded-lg shadow">
+        <h3 class="text-lg font-semibold mb-4">Топ-5 активных зрителей</h3>
+        <div class="overflow-x-auto">
+            <table class="min-w-full bg-white">
+                <thead>
+                    <tr>
+                        <th class="py-3 px-4 border-b border-gray-200 bg-gray-50 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Пользователь</th>
+                        <th class="py-3 px-4 border-b border-gray-200 bg-gray-50 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Роль</th>
+                        <th class="py-3 px-4 border-b border-gray-200 bg-gray-50 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Просмотры</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for user in top_viewers %}
+                    <tr>
+                        <td class="py-4 px-4 border-b border-gray-200">{{ user.username }}</td>
+                        <td class="py-4 px-4 border-b border-gray-200">{{ user.get_role_display }}</td>
+                        <td class="py-4 px-4 border-b border-gray-200">{{ user.view_count }}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+    // Данные для графиков
+    const dailyData = {{ daily_data_json|safe }};
+    const roleData = {{ role_data_json|safe }};
+    const weeklyData = {{ weekly_data_json|safe }};
+    
+    // График по дням
+    const dailyChart = new Chart(
+        document.getElementById('dailyChart'),
+        {
+            type: 'line',
+            data: {
+                labels: dailyData.labels,
+                datasets: [{
+                    label: 'Просмотры',
+                    data: dailyData.data,
+                    borderColor: 'rgb(75, 192, 192)',
+                    tension: 0.1
+                }]
+            },
+            options: {
+                responsive: true,
+                plugins: {
+                    legend: {
+                        position: 'top',
+                    },
+                    title: {
+                        display: true,
+                        text: 'Просмотры по дням'
+                    }
+                }
+            }
+        }
+    );
+    
+    // График по ролям
+    const roleChart = new Chart(
+        document.getElementById('roleChart'),
+        {
+            type: 'pie',
+            data: {
+                labels: roleData.labels,
+                datasets: [{
+                    label: 'Просмотры',
+                    data: roleData.data,
+                    backgroundColor: [
+                        'rgba(255, 99, 132, 0.5)',
+                        'rgba(54, 162, 235, 0.5)',
+                        'rgba(255, 206, 86, 0.5)',
+                        'rgba(75, 192, 192, 0.5)',
+                        'rgba(153, 102, 255, 0.5)'
+                    ],
+                    borderWidth: 1
+                }]
+            },
+            options: {
+                responsive: true,
+                plugins: {
+                    legend: {
+                        position: 'top',
+                    },
+                    title: {
+                        display: true,
+                        text: 'Просмотры по ролям'
+                    }
+                }
+            }
+        }
+    );
+    
+    // График по неделям
+    const weeklyChart = new Chart(
+        document.getElementById('weeklyChart'),
+        {
+            type: 'bar',
+            data: {
+                labels: weeklyData.labels,
+                datasets: [{
+                    label: 'Просмотры',
+                    data: weeklyData.data,
+                    backgroundColor: 'rgba(153, 102, 255, 0.5)',
+                    borderColor: 'rgb(153, 102, 255)',
+                    borderWidth: 1
+                }]
+            },
+            options: {
+                responsive: true,
+                plugins: {
+                    legend: {
+                        position: 'top',
+                    },
+                    title: {
+                        display: true,
+                        text: 'Просмотры по неделям'
+                    }
+                }
+            }
+        }
+    );
+</script>
+{% endblock %} 

@@ -1,0 +1,185 @@
+{% extends 'base.html' %}
+
+{% block title %}Мои достижения{% endblock %}
+
+{% block content %}
+<div class="container mx-auto py-6 px-4">
+    <div class="mb-8">
+        <h1 class="text-3xl font-bold mb-2">Мои достижения</h1>
+        <p class="text-gray-600">Отслеживайте свой прогресс и разблокируйте новые награды!</p>
+    </div>
+
+    <!-- Статистика достижений -->
+    <div class="bg-white rounded-lg shadow-md p-6 mb-8">
+        <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+            <div class="text-center">
+                <div class="text-3xl font-bold text-indigo-600">{{ stats.earned }}</div>
+                <div class="text-sm text-gray-600">Заработано</div>
+            </div>
+            <div class="text-center">
+                <div class="text-3xl font-bold text-green-600">{{ stats.total }}</div>
+                <div class="text-sm text-gray-600">Всего доступно</div>
+            </div>
+            <div class="text-center">
+                <div class="text-3xl font-bold text-purple-600">{{ stats.percentage }}%</div>
+                <div class="text-sm text-gray-600">Прогресс</div>
+            </div>
+            <div class="text-center">
+                <div class="text-3xl font-bold text-amber-600">{{ stats.total_xp }}</div>
+                <div class="text-sm text-gray-600">Получено XP</div>
+            </div>
+        </div>
+        <div class="mt-4">
+            <div class="w-full bg-gray-200 rounded-full h-2.5">
+                <div class="bg-indigo-600 h-2.5 rounded-full" style="width: {{ stats.percentage }}%"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Фильтры -->
+    <div class="bg-white rounded-lg shadow-md p-4 mb-8">
+        <div class="flex flex-wrap items-center justify-between">
+            <div class="mb-2 sm:mb-0">
+                <button id="all-achievements" class="px-4 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700 text-sm font-medium mr-2">
+                    Все
+                </button>
+                <button id="earned-achievements" class="px-4 py-2 bg-white border border-gray-300 text-gray-700 rounded-md hover:bg-gray-50 text-sm font-medium mr-2">
+                    Полученные
+                </button>
+                <button id="locked-achievements" class="px-4 py-2 bg-white border border-gray-300 text-gray-700 rounded-md hover:bg-gray-50 text-sm font-medium">
+                    Не полученные
+                </button>
+            </div>
+            <div class="relative">
+                <input type="text" id="achievement-search" placeholder="Поиск..." class="pl-10 pr-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500">
+                <div class="absolute left-3 top-1/2 transform -translate-y-1/2">
+                    <svg class="h-5 w-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
+                    </svg>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Категории достижений -->
+    <div class="mb-8">
+        <h2 class="text-2xl font-bold mb-4">Достижения по категориям</h2>
+        
+        {% for category, achievements_list in achievements_by_category.items %}
+        <div class="mb-8 achievement-category">
+            <h3 class="text-xl font-semibold mb-4">{{ category }}</h3>
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                {% for achievement_data in achievements_list %}
+                <div class="bg-white rounded-lg shadow-md overflow-hidden achievement-card {% if achievement_data.earned %}earned{% else %}locked{% endif %}" data-name="{{ achievement_data.achievement.name|lower }}">
+                    <div class="p-4 {% if achievement_data.earned %}border-t-4 border-green-500{% else %}border-t-4 border-gray-300{% endif %}">
+                        <div class="flex justify-between items-start mb-2">
+                            <h4 class="text-lg font-medium">{{ achievement_data.achievement.name }}</h4>
+                            <div class="text-sm font-medium text-indigo-600">+{{ achievement_data.achievement.experience_reward }} XP</div>
+                        </div>
+                        <p class="text-gray-600 text-sm mb-3">{{ achievement_data.achievement.description }}</p>
+                        {% if achievement_data.earned %}
+                            <div class="flex justify-between items-center text-sm text-gray-500">
+                                <div class="flex items-center text-green-600">
+                                    <svg class="w-5 h-5 mr-1" fill="currentColor" viewBox="0 0 20 20">
+                                        <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"></path>
+                                    </svg>
+                                    Получено
+                                </div>
+                                <span>{{ achievement_data.earned_at|date:"d.m.Y" }}</span>
+                            </div>
+                        {% else %}
+                            <div class="flex items-center text-sm text-gray-500">
+                                <svg class="w-5 h-5 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"></path>
+                                </svg>
+                                Не разблокировано
+                            </div>
+                        {% endif %}
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+        {% empty %}
+        <div class="text-center py-8">
+            <p class="text-gray-500">Достижения не найдены</p>
+        </div>
+        {% endfor %}
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const allCards = document.querySelectorAll('.achievement-card');
+        const searchInput = document.getElementById('achievement-search');
+        const allButton = document.getElementById('all-achievements');
+        const earnedButton = document.getElementById('earned-achievements');
+        const lockedButton = document.getElementById('locked-achievements');
+
+        // Функция фильтрации достижений
+        function filterAchievements(filter, searchTerm = '') {
+            const categories = document.querySelectorAll('.achievement-category');
+            
+            allCards.forEach(card => {
+                const isEarned = card.classList.contains('earned');
+                const matchesFilter = 
+                    filter === 'all' || 
+                    (filter === 'earned' && isEarned) || 
+                    (filter === 'locked' && !isEarned);
+                
+                const name = card.getAttribute('data-name');
+                const matchesSearch = !searchTerm || name.includes(searchTerm.toLowerCase());
+                
+                card.style.display = (matchesFilter && matchesSearch) ? 'block' : 'none';
+            });
+
+            // Скрываем категории, у которых нет видимых карточек
+            categories.forEach(category => {
+                const visibleCards = category.querySelectorAll('.achievement-card[style="display: block"]');
+                category.style.display = visibleCards.length > 0 ? 'block' : 'none';
+            });
+        }
+
+        // Обработчики событий для кнопок фильтрации
+        allButton.addEventListener('click', function() {
+            this.classList.remove('bg-white', 'border', 'border-gray-300', 'text-gray-700');
+            this.classList.add('bg-indigo-600', 'text-white');
+            earnedButton.classList.remove('bg-indigo-600', 'text-white');
+            earnedButton.classList.add('bg-white', 'border', 'border-gray-300', 'text-gray-700');
+            lockedButton.classList.remove('bg-indigo-600', 'text-white');
+            lockedButton.classList.add('bg-white', 'border', 'border-gray-300', 'text-gray-700');
+            filterAchievements('all', searchInput.value);
+        });
+
+        earnedButton.addEventListener('click', function() {
+            this.classList.remove('bg-white', 'border', 'border-gray-300', 'text-gray-700');
+            this.classList.add('bg-indigo-600', 'text-white');
+            allButton.classList.remove('bg-indigo-600', 'text-white');
+            allButton.classList.add('bg-white', 'border', 'border-gray-300', 'text-gray-700');
+            lockedButton.classList.remove('bg-indigo-600', 'text-white');
+            lockedButton.classList.add('bg-white', 'border', 'border-gray-300', 'text-gray-700');
+            filterAchievements('earned', searchInput.value);
+        });
+
+        lockedButton.addEventListener('click', function() {
+            this.classList.remove('bg-white', 'border', 'border-gray-300', 'text-gray-700');
+            this.classList.add('bg-indigo-600', 'text-white');
+            allButton.classList.remove('bg-indigo-600', 'text-white');
+            allButton.classList.add('bg-white', 'border', 'border-gray-300', 'text-gray-700');
+            earnedButton.classList.remove('bg-indigo-600', 'text-white');
+            earnedButton.classList.add('bg-white', 'border', 'border-gray-300', 'text-gray-700');
+            filterAchievements('locked', searchInput.value);
+        });
+
+        // Обработчик события для поиска
+        searchInput.addEventListener('input', function() {
+            const activeFilter = document.querySelector('button.bg-indigo-600').id;
+            const filter = activeFilter === 'all-achievements' ? 'all' : 
+                           activeFilter === 'earned-achievements' ? 'earned' : 'locked';
+            filterAchievements(filter, this.value);
+        });
+    });
+</script>
+{% endblock %} 

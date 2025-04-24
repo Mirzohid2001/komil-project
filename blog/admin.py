@@ -9,7 +9,7 @@ import json
 from django.shortcuts import render
 from django.contrib.admin.views.decorators import staff_member_required
 
-from .models import Category, Post, VideoView
+from .models import Category, Post, VideoView, Test, Question, Option, TestResult, UserAnswer
 from accounts.models import UserActivity, User
 
 class VideoViewInline(admin.TabularInline):
@@ -368,3 +368,62 @@ original_admin_site.get_urls = (lambda original_get_urls:
         path('blog/analytics/', analytics_view, name='blog_analytics'),
     ]
 )(original_admin_site.get_urls)
+
+class OptionInline(admin.TabularInline):
+    model = Option
+    extra = 4
+    min_num = 2
+
+class QuestionAdmin(admin.ModelAdmin):
+    list_display = ('text', 'test', 'get_correct_option', 'created_at')
+    list_filter = ('test', 'created_at', 'updated_at')
+    search_fields = ('text', 'explanation')
+    inlines = [OptionInline]
+    
+    def get_correct_option(self, obj):
+        correct = obj.options.filter(is_correct=True).first()
+        return correct.text if correct else "Нет правильного ответа"
+    get_correct_option.short_description = "Правильный ответ"
+
+class QuestionInline(admin.TabularInline):
+    model = Question
+    extra = 0
+    show_change_link = True
+    readonly_fields = ('text', 'created_at')
+    fields = ('text', 'created_at')
+    can_delete = False
+    max_num = 0
+
+class TestAdmin(admin.ModelAdmin):
+    list_display = ('title', 'role', 'get_question_count', 'passing_score', 'is_active', 'updated_at')
+    list_filter = ('role', 'is_active', 'created_at', 'updated_at')
+    search_fields = ('title', 'description')
+    readonly_fields = ('created_at', 'updated_at')
+    inlines = [QuestionInline]
+    
+    def get_question_count(self, obj):
+        return obj.questions.count()
+    get_question_count.short_description = "Кол-во вопросов"
+    
+class UserAnswerInline(admin.TabularInline):
+    model = UserAnswer
+    extra = 0
+    readonly_fields = ('question', 'selected_option', 'is_correct')
+    can_delete = False
+    max_num = 0
+
+class TestResultAdmin(admin.ModelAdmin):
+    list_display = ('user', 'test', 'score', 'percentage', 'is_passed', 'get_duration', 'completed_at')
+    list_filter = ('is_passed', 'completed_at', 'user__role', 'test')
+    search_fields = ('user__username', 'test__title')
+    readonly_fields = ('user', 'test', 'score', 'percentage', 'is_passed', 'started_at', 'completed_at', 'get_duration')
+    inlines = [UserAnswerInline]
+    
+    def get_duration(self, obj):
+        return f"{obj.get_duration()} мин."
+    get_duration.short_description = "Продолжительность"
+
+# Register test-related models
+admin.site.register(Test, TestAdmin)
+admin.site.register(Question, QuestionAdmin)
+admin.site.register(TestResult, TestResultAdmin)

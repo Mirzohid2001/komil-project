@@ -1,0 +1,175 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}{{ test.title }} - Testni boshlash{% endblock %}
+
+{% block extra_css %}
+<style>
+  .test-header {
+    border-radius: 16px;
+    background-color: #f8fafc;
+    border-left: 5px solid #4f46e5;
+  }
+  
+  .status-icon {
+    width: 60px;
+    height: 60px;
+    border-radius: 30px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-size: 24px;
+  }
+  
+  .requirements-list li {
+    margin-bottom: 10px;
+  }
+  
+  .animation-container {
+    max-width: 400px;
+    margin: 0 auto;
+  }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+  <div class="row justify-content-center">
+    <div class="col-lg-8">
+      <div class="card border-0 shadow-sm">
+        <div class="card-body p-4">
+          <!-- Test sarlavhasi -->
+          <div class="test-header p-4 mb-4">
+            <div class="d-flex align-items-center mb-2">
+              <div class="status-icon bg-primary me-3">
+                <i class="fas fa-clipboard-check"></i>
+              </div>
+              <div>
+                <h1 class="h3 mb-0">{{ test.title }}</h1>
+                <p class="text-muted mb-0">{{ test.created_at|date:"d.m.Y" }}</p>
+              </div>
+            </div>
+            <p class="mb-0 mt-3">{{ test.description }}</p>
+          </div>
+          
+          <!-- Test haqida ma'lumot -->
+          <div class="row g-4 mb-4">
+            <div class="col-md-4">
+              <div class="d-flex align-items-center">
+                <div class="me-3 text-primary">
+                  <i class="fas fa-tasks fa-2x"></i>
+                </div>
+                <div>
+                  <p class="text-muted mb-0">Savollar</p>
+                  <h4 class="mb-0">{{ test.question_set.count }}</h4>
+                </div>
+              </div>
+            </div>
+            <div class="col-md-4">
+              <div class="d-flex align-items-center">
+                <div class="me-3 text-warning">
+                  <i class="fas fa-clock fa-2x"></i>
+                </div>
+                <div>
+                  <p class="text-muted mb-0">Vaqt chegarasi</p>
+                  <h4 class="mb-0">{{ test.time_limit }} min</h4>
+                </div>
+              </div>
+            </div>
+            <div class="col-md-4">
+              <div class="d-flex align-items-center">
+                <div class="me-3 text-success">
+                  <i class="fas fa-percent fa-2x"></i>
+                </div>
+                <div>
+                  <p class="text-muted mb-0">O'tish bali</p>
+                  <h4 class="mb-0">{{ test.passing_score }}%</h4>
+                </div>
+              </div>
+            </div>
+          </div>
+          
+          <!-- Talablar va qoidalar -->
+          <div class="mb-4">
+            <h3 class="mb-3">Test qoidalari</h3>
+            <ul class="requirements-list">
+              <li><i class="fas fa-check-circle text-success me-2"></i> Testni boshlashdan oldin qo'shimcha ma'lumotlarni o'rganib chiqing</li>
+              <li><i class="fas fa-check-circle text-success me-2"></i> Barcha savollarga javob berishingiz shart emas, lekin to'liq javob berilgan savollar soni baholanishingizga ta'sir qiladi</li>
+              <li><i class="fas fa-check-circle text-success me-2"></i> Vaqt tugaganida test avtomatik ravishda yakunlanadi</li>
+              <li><i class="fas fa-times-circle text-danger me-2"></i> Test davomida boshqa web-sahifalardan foydalanish yoki testdan chiqish tavsiya etilmaydi</li>
+              <li><i class="fas fa-times-circle text-danger me-2"></i> Natijangiz test yakunida avtomatik ravishda baholanadi</li>
+            </ul>
+          </div>
+          
+          <!-- Oldingi urinishlar -->
+          {% if previous_attempts %}
+            <div class="mb-4">
+              <h3 class="mb-3">Oldingi urinishlar</h3>
+              <div class="table-responsive">
+                <table class="table table-hover">
+                  <thead>
+                    <tr>
+                      <th>#</th>
+                      <th>Sana</th>
+                      <th>Natija</th>
+                      <th>Status</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {% for attempt in previous_attempts %}
+                      <tr>
+                        <td>{{ forloop.counter }}</td>
+                        <td>{{ attempt.completed_at|date:"d.m.Y H:i" }}</td>
+                        <td>
+                          <div class="progress" style="height: 8px; width: 100px;">
+                            <div class="progress-bar {% if attempt.is_passed %}bg-success{% else %}bg-danger{% endif %}" 
+                                 role="progressbar" 
+                                 aria-valuenow="{{ attempt.percentage }}" 
+                                 aria-valuemin="0" 
+                                 aria-valuemax="100" 
+                                 style="width: {{ attempt.percentage }}%"></div>
+                          </div>
+                          <span class="small">{{ attempt.percentage|floatformat:1 }}%</span>
+                        </td>
+                        <td>
+                          {% if attempt.is_passed %}
+                            <span class="badge bg-success">O'tildi</span>
+                          {% else %}
+                            <span class="badge bg-danger">O'tilmadi</span>
+                          {% endif %}
+                        </td>
+                      </tr>
+                    {% endfor %}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          {% endif %}
+          
+          <!-- Boshlash tugmasi -->
+          <div class="d-grid">
+            <a href="{% url 'blog:test_take' test.id %}" class="btn btn-primary btn-lg">
+              <i class="fas fa-play-circle me-2"></i> Testni boshlash
+            </a>
+            <p class="text-muted text-center mt-2">Boshlash tugmasini bosib, siz testni topshirishga rozilik bildirasiz</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+  document.addEventListener('DOMContentLoaded', function() {
+    // Sahifa yuklanganida animatsiyalar
+    AOS.init({
+      duration: 800,
+      easing: 'ease-in-out',
+      once: true
+    });
+  });
+</script>
+{% endblock %} 

@@ -1,6 +1,6 @@
 {% extends 'accounts/profile_base.html' %}
 
-{% block profile_title %}Редактирование профиля{% endblock %}
+{% block profile_title %}Profilni tahrirlash{% endblock %}
 
 {% block profile_content %}
 <div class="card border-0 shadow-sm">
@@ -9,17 +9,17 @@
       {% csrf_token %}
       
       <div class="row">
-        <!-- Персональная информация -->
+        <!-- Shaxsiy ma'lumotlar -->
         <div class="col-md-6 mb-4">
-          <h5 class="mb-3 text-primary">Персональная информация</h5>
+          <h5 class="mb-3 text-primary">Shaxsiy ma'lumotlar</h5>
           
           <div class="mb-3">
-            <label for="{{ form.first_name.id_for_label }}" class="form-label">Имя</label>
+            <label for="{{ form.first_name.id_for_label }}" class="form-label">Ism</label>
             {{ form.first_name }}
           </div>
           
           <div class="mb-3">
-            <label for="{{ form.last_name.id_for_label }}" class="form-label">Фамилия</label>
+            <label for="{{ form.last_name.id_for_label }}" class="form-label">Familiya</label>
             {{ form.last_name }}
           </div>
           
@@ -29,17 +29,17 @@
           </div>
           
           <div class="mb-3">
-            <label for="{{ form.phone_number.id_for_label }}" class="form-label">Телефон</label>
+            <label for="{{ form.phone_number.id_for_label }}" class="form-label">Telefon</label>
             {{ form.phone_number }}
           </div>
         </div>
         
-        <!-- Фото профиля и биография -->
+        <!-- Profil rasmi va biografiya -->
         <div class="col-md-6 mb-4">
-          <h5 class="mb-3 text-primary">Фото и биография</h5>
+          <h5 class="mb-3 text-primary">Rasm va biografiya</h5>
           
           <div class="mb-4">
-            <label for="{{ form.profile_image.id_for_label }}" class="form-label">Фото профиля</label>
+            <label for="{{ form.profile_image.id_for_label }}" class="form-label">Profil rasmi</label>
             <div class="d-flex align-items-start mb-3">
               {% if user.profile_image %}
                 <img src="{{ user.profile_image.url }}" alt="Current Profile Image" class="me-3" style="width: 80px; height: 80px; border-radius: 8px; object-fit: cover;">
@@ -50,15 +50,15 @@
               {% endif %}
               <div>
                 {{ form.profile_image }}
-                <small class="form-text text-muted">Рекомендуемые размеры: 400x400px, JPG или PNG</small>
+                <small class="form-text text-muted">Tavsiya etilgan o'lchamlar: 400x400px, JPG yoki PNG</small>
               </div>
             </div>
           </div>
           
           <div class="mb-3">
-            <label for="{{ form.bio.id_for_label }}" class="form-label">О себе</label>
+            <label for="{{ form.bio.id_for_label }}" class="form-label">O'zim haqimda</label>
             {{ form.bio }}
-            <small class="form-text text-muted">Краткая информация о вас</small>
+            <small class="form-text text-muted">Siz haqingizda qisqacha ma'lumot</small>
           </div>
         </div>
       </div>
@@ -66,9 +66,9 @@
       <div class="border-top pt-4 mt-2">
         <div class="d-flex">
           <button type="submit" class="btn btn-primary px-4">
-            <i class="fas fa-save me-2"></i> Сохранить изменения
+            <i class="fas fa-save me-2"></i> O'zgarishlarni saqlash
           </button>
-          <a href="{% url 'accounts:profile' %}" class="btn btn-outline-secondary ms-2">Отмена</a>
+          <a href="{% url 'accounts:profile' %}" class="btn btn-outline-secondary ms-2">Bekor qilish</a>
         </div>
       </div>
     </form>

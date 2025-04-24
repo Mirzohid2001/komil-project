@@ -1,0 +1,233 @@
+{% extends 'base.html' %}
+{% load static blog_extras %}
+
+{% block title %}Test natijalari{% endblock %}
+
+{% block extra_css %}
+<style>
+  .result-header {
+    border-radius: 16px;
+    overflow: hidden;
+    margin-bottom: 2rem;
+  }
+  
+  .result-passed {
+    background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+    color: white;
+  }
+  
+  .result-failed {
+    background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+    color: white;
+  }
+  
+  .result-circle {
+    width: 140px;
+    height: 140px;
+    position: relative;
+    margin: 0 auto;
+  }
+  
+  .result-circle svg {
+    transform: rotate(-90deg);
+  }
+  
+  .result-circle .bg {
+    fill: none;
+    stroke: rgba(255, 255, 255, 0.2);
+    stroke-width: 10;
+  }
+  
+  .result-circle .progress {
+    fill: none;
+    stroke: white;
+    stroke-width: 10;
+    stroke-linecap: round;
+    stroke-dasharray: 400;
+    transition: stroke-dashoffset 1s ease;
+  }
+  
+  .result-circle .percentage {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    font-size: 2rem;
+    font-weight: bold;
+  }
+  
+  .answer-card {
+    border-radius: 12px;
+    margin-bottom: 1.5rem;
+    transition: all 0.2s ease;
+  }
+  
+  .answer-card:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1);
+  }
+  
+  .answer-correct {
+    border-left: 5px solid #10b981;
+  }
+  
+  .answer-incorrect {
+    border-left: 5px solid #ef4444;
+  }
+  
+  .explanation {
+    background-color: #f8fafc;
+    border-radius: 8px;
+    padding: 1rem;
+    margin-top: 1rem;
+  }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container">
+  <!-- Test natijalari -->
+  <div class="row mb-4">
+    <div class="col-12">
+      <div class="d-flex justify-content-between align-items-center mb-4">
+        <h1 class="mb-0"><i class="fas fa-poll text-primary me-2"></i> Test natijalari</h1>
+        <div>
+          <a href="{% url 'blog:test_list' %}" class="btn btn-outline-primary">
+            <i class="fas fa-arrow-left me-2"></i> Testlar ro'yxatiga qaytish
+          </a>
+        </div>
+      </div>
+      
+      <!-- Natija kartasi -->
+      <div class="result-header {% if is_passed %}result-passed{% else %}result-failed{% endif %} p-4">
+        <div class="row align-items-center">
+          <div class="col-md-8">
+            <h2 class="mb-3">{{ result.test.title }}</h2>
+            <div class="d-flex flex-wrap gap-4 mb-3">
+              <div>
+                <div class="text-white-50 mb-1">Holat</div>
+                <div class="fw-bold">
+                  {% if is_passed %}
+                    <i class="fas fa-check-circle me-2"></i> Test muvaffaqiyatli o'tildi
+                  {% else %}
+                    <i class="fas fa-times-circle me-2"></i> Test muvaffaqiyatli o'tilmadi
+                  {% endif %}
+                </div>
+              </div>
+              <div>
+                <div class="text-white-50 mb-1">Sana</div>
+                <div class="fw-bold">{{ result.completed_at|date:"d.m.Y H:i" }}</div>
+              </div>
+              <div>
+                <div class="text-white-50 mb-1">Davomiyligi</div>
+                <div class="fw-bold">{{ duration|floatformat:1 }} min</div>
+              </div>
+              <div>
+                <div class="text-white-50 mb-1">To'g'ri javoblar</div>
+                <div class="fw-bold">{{ correct_answers }} / {{ total_questions }}</div>
+              </div>
+            </div>
+          </div>
+          <div class="col-md-4">
+            <div class="result-circle">
+              <svg width="140" height="140" viewBox="0 0 140 140">
+                <circle class="bg" cx="70" cy="70" r="65"></circle>
+                <circle class="progress" cx="70" cy="70" r="65"></circle>
+              </svg>
+              <div class="percentage">{{ percentage|floatformat:0 }}%</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+  
+  <!-- Savollarga javoblar -->
+  <div class="row mb-5">
+    <div class="col-12">
+      <h3 class="mb-4">Sizning javoblaringiz</h3>
+      
+      {% for answer in answers %}
+        <div class="card shadow-sm answer-card {% if answer.is_correct %}answer-correct{% else %}answer-incorrect{% endif %} mb-4">
+          <div class="card-body p-4">
+            <h5 class="card-title mb-3">{{ forloop.counter }}. {{ answer.question.text }}</h5>
+            
+            <p class="mb-2">
+              Sizning javobingiz: 
+              <strong class="{% if answer.is_correct %}text-success{% else %}text-danger{% endif %}">
+                {{ answer.selected_option.text }}
+                {% if answer.is_correct %}
+                  <i class="fas fa-check-circle ms-2"></i>
+                {% else %}
+                  <i class="fas fa-times-circle ms-2"></i>
+                {% endif %}
+              </strong>
+            </p>
+            
+            {% if not answer.is_correct %}
+              <p class="mb-2">
+                To'g'ri javob: 
+                <strong class="text-success">
+                  {{ answer.question.get_correct_option.text }}
+                  <i class="fas fa-check-circle ms-2"></i>
+                </strong>
+              </p>
+            {% endif %}
+            
+            {% if answer.question.explanation %}
+              <div class="explanation">
+                <h6><i class="fas fa-info-circle me-2"></i> Izoh:</h6>
+                <p class="mb-0">{{ answer.question.explanation }}</p>
+              </div>
+            {% endif %}
+          </div>
+        </div>
+      {% endfor %}
+    </div>
+  </div>
+  
+  <!-- Tavsiyalar -->
+  <div class="row mb-4">
+    <div class="col-12">
+      <div class="card border-0 shadow-sm">
+        <div class="card-body p-4">
+          <h3 class="card-title mb-4">Tavsiyalar</h3>
+          
+          {% if is_passed %}
+            <div class="alert alert-success">
+              <i class="fas fa-trophy me-2"></i> Tabriklaymiz! Siz testni muvaffaqiyatli o'tdingiz.
+            </div>
+            <p>Sizning natijangiz: {{ percentage|floatformat:1 }}%. Siz materiallarni yaxshi o'zlashtirgansiz va oldinga siljishga tayyorsiz.</p>
+          {% else %}
+            <div class="alert alert-warning">
+              <i class="fas fa-exclamation-triangle me-2"></i> Siz testni o'ta olmadingiz.
+            </div>
+            <p>Sizning natijangiz: {{ percentage|floatformat:1 }}%. Muvaffaqiyatli o'tish uchun kamida {{ result.test.passing_score }}% to'plash kerak.</p>
+            <p>Materialni qayta ko'rib chiqishni va testni yana bir bor topshirishni tavsiya qilamiz.</p>
+          {% endif %}
+          
+          <div class="mt-4">
+            <a href="{% url 'blog:test_start' result.test.id %}" class="btn btn-primary">
+              <i class="fas fa-redo me-2"></i> Testni qayta topshirish
+            </a>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+  document.addEventListener('DOMContentLoaded', function() {
+    // Doira diagrammani animatsiyalash
+    setTimeout(function() {
+      const circle = document.querySelector('.result-circle .progress');
+      const percentage = parseFloat("{{ percentage }}");
+      const dashoffset = 400 - ((percentage / 100) * 400);
+      circle.style.strokeDashoffset = dashoffset;
+    }, 300);
+  });
+</script>
+{% endblock %} 

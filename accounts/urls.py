@@ -2,7 +2,9 @@ from django.urls import path
 from .views import (
     signup, MyLoginView, logout_view,
     profile_view, profile_edit, change_password,
-    activity_history, toggle_favorite, favorites_list
+    activity_history, toggle_favorite, favorites_list,
+    learning_progress, user_achievements, user_certificates,
+    download_certificate, user_statistics
 )
 
 app_name = 'accounts'
@@ -21,4 +23,11 @@ urlpatterns = [
     
     # Избранное
     path('post/<int:post_id>/favorite/', toggle_favorite, name='toggle_favorite'),
+    
+    # Новые маршруты для прогресса обучения и геймификации
+    path('profile/progress/', learning_progress, name='learning_progress'),
+    path('profile/achievements/', user_achievements, name='user_achievements'),
+    path('profile/certificates/', user_certificates, name='user_certificates'),
+    path('profile/certificates/<int:certificate_id>/download/', download_certificate, name='download_certificate'),
+    path('profile/statistics/', user_statistics, name='user_statistics'),
 ]

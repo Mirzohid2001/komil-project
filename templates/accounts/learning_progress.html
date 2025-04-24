@@ -1,0 +1,272 @@
+{% extends 'base.html' %}
+
+{% block title %}Прогресс обучения{% endblock %}
+
+{% block content %}
+<div class="container mx-auto py-6 px-4">
+    <div class="mb-8">
+        <h1 class="text-3xl font-bold mb-2">Мой прогресс обучения</h1>
+        <p class="text-gray-600">Отслеживайте свой учебный прогресс и результаты</p>
+    </div>
+
+    <!-- Общая статистика обучения -->
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
+        <div class="bg-white rounded-lg shadow-md p-6">
+            <div class="flex items-center">
+                <div class="rounded-full bg-blue-100 p-3 mr-4">
+                    <svg class="w-6 h-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"></path>
+                    </svg>
+                </div>
+                <div>
+                    <div class="text-sm font-medium text-gray-500">Курсов начато</div>
+                    <div class="text-xl font-bold">{{ stats.courses_started }}</div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="bg-white rounded-lg shadow-md p-6">
+            <div class="flex items-center">
+                <div class="rounded-full bg-green-100 p-3 mr-4">
+                    <svg class="w-6 h-6 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                    </svg>
+                </div>
+                <div>
+                    <div class="text-sm font-medium text-gray-500">Курсов завершено</div>
+                    <div class="text-xl font-bold">{{ stats.courses_completed }}</div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="bg-white rounded-lg shadow-md p-6">
+            <div class="flex items-center">
+                <div class="rounded-full bg-purple-100 p-3 mr-4">
+                    <svg class="w-6 h-6 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path>
+                    </svg>
+                </div>
+                <div>
+                    <div class="text-sm font-medium text-gray-500">Получено XP</div>
+                    <div class="text-xl font-bold">{{ stats.total_xp }}</div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="bg-white rounded-lg shadow-md p-6">
+            <div class="flex items-center">
+                <div class="rounded-full bg-amber-100 p-3 mr-4">
+                    <svg class="w-6 h-6 text-amber-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                    </svg>
+                </div>
+                <div>
+                    <div class="text-sm font-medium text-gray-500">Часов обучения</div>
+                    <div class="text-xl font-bold">{{ stats.hours_spent }}</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Текущие курсы -->
+    <div class="mb-8">
+        <h2 class="text-2xl font-bold mb-4">Текущие курсы</h2>
+        
+        {% if current_courses %}
+        <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
+            {% for course in current_courses %}
+            <div class="bg-white rounded-lg shadow-md overflow-hidden">
+                <div class="p-6">
+                    <div class="flex justify-between items-start mb-4">
+                        <h3 class="text-lg font-semibold">{{ course.name }}</h3>
+                        <span class="bg-blue-100 text-blue-800 text-xs font-medium px-2.5 py-0.5 rounded">В процессе</span>
+                    </div>
+                    <p class="text-gray-600 text-sm mb-4 line-clamp-2">{{ course.description }}</p>
+                    
+                    <div class="mb-2">
+                        <div class="flex justify-between text-sm mb-1">
+                            <span>Прогресс</span>
+                            <span class="font-medium">{{ course.progress }}%</span>
+                        </div>
+                        <div class="w-full bg-gray-200 rounded-full h-2.5">
+                            <div class="bg-blue-600 h-2.5 rounded-full" style="width: {{ course.progress }}%"></div>
+                        </div>
+                    </div>
+                    
+                    <div class="text-sm text-gray-500 mb-4">
+                        <div class="flex justify-between mb-1">
+                            <span>Выполнено модулей:</span>
+                            <span>{{ course.completed_modules }} / {{ course.total_modules }}</span>
+                        </div>
+                        <div class="flex justify-between">
+                            <span>Последняя активность:</span>
+                            <span>{{ course.last_activity|date:"d.m.Y" }}</span>
+                        </div>
+                    </div>
+                    
+                    <a href="{{ course.url }}" class="inline-block w-full py-2 px-4 bg-indigo-600 hover:bg-indigo-700 text-white text-center font-medium rounded-md transition duration-200">
+                        Продолжить обучение
+                    </a>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+        {% else %}
+        <div class="bg-white rounded-lg shadow-md p-8 text-center">
+            <svg class="mx-auto h-12 w-12 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path>
+            </svg>
+            <h3 class="mt-2 text-lg font-medium text-gray-900">Нет активных курсов</h3>
+            <p class="mt-1 text-sm text-gray-500">Начните изучать новые курсы, чтобы увидеть их здесь.</p>
+            <div class="mt-6">
+                <a href="/courses/" class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
+                    Перейти к каталогу курсов
+                </a>
+            </div>
+        </div>
+        {% endif %}
+    </div>
+
+    <!-- Завершенные курсы -->
+    <div class="mb-8">
+        <h2 class="text-2xl font-bold mb-4">Завершенные курсы</h2>
+        
+        {% if completed_courses %}
+        <div class="bg-white rounded-lg shadow-md overflow-hidden">
+            <table class="min-w-full divide-y divide-gray-200">
+                <thead class="bg-gray-50">
+                    <tr>
+                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                            Название курса
+                        </th>
+                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider hidden md:table-cell">
+                            Дата завершения
+                        </th>
+                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider hidden lg:table-cell">
+                            Длительность
+                        </th>
+                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                            Оценка
+                        </th>
+                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                            Сертификат
+                        </th>
+                    </tr>
+                </thead>
+                <tbody class="bg-white divide-y divide-gray-200">
+                    {% for course in completed_courses %}
+                    <tr>
+                        <td class="px-6 py-4 whitespace-nowrap">
+                            <div class="text-sm font-medium text-gray-900">{{ course.name }}</div>
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap hidden md:table-cell">
+                            <div class="text-sm text-gray-500">{{ course.completion_date|date:"d.m.Y" }}</div>
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap hidden lg:table-cell">
+                            <div class="text-sm text-gray-500">{{ course.duration }}</div>
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap">
+                            <div class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                                {{ course.score }}%
+                            </div>
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap">
+                            {% if course.has_certificate %}
+                            <a href="{{ course.certificate_url }}" class="text-indigo-600 hover:text-indigo-900 text-sm font-medium">Просмотреть</a>
+                            {% else %}
+                            <span class="text-gray-400 text-sm">Недоступно</span>
+                            {% endif %}
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% else %}
+        <div class="bg-white rounded-lg shadow-md p-8 text-center">
+            <svg class="mx-auto h-12 w-12 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-5.714 2.143L13 21l-2.286-6.857L5 12l5.714-2.143L13 3z"></path>
+            </svg>
+            <h3 class="mt-2 text-lg font-medium text-gray-900">Нет завершенных курсов</h3>
+            <p class="mt-1 text-sm text-gray-500">Завершите хотя бы один курс, чтобы увидеть его здесь.</p>
+        </div>
+        {% endif %}
+    </div>
+
+    <!-- График учебной активности -->
+    <div class="mb-8">
+        <h2 class="text-2xl font-bold mb-4">Учебная активность</h2>
+        <div class="bg-white rounded-lg shadow-md p-6">
+            <div id="activity-chart" class="h-80">
+                {% if not has_activity_data %}
+                <div class="flex flex-col items-center justify-center h-full">
+                    <svg class="w-12 h-12 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path>
+                    </svg>
+                    <p class="mt-2 text-sm text-gray-500">Недостаточно данных для отображения графика</p>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+{% if has_activity_data %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const ctx = document.getElementById('activity-chart').getContext('2d');
+        
+        const chart = new Chart(ctx, {
+            type: 'line',
+            data: {
+                labels: {{ activity_dates|safe }},
+                datasets: [{
+                    label: 'Время обучения (минуты)',
+                    data: {{ activity_minutes|safe }},
+                    backgroundColor: 'rgba(79, 70, 229, 0.1)',
+                    borderColor: 'rgba(79, 70, 229, 1)',
+                    borderWidth: 2,
+                    fill: true,
+                    tension: 0.4,
+                    pointBackgroundColor: 'rgba(79, 70, 229, 1)',
+                    pointRadius: 3,
+                    pointHoverRadius: 5
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        display: true,
+                        position: 'top'
+                    },
+                    tooltip: {
+                        mode: 'index',
+                        intersect: false
+                    }
+                },
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        title: {
+                            display: true,
+                            text: 'Минуты'
+                        }
+                    },
+                    x: {
+                        title: {
+                            display: true,
+                            text: 'Дата'
+                        }
+                    }
+                }
+            }
+        });
+    });
+</script>
+{% endif %}
+{% endblock %} 

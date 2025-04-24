@@ -1,0 +1,213 @@
+{% extends 'base.html' %}
+
+{% block title %}Моя статистика{% endblock %}
+
+{% block content %}
+<div class="container mx-auto py-6 px-4">
+    <div class="mb-8">
+        <h1 class="text-3xl font-bold mb-2">Моя статистика</h1>
+        <p class="text-gray-600">Детальная информация о вашей активности на платформе</p>
+    </div>
+
+    <!-- Общие показатели -->
+    <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
+        <div class="bg-white rounded-lg shadow-md p-6 text-center">
+            <div class="text-3xl font-bold text-indigo-600 mb-1">{{ xp_stats.level }}</div>
+            <div class="text-sm text-gray-600">Текущий уровень</div>
+        </div>
+        <div class="bg-white rounded-lg shadow-md p-6 text-center">
+            <div class="text-3xl font-bold text-green-600 mb-1">{{ xp_stats.total }}</div>
+            <div class="text-sm text-gray-600">Очки опыта</div>
+        </div>
+        <div class="bg-white rounded-lg shadow-md p-6 text-center">
+            <div class="text-3xl font-bold text-purple-600 mb-1">{{ view_count }}</div>
+            <div class="text-sm text-gray-600">Всего просмотров</div>
+        </div>
+        <div class="bg-white rounded-lg shadow-md p-6 text-center">
+            <div class="text-3xl font-bold text-amber-600 mb-1">{{ certificates_count }}</div>
+            <div class="text-sm text-gray-600">Сертификатов</div>
+        </div>
+    </div>
+
+    <!-- Прогресс до следующего уровня -->
+    <div class="bg-white rounded-lg shadow-md p-6 mb-8">
+        <h2 class="text-xl font-semibold mb-4">Прогресс до следующего уровня</h2>
+        <div class="mb-2 flex justify-between">
+            <span class="text-sm text-gray-600">Уровень {{ xp_stats.level }}</span>
+            <span class="text-sm text-gray-600">Уровень {{ xp_stats.level|add:"1" }}</span>
+        </div>
+        <div class="w-full bg-gray-200 rounded-full h-2.5">
+            <div class="bg-blue-600 h-2.5 rounded-full" style="width: {{ xp_stats.progress_to_next }}%"></div>
+        </div>
+        <div class="mt-2 text-sm text-gray-600 text-right">
+            {{ xp_stats.total }} / {{ xp_stats.next_level_threshold }} XP ({{ xp_stats.progress_to_next|floatformat:1 }}%)
+        </div>
+    </div>
+
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
+        <!-- График активности -->
+        <div class="bg-white rounded-lg shadow-md p-6">
+            <h2 class="text-xl font-semibold mb-4">Активность за последние 30 дней</h2>
+            <canvas id="activityChart" height="250"></canvas>
+        </div>
+
+        <!-- Статистика тестирования -->
+        <div class="bg-white rounded-lg shadow-md p-6">
+            <h2 class="text-xl font-semibold mb-4">Тестирование</h2>
+            <div class="grid grid-cols-2 gap-4">
+                <div class="p-4 bg-gray-50 rounded-lg">
+                    <div class="text-2xl font-bold text-indigo-600">{{ tests_taken }}</div>
+                    <div class="text-sm text-gray-600">Пройдено тестов</div>
+                </div>
+                <div class="p-4 bg-gray-50 rounded-lg">
+                    <div class="text-2xl font-bold text-green-600">{{ tests_passed }}</div>
+                    <div class="text-sm text-gray-600">Успешно сдано</div>
+                </div>
+                <div class="p-4 bg-gray-50 rounded-lg">
+                    <div class="text-2xl font-bold text-amber-600">{{ pass_rate|floatformat:1 }}%</div>
+                    <div class="text-sm text-gray-600">Процент успеха</div>
+                </div>
+                <div class="p-4 bg-gray-50 rounded-lg">
+                    <div class="text-2xl font-bold text-blue-600">{{ avg_test_score|floatformat:1 }}%</div>
+                    <div class="text-sm text-gray-600">Средний балл</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
+        <!-- Последние достижения -->
+        <div class="bg-white rounded-lg shadow-md p-6">
+            <h2 class="text-xl font-semibold mb-4">Последние достижения</h2>
+            {% if recent_achievements %}
+                <ul class="divide-y divide-gray-200">
+                    {% for achievement in recent_achievements %}
+                        <li class="py-3 flex items-start">
+                            <div class="bg-indigo-100 p-2 rounded-md mr-3">
+                                <svg class="w-5 h-5 text-indigo-600" fill="currentColor" viewBox="0 0 20 20">
+                                    <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"></path>
+                                </svg>
+                            </div>
+                            <div class="flex-1">
+                                <h3 class="text-base font-medium">{{ achievement.achievement.name }}</h3>
+                                <p class="text-sm text-gray-600">{{ achievement.achievement.description }}</p>
+                                <p class="text-xs text-gray-500 mt-1">{{ achievement.earned_at|date:"d.m.Y H:i" }}</p>
+                            </div>
+                            <div class="text-indigo-600 font-semibold">
+                                +{{ achievement.achievement.experience_reward }} XP
+                            </div>
+                        </li>
+                    {% endfor %}
+                </ul>
+            {% else %}
+                <p class="text-gray-500 text-center py-4">У вас пока нет достижений</p>
+            {% endif %}
+            <div class="mt-4 text-center">
+                <a href="{% url 'accounts:user_achievements' %}" class="text-indigo-600 hover:text-indigo-800 text-sm font-medium">
+                    Смотреть все достижения
+                </a>
+            </div>
+        </div>
+
+        <!-- История повышения уровня -->
+        <div class="bg-white rounded-lg shadow-md p-6">
+            <h2 class="text-xl font-semibold mb-4">История повышения уровня</h2>
+            {% if level_ups %}
+                <ul class="divide-y divide-gray-200">
+                    {% for level_up in level_ups %}
+                        <li class="py-3 flex items-center">
+                            <div class="bg-green-100 p-2 rounded-md mr-3">
+                                <svg class="w-5 h-5 text-green-600" fill="currentColor" viewBox="0 0 20 20">
+                                    <path fill-rule="evenodd" d="M5.293 9.707a1 1 0 010-1.414l4-4a1 1 0 011.414 0l4 4a1 1 0 01-1.414 1.414L11 7.414V15a1 1 0 11-2 0V7.414L6.707 9.707a1 1 0 01-1.414 0z" clip-rule="evenodd"></path>
+                                </svg>
+                            </div>
+                            <div class="flex-1">
+                                <h3 class="text-base font-medium">Уровень {{ level_up.new_level }}</h3>
+                                <p class="text-xs text-gray-500">{{ level_up.timestamp|date:"d.m.Y H:i" }}</p>
+                            </div>
+                        </li>
+                    {% endfor %}
+                </ul>
+            {% else %}
+                <p class="text-gray-500 text-center py-4">История повышения уровня пуста</p>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- Сводка обучения -->
+    <div class="bg-white rounded-lg shadow-md p-6 mb-8">
+        <h2 class="text-xl font-semibold mb-4">Сводка обучения</h2>
+        <div class="grid grid-cols-1 sm:grid-cols-3 gap-6">
+            <div class="bg-gray-50 rounded-lg p-4 text-center">
+                <div class="text-2xl font-bold text-indigo-600 mb-1">{{ categories_completed }}</div>
+                <div class="text-sm text-gray-600">Завершено категорий</div>
+            </div>
+            <div class="bg-gray-50 rounded-lg p-4 text-center">
+                <div class="text-2xl font-bold text-green-600 mb-1">{{ certificates_count }}</div>
+                <div class="text-sm text-gray-600">Получено сертификатов</div>
+            </div>
+            <div class="bg-gray-50 rounded-lg p-4 text-center">
+                <div class="text-2xl font-bold text-amber-600 mb-1">{{ achievements_count }}</div>
+                <div class="text-sm text-gray-600">Заработано достижений</div>
+            </div>
+        </div>
+        <div class="mt-6 flex justify-center space-x-4">
+            <a href="{% url 'accounts:learning_progress' %}" class="px-4 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700 text-sm font-medium">
+                Мой прогресс обучения
+            </a>
+            <a href="{% url 'accounts:user_certificates' %}" class="px-4 py-2 bg-white border border-gray-300 text-gray-700 rounded-md hover:bg-gray-50 text-sm font-medium">
+                Мои сертификаты
+            </a>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Данные для графика активности
+        const activityData = {{ activity_data_json|safe }};
+        
+        if (activityData.labels.length > 0) {
+            const ctx = document.getElementById('activityChart').getContext('2d');
+            new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: activityData.labels,
+                    datasets: [{
+                        label: 'Активность',
+                        data: activityData.data,
+                        borderColor: '#4f46e5',
+                        backgroundColor: 'rgba(79, 70, 229, 0.1)',
+                        borderWidth: 2,
+                        tension: 0.3,
+                        fill: true
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            ticks: {
+                                precision: 0
+                            }
+                        }
+                    },
+                    plugins: {
+                        legend: {
+                            display: false
+                        }
+                    }
+                }
+            });
+        } else {
+            document.getElementById('activityChart').parentNode.innerHTML = 
+                '<div class="text-center text-gray-500 py-10">Недостаточно данных для построения графика</div>';
+        }
+    });
+</script>
+{% endblock %} 

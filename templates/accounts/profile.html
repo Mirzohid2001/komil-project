@@ -1,23 +1,23 @@
 {% extends 'accounts/profile_base.html' %}
 
-{% block profile_title %}Мой профиль{% endblock %}
+{% block profile_title %}Mening profilim{% endblock %}
 
 {% block profile_content %}
 <div class="row">
-  <!-- Личная информация -->
+  <!-- Shaxsiy ma'lumotlar -->
   <div class="col-md-6 mb-4">
     <div class="card h-100 border-0 shadow-sm">
       <div class="card-header bg-white py-3">
-        <h5 class="mb-0"><i class="fas fa-info-circle me-2 text-primary"></i> Личная информация</h5>
+        <h5 class="mb-0"><i class="fas fa-info-circle me-2 text-primary"></i> Shaxsiy ma'lumotlar</h5>
       </div>
       <div class="card-body">
         <div class="d-flex mb-3">
-          <div class="text-muted" style="width: 40%;">Имя пользователя:</div>
+          <div class="text-muted" style="width: 40%;">Foydalanuvchi nomi:</div>
           <div class="fw-medium">{{ user.username }}</div>
         </div>
         {% if user.first_name %}
         <div class="d-flex mb-3">
-          <div class="text-muted" style="width: 40%;">Полное имя:</div>
+          <div class="text-muted" style="width: 40%;">To'liq ism:</div>
           <div class="fw-medium">{{ user.get_full_name }}</div>
         </div>
         {% endif %}
@@ -28,40 +28,40 @@
         </div>
         {% endif %}
         <div class="d-flex mb-3">
-          <div class="text-muted" style="width: 40%;">Роль:</div>
+          <div class="text-muted" style="width: 40%;">Roli:</div>
           <div class="fw-medium">{{ user.get_role_display }}</div>
         </div>
         {% if user.phone_number %}
         <div class="d-flex mb-3">
-          <div class="text-muted" style="width: 40%;">Телефон:</div>
+          <div class="text-muted" style="width: 40%;">Telefon:</div>
           <div class="fw-medium">{{ user.phone_number }}</div>
         </div>
         {% endif %}
         <div class="d-flex mb-3">
-          <div class="text-muted" style="width: 40%;">Дата регистрации:</div>
+          <div class="text-muted" style="width: 40%;">Ro'yxatdan o'tgan sana:</div>
           <div class="fw-medium">{{ user.date_joined|date:"d.m.Y" }}</div>
         </div>
         {% if user.bio %}
         <div class="mt-4">
-          <div class="text-muted mb-2">О себе:</div>
+          <div class="text-muted mb-2">O'zim haqimda:</div>
           <p>{{ user.bio }}</p>
         </div>
         {% endif %}
         <div class="mt-4">
           <a href="{% url 'accounts:profile_edit' %}" class="btn btn-sm btn-primary px-4">
-            <i class="fas fa-edit me-2"></i> Редактировать профиль
+            <i class="fas fa-edit me-2"></i> Profilni tahrirlash
           </a>
         </div>
       </div>
     </div>
   </div>
   
-  <!-- Активность -->
+  <!-- Faollik -->
   <div class="col-md-6 mb-4">
     <div class="card h-100 border-0 shadow-sm">
       <div class="card-header bg-white py-3 d-flex justify-content-between align-items-center">
-        <h5 class="mb-0"><i class="fas fa-history me-2 text-primary"></i> Последняя активность</h5>
-        <a href="{% url 'accounts:activity_history' %}" class="btn btn-sm btn-outline-primary">Вся история</a>
+        <h5 class="mb-0"><i class="fas fa-history me-2 text-primary"></i> So'nggi faollik</h5>
+        <a href="{% url 'accounts:activity_history' %}" class="btn btn-sm btn-outline-primary">Barcha tarix</a>
       </div>
       <div class="card-body p-0">
         {% if activities %}
@@ -104,20 +104,117 @@
         {% else %}
           <div class="empty-state">
             <i class="fas fa-history opacity-25"></i>
-            <h4 class="fw-bold mb-3">Нет активности</h4>
-            <p class="text-muted mb-0">Ваша активность будет отображаться здесь</p>
+            <h4 class="fw-bold mb-3">Faollik yo'q</h4>
+            <p class="text-muted mb-0">Sizning faoliyatingiz bu yerda ko'rsatiladi</p>
           </div>
         {% endif %}
       </div>
     </div>
   </div>
   
-  <!-- Избранное -->
+  <!-- Test statistikasi -->
+  <div class="col-12 mb-4">
+    <div class="card border-0 shadow-sm">
+      <div class="card-header bg-white py-3 d-flex justify-content-between align-items-center">
+        <h5 class="mb-0"><i class="fas fa-tasks me-2 text-primary"></i> Test statistikasi</h5>
+        <div>
+          <a href="{% url 'blog:test_list' %}" class="btn btn-sm btn-outline-primary me-2">
+            <i class="fas fa-list me-1"></i> Testlar ro'yxati
+          </a>
+          <a href="{% url 'blog:test_history' %}" class="btn btn-sm btn-primary">
+            <i class="fas fa-history me-1"></i> Testlar tarixi
+          </a>
+        </div>
+      </div>
+      <div class="card-body">
+        {% if user.test_results.exists %}
+          <div class="row">
+            <!-- Asosiy statistika -->
+            <div class="col-lg-6 mb-4">
+              <h6 class="fw-bold mb-3">Umumiy statistika</h6>
+              <div class="row g-3">
+                <div class="col-6 col-md-3">
+                  <div class="p-3 rounded-3" style="background-color: #f8f9fa;">
+                    <div class="small text-muted mb-1">Jami testlar</div>
+                    <div class="fs-4 fw-bold">{{ user.test_results.count }}</div>
+                  </div>
+                </div>
+                <div class="col-6 col-md-3">
+                  <div class="p-3 rounded-3" style="background-color: #f8f9fa;">
+                    <div class="small text-muted mb-1">O'tilgan</div>
+                    <div class="fs-4 fw-bold text-success">{{ user.test_results.filter.is_passed.count }}</div>
+                  </div>
+                </div>
+                <div class="col-6 col-md-3">
+                  <div class="p-3 rounded-3" style="background-color: #f8f9fa;">
+                    <div class="small text-muted mb-1">O'tilmagan</div>
+                    <div class="fs-4 fw-bold text-danger">{{ user.test_results.filter.is_passed.False.count }}</div>
+                  </div>
+                </div>
+                <div class="col-6 col-md-3">
+                  <div class="p-3 rounded-3" style="background-color: #f8f9fa;">
+                    <div class="small text-muted mb-1">O'rtacha ball</div>
+                    <div class="fs-4 fw-bold">{{ user.test_results.aggregate.Avg.percentage|floatformat:1 }}%</div>
+                  </div>
+                </div>
+              </div>
+            </div>
+            
+            <!-- So'nggi natijalar -->
+            <div class="col-lg-6">
+              <h6 class="fw-bold mb-3">So'nggi natijalar</h6>
+              <div class="table-responsive">
+                <table class="table table-sm">
+                  <thead>
+                    <tr>
+                      <th>Test</th>
+                      <th>Sana</th>
+                      <th>Natija</th>
+                      <th></th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {% for result in user.test_results.all|slice:":5" %}
+                      <tr>
+                        <td>{{ result.test.title }}</td>
+                        <td>{{ result.completed_at|date:"d.m.Y" }}</td>
+                        <td>
+                          <span class="badge {% if result.is_passed %}bg-success{% else %}bg-danger{% endif %}">
+                            {{ result.percentage|floatformat:1 }}%
+                          </span>
+                        </td>
+                        <td>
+                          <a href="{% url 'blog:test_result' result.id %}" class="btn btn-sm btn-outline-primary">
+                            <i class="fas fa-eye"></i>
+                          </a>
+                        </td>
+                      </tr>
+                    {% endfor %}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+        {% else %}
+          <div class="text-center py-5">
+            <i class="fas fa-tasks fa-3x text-muted opacity-25 mb-3"></i>
+            <h4>Siz hali testlarni topshirmadingiz</h4>
+            <p class="text-muted">Statistika va progressni ko'rish uchun testlarni topshiring</p>
+            <a href="{% url 'blog:test_list' %}" class="btn btn-primary mt-3">
+              <i class="fas fa-play me-2"></i> Testlarga o'tish
+            </a>
+          </div>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+  
+  <!-- Saqlanganlar -->
   <div class="col-12">
     <div class="card border-0 shadow-sm">
       <div class="card-header bg-white py-3 d-flex justify-content-between align-items-center">
-        <h5 class="mb-0"><i class="fas fa-bookmark me-2 text-primary"></i> Избранные материалы</h5>
-        <a href="{% url 'accounts:favorites' %}" class="btn btn-sm btn-outline-primary">Все избранное</a>
+        <h5 class="mb-0"><i class="fas fa-bookmark me-2 text-primary"></i> Saqlangan materiallar</h5>
+        <a href="{% url 'accounts:favorites' %}" class="btn btn-sm btn-outline-primary">Barcha saqlanganlar</a>
       </div>
       <div class="card-body">
         {% if favorites %}
@@ -141,7 +238,7 @@
                       <span><i class="far fa-folder"></i> {{ favorite.post.category.name }}</span>
                     </div>
                     <div class="mt-3">
-                      <a href="{% url 'blog:post_detail' favorite.post.id %}" class="btn btn-sm btn-primary px-3">Открыть</a>
+                      <a href="{% url 'blog:post_detail' favorite.post.id %}" class="btn btn-sm btn-primary px-3">Ochish</a>
                       <a href="{% url 'accounts:toggle_favorite' favorite.post.id %}" class="btn btn-sm btn-outline-danger ms-2">
                         <i class="fas fa-heart-broken"></i>
                       </a>

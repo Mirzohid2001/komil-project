@@ -1,0 +1,254 @@
+{% extends 'base.html' %}
+{% load static blog_extras %}
+
+{% block title %}Testlar{% endblock %}
+
+{% block extra_css %}
+<style>
+  .test-card {
+    position: relative;
+    border-radius: 16px;
+    overflow: hidden;
+    transition: all 0.3s ease-in-out;
+  }
+  
+  .test-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 15px 30px rgba(0, 0, 0, 0.1);
+  }
+  
+  .test-status {
+    position: absolute;
+    top: 20px;
+    right: 20px;
+    width: 24px;
+    height: 24px;
+    border-radius: 50%;
+  }
+  
+  .status-passed {
+    background-color: #10b981;
+    box-shadow: 0 0 0 4px rgba(16, 185, 129, 0.2);
+  }
+  
+  .status-failed {
+    background-color: #ef4444;
+    box-shadow: 0 0 0 4px rgba(239, 68, 68, 0.2);
+  }
+  
+  .status-not-taken {
+    background-color: #6b7280;
+    box-shadow: 0 0 0 4px rgba(107, 114, 128, 0.2);
+  }
+  
+  .achievement-card {
+    border-radius: 16px;
+    overflow: hidden;
+  }
+  
+  .progress-label {
+    font-size: 0.875rem;
+    color: #4b5563;
+  }
+  
+  .progress-bar {
+    height: 8px;
+    border-radius: 4px;
+    overflow: hidden;
+  }
+  
+  .circular-progress {
+    width: 120px;
+    height: 120px;
+    position: relative;
+  }
+  
+  .circular-progress svg {
+    transform: rotate(-90deg);
+  }
+  
+  .circular-progress .circle-bg {
+    fill: none;
+    stroke: #f0f0f0;
+    stroke-width: 8;
+  }
+  
+  .circular-progress .circle {
+    fill: none;
+    stroke: #4f46e5;
+    stroke-width: 8;
+    stroke-linecap: round;
+    transition: stroke-dashoffset 0.5s ease;
+  }
+  
+  .circular-progress .percentage {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    font-size: 1.5rem;
+    font-weight: bold;
+    color: #1e293b;
+  }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container">
+  <!-- Sarlavha va statistika -->
+  <div class="row mb-4">
+    <div class="col-12">
+      <div class="d-flex justify-content-between align-items-center mb-4">
+        <h1 class="mb-0"><i class="fas fa-tasks text-primary me-2"></i> Testlar</h1>
+        <div>
+          <a href="{% url 'blog:test_history' %}" class="btn btn-outline-primary">
+            <i class="fas fa-history me-2"></i> Testlar tarixi
+          </a>
+          {% if request.user.role == 'admin' %}
+          <a href="{% url 'blog:test_analytics' %}" class="btn btn-primary ms-2">
+            <i class="fas fa-chart-bar me-2"></i> Tahlil
+          </a>
+          {% endif %}
+        </div>
+      </div>
+      
+      <!-- Qisqacha statistika -->
+      <div class="row g-3 mb-4">
+        <div class="col-md-3">
+          <div class="card h-100 border-0 shadow-sm">
+            <div class="card-body">
+              <h5 class="card-title text-muted">Jami topshirilgan testlar</h5>
+              <h2 class="display-5 fw-bold">{{ total_tests_taken }}</h2>
+            </div>
+          </div>
+        </div>
+        <div class="col-md-3">
+          <div class="card h-100 border-0 shadow-sm">
+            <div class="card-body">
+              <h5 class="card-title text-muted">Muvaffaqiyatli topshirilgan</h5>
+              <h2 class="display-5 fw-bold">{{ tests_passed }}</h2>
+            </div>
+          </div>
+        </div>
+        <div class="col-md-3">
+          <div class="card h-100 border-0 shadow-sm">
+            <div class="card-body">
+              <h5 class="card-title text-muted">Muvaffaqiyat foizi</h5>
+              <h2 class="display-5 fw-bold">{{ pass_rate|floatformat:1 }}%</h2>
+            </div>
+          </div>
+        </div>
+        <div class="col-md-3">
+          <div class="card h-100 border-0 shadow-sm">
+            <div class="card-body">
+              <h5 class="card-title text-muted">O'rtacha ball</h5>
+              <h2 class="display-5 fw-bold">{{ avg_score|floatformat:1 }}%</h2>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+  
+  <!-- Testlar ro'yxati -->
+  <div class="row g-4">
+    {% if tests %}
+      {% for test in tests %}
+        <div class="col-md-6 col-lg-4">
+          <div class="test-card card h-100 border-0 shadow-sm">
+            {% with best_result=test_status|get:test.id|get:'best_result' %}
+              {% if best_result %}
+                {% if best_result.is_passed %}
+                  <div class="test-status status-passed" data-bs-toggle="tooltip" title="Muvaffaqiyatli o'tilgan"></div>
+                {% else %}
+                  <div class="test-status status-failed" data-bs-toggle="tooltip" title="O'tilmagan"></div>
+                {% endif %}
+              {% else %}
+                <div class="test-status status-not-taken" data-bs-toggle="tooltip" title="Topshirilmagan"></div>
+              {% endif %}
+            
+              <div class="card-body p-4">
+                <h4 class="card-title fw-bold mb-3">{{ test.title }}</h4>
+                <p class="card-text text-muted mb-4">{{ test.description|truncatechars:120 }}</p>
+                
+                <div class="d-flex flex-wrap mb-3 gap-2">
+                  <span class="badge bg-primary rounded-pill">
+                    <i class="fas fa-user-tag me-1"></i> {{ test.get_role_display }}
+                  </span>
+                  <span class="badge bg-secondary rounded-pill">
+                    <i class="fas fa-clock me-1"></i> {{ test.time_limit }} min
+                  </span>
+                  <span class="badge bg-info rounded-pill">
+                    <i class="fas fa-graduation-cap me-1"></i> {{ test.passing_score }}% o'tish uchun
+                  </span>
+                </div>
+                
+                {% with attempts=test_status|get:test.id|get:'attempts' %}
+                  {% if attempts > 0 %}
+                    <div class="mb-4">
+                      <div class="d-flex justify-content-between align-items-center mb-1">
+                        <span class="progress-label">Eng yaxshi natija</span>
+                        <span class="fw-bold">{{ best_result.percentage|floatformat:1 }}%</span>
+                      </div>
+                      <div class="progress" style="height: 8px;">
+                        <div class="progress-bar {% if best_result.is_passed %}bg-success{% else %}bg-danger{% endif %}" 
+                          role="progressbar" 
+                          style="width: {{ best_result.percentage }}%"></div>
+                      </div>
+                    </div>
+                    {% with last_attempt=test_status|get:test.id|get:'last_attempt' %}
+                      <p class="small text-muted mb-4">
+                        Urinishlar: {{ attempts }} | 
+                        So'nggi: {{ last_attempt.completed_at|date:"d.m.Y H:i" }}
+                      </p>
+                    {% endwith %}
+                  {% endif %}
+                  
+                  <div class="d-grid">
+                    <a href="{% url 'blog:test_start' test.id %}" class="btn btn-primary">
+                      {% if attempts > 0 %}
+                        <i class="fas fa-redo me-2"></i> Qayta topshirish
+                      {% else %}
+                        <i class="fas fa-play me-2"></i> Testni boshlash
+                      {% endif %}
+                    </a>
+                  </div>
+                {% endwith %}
+              </div>
+            {% endwith %}
+          </div>
+        </div>
+      {% endfor %}
+    {% else %}
+      <div class="col-12">
+        <div class="card border-0 shadow-sm">
+          <div class="card-body p-5 text-center">
+            <i class="fas fa-exclamation-circle text-muted fa-3x mb-3"></i>
+            <h3 class="mb-3">Mavjud testlar yo'q</h3>
+            <p class="text-muted mb-0">Sizning rolingiz ({{ request.user.get_role_display }}) uchun hozircha testlar qo'shilmagan</p>
+          </div>
+        </div>
+      </div>
+    {% endif %}
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+  // Tooltiplarni ishga tushirish
+  document.addEventListener('DOMContentLoaded', function() {
+    const tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
+    tooltipTriggerList.map(function (tooltipTriggerEl) {
+      return new bootstrap.Tooltip(tooltipTriggerEl);
+    });
+    
+    // Kartochkalar animatsiyasi
+    AOS.init({
+      duration: 800,
+      easing: 'ease-in-out',
+      once: true
+    });
+  });
+</script>
+{% endblock %} 

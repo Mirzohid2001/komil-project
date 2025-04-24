@@ -1,0 +1,270 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Testlar tarixi{% endblock %}
+
+{% block extra_css %}
+<style>
+  .history-card {
+    border-radius: 16px;
+    overflow: hidden;
+    transition: all 0.3s ease;
+  }
+  
+  .history-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1);
+  }
+  
+  .status-badge {
+    font-size: 0.75rem;
+    padding: 0.25rem 0.75rem;
+    border-radius: 9999px;
+    font-weight: 600;
+  }
+  
+  .status-badge.passed {
+    background-color: rgba(16, 185, 129, 0.1);
+    color: #059669;
+  }
+  
+  .status-badge.failed {
+    background-color: rgba(239, 68, 68, 0.1);
+    color: #dc2626;
+  }
+  
+  .chart-container {
+    position: relative;
+    height: 300px;
+    margin-bottom: 2rem;
+  }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container">
+  <!-- Sarlavha va statistika -->
+  <div class="row mb-4">
+    <div class="col-12">
+      <div class="d-flex justify-content-between align-items-center mb-4">
+        <h1 class="mb-0"><i class="fas fa-history text-primary me-2"></i> Testlar tarixi</h1>
+        <div>
+          <a href="{% url 'blog:test_list' %}" class="btn btn-outline-primary">
+            <i class="fas fa-arrow-left me-2"></i> Testlar ro'yxatiga qaytish
+          </a>
+        </div>
+      </div>
+    </div>
+  </div>
+  
+  <!-- Umumiy statistika -->
+  <div class="row g-4 mb-5">
+    <div class="col-lg-8">
+      <div class="card border-0 shadow-sm h-100">
+        <div class="card-body p-4">
+          <h3 class="card-title mb-4">Umumiy statistika</h3>
+          
+          {% if total_tests > 0 %}
+            <div class="row g-4">
+              <div class="col-md-6">
+                <div class="mb-4">
+                  <h5 class="text-muted mb-3">Umumiy ko'rsatkichlar</h5>
+                  <div class="d-flex flex-column gap-3">
+                    <div class="d-flex justify-content-between">
+                      <span>Jami topshirilgan testlar</span>
+                      <span class="fw-bold">{{ total_tests }}</span>
+                    </div>
+                    <div class="d-flex justify-content-between">
+                      <span>Muvaffaqiyatli topshirilgan</span>
+                      <span class="fw-bold">{{ tests_passed }} ({{ pass_rate|floatformat:1 }}%)</span>
+                    </div>
+                    <div class="d-flex justify-content-between">
+                      <span>O'rtacha ball</span>
+                      <span class="fw-bold">{{ avg_score|floatformat:1 }}%</span>
+                    </div>
+                    <div class="d-flex justify-content-between">
+                      <span>Eng yaxshi natija</span>
+                      <span class="fw-bold text-success">{{ best_score|floatformat:1 }}%</span>
+                    </div>
+                    <div class="d-flex justify-content-between">
+                      <span>Eng yomon natija</span>
+                      <span class="fw-bold text-danger">{{ worst_score|floatformat:1 }}%</span>
+                    </div>
+                    <div class="d-flex justify-content-between">
+                      <span>O'rtacha davomiylik</span>
+                      <span class="fw-bold">{{ avg_duration_minutes|floatformat:1 }} min</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+              <div class="col-md-6">
+                <div>
+                  <h5 class="text-muted mb-3">Progress</h5>
+                  <div class="chart-container">
+                    <canvas id="progressChart"></canvas>
+                  </div>
+                </div>
+              </div>
+            </div>
+          {% else %}
+            <div class="alert alert-info text-center py-4">
+              <i class="fas fa-info-circle fa-2x mb-3 text-primary"></i>
+              <h4>Testlar haqida ma'lumot yo'q</h4>
+              <p class="mb-0">Statistikani ko'rish uchun bir nechta testlarni topshiring</p>
+            </div>
+          {% endif %}
+        </div>
+      </div>
+    </div>
+    <div class="col-lg-4">
+      <div class="card border-0 shadow-sm h-100">
+        <div class="card-body p-4">
+          <h3 class="card-title mb-4">Kategoriyalar bo'yicha testlar</h3>
+          
+          {% if tests_data %}
+            <div class="d-flex flex-column gap-4">
+              {% for test_id, data in tests_data.items %}
+                <div class="d-flex flex-column">
+                  <h5 class="mb-2">{{ data.test.title }}</h5>
+                  <div class="d-flex justify-content-between mb-2">
+                    <span class="text-muted">Urinishlar: {{ data.attempts }}</span>
+                    <span class="{% if data.passed > 0 %}text-success{% else %}text-danger{% endif %}">
+                      O'tilgan: {{ data.passed }}/{{ data.attempts }}
+                    </span>
+                  </div>
+                  <div class="progress" style="height: 8px; border-radius: 4px;">
+                    <div class="progress-bar bg-primary" role="progressbar" 
+                         style="width: {{ data.avg_score }}%" 
+                         aria-valuenow="{{ data.avg_score }}" 
+                         aria-valuemin="0" 
+                         aria-valuemax="100"></div>
+                  </div>
+                  <div class="d-flex justify-content-between mt-2">
+                    <span class="small text-muted">O'rtacha ball</span>
+                    <span class="small fw-bold">{{ data.avg_score|floatformat:1 }}%</span>
+                  </div>
+                </div>
+              {% endfor %}
+            </div>
+          {% else %}
+            <div class="text-center py-4 text-muted">
+              <i class="fas fa-chart-bar fa-3x mb-3 opacity-25"></i>
+              <p>Ko'rsatish uchun ma'lumot yo'q</p>
+            </div>
+          {% endif %}
+        </div>
+      </div>
+    </div>
+  </div>
+  
+  <!-- Testlar tarixi -->
+  <div class="row mb-4">
+    <div class="col-12">
+      <h3 class="mb-4">So'nggi urinishlar</h3>
+      
+      {% if results %}
+        <div class="row g-4">
+          {% for result in results %}
+            <div class="col-md-6 col-lg-4">
+              <div class="card border-0 shadow-sm history-card">
+                <div class="card-body p-4">
+                  <div class="d-flex justify-content-between align-items-start mb-3">
+                    <h5 class="card-title">{{ result.test.title }}</h5>
+                    <span class="status-badge {% if result.is_passed %}passed{% else %}failed{% endif %}">
+                      {% if result.is_passed %}O'tildi{% else %}O'tilmadi{% endif %}
+                    </span>
+                  </div>
+                  
+                  <div class="d-flex flex-column gap-2 mb-4">
+                    <div class="d-flex justify-content-between">
+                      <span class="text-muted">Sana</span>
+                      <span>{{ result.completed_at|date:"d.m.Y H:i" }}</span>
+                    </div>
+                    <div class="d-flex justify-content-between">
+                      <span class="text-muted">Ballar</span>
+                      <span>{{ result.score }} dan {{ result.answers.count }}</span>
+                    </div>
+                    <div class="d-flex justify-content-between">
+                      <span class="text-muted">Foiz</span>
+                      <span class="fw-bold {% if result.is_passed %}text-success{% else %}text-danger{% endif %}">
+                        {{ result.percentage|floatformat:1 }}%
+                      </span>
+                    </div>
+                    <div class="d-flex justify-content-between">
+                      <span class="text-muted">Davomiyligi</span>
+                      <span>{{ result.get_duration|floatformat:1 }} min</span>
+                    </div>
+                  </div>
+                  
+                  <div class="d-grid">
+                    <a href="{% url 'blog:test_result' result.id %}" class="btn btn-outline-primary">
+                      <i class="fas fa-eye me-2"></i> Batafsil
+                    </a>
+                  </div>
+                </div>
+              </div>
+            </div>
+          {% endfor %}
+        </div>
+      {% else %}
+        <div class="card border-0 shadow-sm">
+          <div class="card-body p-5 text-center">
+            <i class="fas fa-history text-muted fa-3x mb-3"></i>
+            <h4 class="mb-3">Testlar tarixi yo'q</h4>
+            <p class="text-muted mb-4">Siz hali birorta ham test topshirmadingiz</p>
+            <a href="{% url 'blog:test_list' %}" class="btn btn-primary">
+              <i class="fas fa-arrow-right me-2"></i> Testlarga o'tish
+            </a>
+          </div>
+        </div>
+      {% endif %}
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+  document.addEventListener('DOMContentLoaded', function() {
+    {% if total_tests > 0 %}
+      // Progress diagrammasi uchun ma'lumotlar
+      const ctx = document.getElementById('progressChart').getContext('2d');
+      const progressChart = new Chart(ctx, {
+        type: 'doughnut',
+        data: {
+          labels: ['Muvaffaqiyatli o\'tilgan', 'O\'tilmagan'],
+          datasets: [{
+            data: [{{ tests_passed }}, {{ total_tests|add:"-"|add:tests_passed }}],
+            backgroundColor: [
+              'rgba(16, 185, 129, 0.7)',
+              'rgba(239, 68, 68, 0.7)'
+            ],
+            borderColor: [
+              'rgba(16, 185, 129, 1)',
+              'rgba(239, 68, 68, 1)'
+            ],
+            borderWidth: 1
+          }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: {
+            legend: {
+              position: 'bottom'
+            }
+          }
+        }
+      });
+    {% endif %}
+    
+    // Анимация карточек
+    AOS.init({
+      duration: 800,
+      easing: 'ease-in-out',
+      once: true
+    });
+  });
+</script>
+{% endblock %} 

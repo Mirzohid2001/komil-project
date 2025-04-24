@@ -4,7 +4,7 @@ from django.db.models import Count
 from django.utils.safestring import mark_safe
 from django.contrib.auth.admin import UserAdmin as BaseUserAdmin
 
-from .models import User, FavoritePost, UserActivity
+from .models import User, FavoritePost, UserActivity, Achievement, UserAchievement, LearningProgress, Certificate, LevelUpEvent
 
 class FavoritePostInline(admin.TabularInline):
     model = FavoritePost
@@ -26,22 +26,15 @@ class UserActivityInline(admin.TabularInline):
     def has_add_permission(self, request, obj=None):
         return False
 
-class UserAdmin(BaseUserAdmin):
-    list_display = ('username', 'email', 'get_role_display', 'is_staff', 'date_joined', 'last_login', 'view_count', 'favorite_count')
-    list_filter = ('role', 'is_staff', 'is_superuser', 'date_joined')
-    search_fields = ('username', 'email', 'first_name', 'last_name')
-    readonly_fields = ('date_joined', 'last_login', 'profile_preview', 'activity_summary')
-    
-    fieldsets = (
-        (None, {'fields': ('username', 'password')}),
-        ('Личная информация', {'fields': ('first_name', 'last_name', 'email', 'role', 'bio', 'phone_number')}),
-        ('Медиа', {'fields': ('profile_image', 'profile_preview')}),
-        ('Активность', {'fields': ('activity_summary',)}),
-        ('Права доступа', {'fields': ('is_active', 'is_staff', 'is_superuser', 'groups', 'user_permissions')}),
-        ('Важные даты', {'fields': ('last_login', 'date_joined'), 'classes': ('collapse',)}),
+class CustomUserAdmin(BaseUserAdmin):
+    fieldsets = BaseUserAdmin.fieldsets + (
+        ('Дополнительные данные', {
+            'fields': ('role', 'profile_image', 'bio', 'phone_number', 'experience_points', 'level')
+        }),
     )
-    
-    inlines = [FavoritePostInline, UserActivityInline]
+    list_display = ('username', 'email', 'first_name', 'last_name', 'role', 'level', 'experience_points')
+    list_filter = BaseUserAdmin.list_filter + ('role', 'level')
+    search_fields = BaseUserAdmin.search_fields + ('bio', 'phone_number')
     
     def profile_preview(self, obj):
         if obj.profile_image:
@@ -146,32 +139,63 @@ class UserAdmin(BaseUserAdmin):
 
 class FavoritePostAdmin(admin.ModelAdmin):
     list_display = ('user', 'post', 'added_at')
-    list_filter = ('added_at', 'user__role')
+    list_filter = ('added_at',)
     search_fields = ('user__username', 'post__title')
     date_hierarchy = 'added_at'
 
 
 class UserActivityAdmin(admin.ModelAdmin):
-    list_display = ('user', 'activity_type', 'timestamp', 'post_title', 'ip_address')
-    list_filter = ('activity_type', 'timestamp', 'user__role')
-    search_fields = ('user__username', 'post__title', 'ip_address')
+    list_display = ('user', 'activity_type', 'timestamp', 'post', 'ip_address')
+    list_filter = ('activity_type', 'timestamp')
+    search_fields = ('user__username', 'ip_address')
     date_hierarchy = 'timestamp'
-    readonly_fields = ('user', 'activity_type', 'timestamp', 'post', 'ip_address', 'details')
+
+
+class AchievementAdmin(admin.ModelAdmin):
+    list_display = ('name', 'type', 'required_value', 'experience_reward', 'is_secret')
+    list_filter = ('type', 'is_secret')
+    search_fields = ('name', 'description')
+
+
+class UserAchievementAdmin(admin.ModelAdmin):
+    list_display = ('user', 'achievement', 'earned_at', 'current_value')
+    list_filter = ('earned_at', 'achievement__type')
+    search_fields = ('user__username', 'achievement__name')
+    date_hierarchy = 'earned_at'
+
+
+class LearningProgressAdmin(admin.ModelAdmin):
+    list_display = ('user', 'category', 'last_viewed', 'is_completed', 'get_completion_percentage')
+    list_filter = ('is_completed', 'last_viewed')
+    search_fields = ('user__username', 'category__name')
+    date_hierarchy = 'last_viewed'
+    filter_horizontal = ('posts_viewed',)
     
-    def post_title(self, obj):
-        if obj.post:
-            return obj.post.title
-        return "-"
-    post_title.short_description = 'Пост'
-    
-    def has_add_permission(self, request):
-        return False
-    
-    def has_change_permission(self, request, obj=None):
-        return False
+    def get_completion_percentage(self, obj):
+        return f"{obj.completion_percentage():.1f}%"
+    get_completion_percentage.short_description = 'Прогресс'
+
+
+class CertificateAdmin(admin.ModelAdmin):
+    list_display = ('certificate_id', 'user', 'category', 'issued_at')
+    list_filter = ('issued_at', 'category')
+    search_fields = ('certificate_id', 'user__username', 'category__name')
+    date_hierarchy = 'issued_at'
+
+
+class LevelUpEventAdmin(admin.ModelAdmin):
+    list_display = ('user', 'previous_level', 'new_level', 'timestamp')
+    list_filter = ('timestamp',)
+    search_fields = ('user__username',)
+    date_hierarchy = 'timestamp'
 
 
 # Регистрируем модели с кастомными админками
-admin.site.register(User, UserAdmin)
+admin.site.register(User, CustomUserAdmin)
 admin.site.register(FavoritePost, FavoritePostAdmin)
 admin.site.register(UserActivity, UserActivityAdmin)
+admin.site.register(Achievement, AchievementAdmin)
+admin.site.register(UserAchievement, UserAchievementAdmin)
+admin.site.register(LearningProgress, LearningProgressAdmin)
+admin.site.register(Certificate, CertificateAdmin)
+admin.site.register(LevelUpEvent, LevelUpEventAdmin)

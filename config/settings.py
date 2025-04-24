@@ -28,6 +28,9 @@ DEBUG = True
 
 ALLOWED_HOSTS = []
 
+# Base URL для генерации абсолютных URL (для сертификатов и т.п.)
+BASE_URL = 'http://localhost:8000'
+
 
 # Application definition
 
