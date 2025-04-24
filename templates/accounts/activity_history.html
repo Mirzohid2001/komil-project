@@ -1,0 +1,132 @@
+{% extends 'accounts/profile_base.html' %}
+
+{% block profile_title %}История активности{% endblock %}
+
+{% block profile_content %}
+<div class="card border-0 shadow-sm">
+  <div class="card-body">
+    {% if page_obj %}
+      <div class="table-responsive">
+        <table class="table table-hover">
+          <thead>
+            <tr>
+              <th scope="col">Дата и время</th>
+              <th scope="col">Действие</th>
+              <th scope="col">Материал</th>
+              <th scope="col">IP адрес</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for activity in page_obj %}
+              <tr>
+                <td>{{ activity.timestamp|date:"d.m.Y H:i" }}</td>
+                <td>
+                  <div class="d-flex align-items-center">
+                    <div class="activity-icon 
+                      {% if 'login' in activity.activity_type %}activity-login
+                      {% elif 'logout' in activity.activity_type %}activity-logout
+                      {% elif 'view' in activity.activity_type %}activity-view
+                      {% elif 'profile' in activity.activity_type %}activity-update
+                      {% elif 'favorite' in activity.activity_type %}activity-favorite
+                      {% endif %} me-2" style="width: 28px; height: 28px; font-size: 0.8rem;">
+                      <i class="fas 
+                        {% if 'login' in activity.activity_type %}fa-sign-in-alt
+                        {% elif 'logout' in activity.activity_type %}fa-sign-out-alt
+                        {% elif 'view_post' == activity.activity_type %}fa-file-alt
+                        {% elif 'view_video' == activity.activity_type %}fa-video
+                        {% elif 'profile' in activity.activity_type %}fa-user-edit
+                        {% elif 'favorite_add' == activity.activity_type %}fa-bookmark
+                        {% elif 'favorite_remove' == activity.activity_type %}fa-bookmark
+                        {% endif %}"></i>
+                    </div>
+                    {{ activity.get_activity_type_display }}
+                  </div>
+                </td>
+                <td>
+                  {% if activity.post %}
+                    <a href="{% url 'blog:post_detail' activity.post.id %}">{{ activity.post.title }}</a>
+                  {% else %}
+                    -
+                  {% endif %}
+                </td>
+                <td>
+                  <small class="text-muted">{{ activity.ip_address }}</small>
+                </td>
+              </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+      
+      <!-- Pagination -->
+      {% if page_obj.has_other_pages %}
+        <nav aria-label="Page navigation" class="mt-4">
+          <ul class="pagination justify-content-center">
+            {% if page_obj.has_previous %}
+              <li class="page-item">
+                <a class="page-link" href="?page=1" aria-label="First">
+                  <span aria-hidden="true">&laquo;&laquo;</span>
+                </a>
+              </li>
+              <li class="page-item">
+                <a class="page-link" href="?page={{ page_obj.previous_page_number }}" aria-label="Previous">
+                  <span aria-hidden="true">&laquo;</span>
+                </a>
+              </li>
+            {% else %}
+              <li class="page-item disabled">
+                <a class="page-link" href="#" aria-label="First">
+                  <span aria-hidden="true">&laquo;&laquo;</span>
+                </a>
+              </li>
+              <li class="page-item disabled">
+                <a class="page-link" href="#" aria-label="Previous">
+                  <span aria-hidden="true">&laquo;</span>
+                </a>
+              </li>
+            {% endif %}
+            
+            {% for num in page_obj.paginator.page_range %}
+              {% if page_obj.number == num %}
+                <li class="page-item active"><a class="page-link" href="?page={{ num }}">{{ num }}</a></li>
+              {% elif num > page_obj.number|add:'-3' and num < page_obj.number|add:'3' %}
+                <li class="page-item"><a class="page-link" href="?page={{ num }}">{{ num }}</a></li>
+              {% endif %}
+            {% endfor %}
+            
+            {% if page_obj.has_next %}
+              <li class="page-item">
+                <a class="page-link" href="?page={{ page_obj.next_page_number }}" aria-label="Next">
+                  <span aria-hidden="true">&raquo;</span>
+                </a>
+              </li>
+              <li class="page-item">
+                <a class="page-link" href="?page={{ page_obj.paginator.num_pages }}" aria-label="Last">
+                  <span aria-hidden="true">&raquo;&raquo;</span>
+                </a>
+              </li>
+            {% else %}
+              <li class="page-item disabled">
+                <a class="page-link" href="#" aria-label="Next">
+                  <span aria-hidden="true">&raquo;</span>
+                </a>
+              </li>
+              <li class="page-item disabled">
+                <a class="page-link" href="#" aria-label="Last">
+                  <span aria-hidden="true">&raquo;&raquo;</span>
+                </a>
+              </li>
+            {% endif %}
+          </ul>
+        </nav>
+      {% endif %}
+    {% else %}
+      <div class="empty-state">
+        <i class="fas fa-history opacity-25"></i>
+        <h4 class="fw-bold mb-3">Нет активности</h4>
+        <p class="text-muted mb-0">Ваша активность будет отображаться здесь</p>
+      </div>
+    {% endif %}
+  </div>
+</div>
+{% endblock %} 

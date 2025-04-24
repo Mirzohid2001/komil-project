@@ -1,0 +1,334 @@
+{% extends 'base.html' %}
+
+{% block title %}{{ category.name }} – Postlar{% endblock %}
+
+{% block extra_css %}
+<style>
+  .page-header {
+    position: relative;
+    margin-bottom: 2rem;
+    padding-bottom: 1rem;
+  }
+  
+  .page-header::after {
+    content: '';
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    width: 100px;
+    height: 4px;
+    background: var(--gradient-primary);
+    border-radius: 2px;
+  }
+  
+  .filter-card {
+    border-radius: 16px;
+    padding: 1.5rem;
+    background: rgba(255, 255, 255, 0.9);
+    backdrop-filter: blur(10px);
+    box-shadow: 0 10px 30px -5px rgba(0, 0, 0, 0.08);
+    border: 1px solid rgba(255, 255, 255, 0.8);
+    transition: all 0.3s ease;
+  }
+  
+  .custom-select, .custom-date {
+    background-color: rgba(255, 255, 255, 0.9);
+    border: 1px solid rgba(0, 0, 0, 0.1);
+    border-radius: 12px;
+    padding: 0.75rem 1rem;
+    transition: all 0.3s ease;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.02);
+  }
+  
+  .custom-select:focus, .custom-date:focus {
+    border-color: var(--primary);
+    box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.2);
+  }
+  
+  .btn-filter {
+    border-radius: 12px;
+    padding: 0.75rem 1.5rem;
+    font-weight: 600;
+    transition: all 0.3s ease;
+  }
+  
+  .post-card {
+    position: relative;
+    border-radius: 20px;
+    overflow: hidden;
+    transition: all 0.4s cubic-bezier(0.165, 0.84, 0.44, 1);
+    background: rgba(255, 255, 255, 0.9);
+    backdrop-filter: blur(10px);
+    box-shadow: 0 10px 30px -5px rgba(0, 0, 0, 0.08);
+    border: 1px solid rgba(255, 255, 255, 0.7);
+  }
+  
+  .post-card:hover {
+    transform: translateY(-10px);
+    box-shadow: 0 30px 60px -10px rgba(50, 50, 93, 0.25),
+                0 18px 36px -18px rgba(0, 0, 0, 0.1);
+  }
+  
+  .post-card .video-wrapper {
+    height: 200px;
+    position: relative;
+    overflow: hidden;
+  }
+  
+  .post-card .video-wrapper video {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    transition: transform 0.5s ease;
+  }
+  
+  .post-card:hover .video-wrapper video {
+    transform: scale(1.05);
+  }
+  
+  .post-card .video-wrapper::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(to bottom, rgba(0,0,0,0) 50%, rgba(0,0,0,0.5) 100%);
+    z-index: 1;
+  }
+  
+  .post-card .play-button {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 60px;
+    height: 60px;
+    background: var(--gradient-primary);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    z-index: 2;
+    opacity: 0.9;
+    transition: all 0.3s ease;
+    cursor: pointer;
+    box-shadow: 0 10px 20px rgba(0, 0, 0, 0.2);
+  }
+  
+  .post-card:hover .play-button {
+    transform: translate(-50%, -50%) scale(1.1);
+    opacity: 1;
+    box-shadow: 0 15px 30px rgba(0, 0, 0, 0.3);
+  }
+  
+  .post-card .content {
+    padding: 1.5rem;
+  }
+  
+  .post-card .title {
+    font-weight: 700;
+    margin-bottom: 0.75rem;
+    color: var(--dark);
+    transition: color 0.3s ease;
+  }
+  
+  .post-card:hover .title {
+    color: var(--primary);
+  }
+  
+  .post-card .meta {
+    display: flex;
+    justify-content: space-between;
+    padding: 1rem 1.5rem;
+    border-top: 1px solid rgba(0, 0, 0, 0.05);
+    background: rgba(0, 0, 0, 0.02);
+  }
+  
+  .post-card .meta-item {
+    display: flex;
+    align-items: center;
+    color: #64748b;
+    font-size: 0.85rem;
+  }
+  
+  .post-card .meta-item i {
+    margin-right: 0.5rem;
+    color: var(--primary);
+  }
+  
+  .post-badge {
+    position: absolute;
+    top: 1rem;
+    right: 1rem;
+    z-index: 2;
+    background: rgba(255, 255, 255, 0.95);
+    color: var(--primary);
+    font-size: 0.75rem;
+    font-weight: 600;
+    padding: 0.5rem 0.75rem;
+    border-radius: 30px;
+    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+  }
+  
+  .no-posts {
+    text-align: center;
+    padding: 3rem;
+    background: rgba(255, 255, 255, 0.8);
+    border-radius: 20px;
+    box-shadow: 0 10px 30px -5px rgba(0, 0, 0, 0.08);
+  }
+  
+  .no-posts i {
+    font-size: 4rem;
+    color: #d1d5db;
+    margin-bottom: 1.5rem;
+  }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container">
+  <!-- Header with Category Title and Back Button -->
+  <div class="d-flex justify-content-between align-items-center mb-4" data-aos="fade-down">
+    <h1 class="page-header display-5 fw-bold">
+      <i class="fas fa-folder-open text-primary me-2"></i> {{ category.name }}
+    </h1>
+    <a href="{% url 'blog:category_list' %}" class="btn btn-outline-primary rounded-pill px-4 py-2">
+      <i class="fas fa-arrow-left me-2"></i> Kategoriyalarga qaytish
+    </a>
+  </div>
+
+  <!-- Advanced Filter Form with Animation -->
+  <div class="filter-card mb-5" data-aos="fade-up">
+    <form method="get" class="row g-3">
+      {% if is_admin %}
+      <div class="col-md-4">
+        <label for="roleFilter" class="form-label fw-medium">
+          <i class="fas fa-user-tag me-2"></i> Rol bo'yicha
+        </label>
+        <select id="roleFilter" name="role" class="form-select custom-select">
+          <option value="">Hammasi</option>
+          {% for key,label in roles %}
+            <option value="{{ key }}" {% if key == selected_role %}selected{% endif %}>
+              {{ label }}
+            </option>
+          {% endfor %}
+        </select>
+      </div>
+      <div class="col-md-3">
+      {% else %}
+      <div class="col-md-5">
+      {% endif %}
+        <label for="dateFrom" class="form-label fw-medium">
+          <i class="fas fa-calendar-alt me-2"></i> Dan
+        </label>
+        <input type="date" id="dateFrom" name="from" value="{{ from }}" class="form-control custom-date">
+      </div>
+      {% if is_admin %}
+      <div class="col-md-3">
+      {% else %}
+      <div class="col-md-5">
+      {% endif %}
+        <label for="dateTo" class="form-label fw-medium">
+          <i class="fas fa-calendar-alt me-2"></i> Gacha
+        </label>
+        <input type="date" id="dateTo" name="to" value="{{ to }}" class="form-control custom-date">
+      </div>
+      <div class="col-md-2 d-flex align-items-end">
+        <button type="submit" class="btn btn-primary btn-filter w-100">
+          <i class="fas fa-filter me-2"></i> Filter
+        </button>
+      </div>
+    </form>
+  </div>
+
+  <!-- Posts Grid with Animations -->
+  {% if posts %}
+    <div class="row g-4">
+      {% for post in posts %}
+        <div class="col-sm-6 col-lg-4" data-aos="fade-up" data-aos-delay="{{ forloop.counter|add:'100' }}">
+          <div class="post-card h-100">
+            {% if post.video %}
+              <div class="video-wrapper">
+                <video src="{{ post.video.url }}" class="post-video"></video>
+                <div class="play-button video-play-btn" data-video-target="video-{{ post.id }}">
+                  <i class="fas fa-play"></i>
+                </div>
+                <span class="post-badge">
+                  <i class="fas fa-tag me-1"></i> {{ post.get_role_display }}
+                </span>
+              </div>
+            {% else %}
+              <div class="video-wrapper bg-light d-flex align-items-center justify-content-center">
+                <i class="fas fa-file-alt fa-3x text-primary opacity-25"></i>
+                <span class="post-badge">
+                  <i class="fas fa-tag me-1"></i> {{ post.get_role_display }}
+                </span>
+              </div>
+            {% endif %}
+            <div class="content">
+              <h5 class="title">{{ post.title }}</h5>
+              <p class="text-muted">{{ post.content|truncatechars:85 }}</p>
+              <a href="{% url 'blog:post_detail' post.id %}" class="btn btn-sm btn-primary rounded-pill px-3 mt-2">
+                <i class="fas fa-eye me-1"></i> Batafsil
+              </a>
+            </div>
+            <div class="meta">
+              <span class="meta-item">
+                <i class="far fa-calendar-alt"></i> {{ post.created_at|date:"d.m.Y" }}
+              </span>
+              <span class="meta-item">
+                <i class="far fa-folder-open"></i> {{ post.category.name }}
+              </span>
+            </div>
+          </div>
+        </div>
+      {% endfor %}
+    </div>
+  {% else %}
+    <div class="no-posts" data-aos="fade-in">
+      <i class="fas fa-search"></i>
+      <h3 class="fw-bold">Bu kategoriyada postlar mavjud emas</h3>
+      <p class="text-muted">Joriy filtrlar bo'yicha hech qanday ma'lumot topilmadi</p>
+      <a href="{% url 'blog:post_list' category.id %}" class="btn btn-primary rounded-pill px-4 mt-3">
+        <i class="fas fa-sync-alt me-2"></i> Filtrlarni tozalash
+      </a>
+    </div>
+  {% endif %}
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+  document.addEventListener('DOMContentLoaded', function() {
+    // Video play functionality
+    const playButtons = document.querySelectorAll('.video-play-btn');
+    playButtons.forEach(button => {
+      button.addEventListener('click', function() {
+        const video = this.closest('.video-wrapper').querySelector('video');
+        if (video.paused) {
+          video.play();
+          this.innerHTML = '<i class="fas fa-pause"></i>';
+        } else {
+          video.pause();
+          this.innerHTML = '<i class="fas fa-play"></i>';
+        }
+      });
+    });
+    
+    // Filter animation
+    const filterInputs = document.querySelectorAll('.custom-select, .custom-date');
+    filterInputs.forEach(input => {
+      input.addEventListener('focus', function() {
+        this.parentNode.classList.add('is-focused');
+      });
+      
+      input.addEventListener('blur', function() {
+        this.parentNode.classList.remove('is-focused');
+      });
+    });
+  });
+</script>
+{% endblock %}

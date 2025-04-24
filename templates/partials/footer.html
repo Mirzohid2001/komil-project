@@ -1,0 +1,71 @@
+<footer class="py-5">
+  <div class="container">
+    <div class="row g-4 justify-content-between align-items-center">
+      <div class="col-md-5" data-aos="fade-right">
+        <div class="d-flex align-items-center mb-3">
+          <span class="brand-icon me-2 d-inline-flex align-items-center justify-content-center">
+            <i class="fas fa-blog text-white fs-5"></i>
+          </span>
+          <span class="fs-4 fw-bold text-gradient">TB Blog</span>
+        </div>
+        <p class="text-muted mb-0">Zamonaviy texnologiyalar bilan yaratilgan platformada professional kontentni boshqarish tizimi.</p>
+      </div>
+      
+      <div class="col-md-4 text-md-end" data-aos="fade-left">
+        <div class="social-icons mb-3">
+          <a href="#" class="social-icon me-2">
+            <i class="fab fa-telegram"></i>
+          </a>
+          <a href="#" class="social-icon me-2">
+            <i class="fab fa-instagram"></i>
+          </a>
+          <a href="#" class="social-icon me-2">
+            <i class="fab fa-facebook"></i>
+          </a>
+          <a href="#" class="social-icon">
+            <i class="fab fa-youtube"></i>
+          </a>
+        </div>
+        <p class="mb-0 text-muted">&copy; {{ now.year }} TB Blog. Barcha huquqlar himoyalangan.</p>
+      </div>
+    </div>
+  </div>
+</footer>
+
+<style>
+  footer {
+    position: relative;
+    overflow: hidden;
+  }
+  
+  footer::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 1px;
+    background: linear-gradient(to right, transparent, var(--primary), transparent);
+  }
+  
+  .social-icon {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 38px;
+    height: 38px;
+    border-radius: 50%;
+    color: var(--primary);
+    background: rgba(79, 70, 229, 0.1);
+    transition: all 0.3s ease;
+    font-size: 1.2rem;
+  }
+  
+  .social-icon:hover {
+    color: white;
+    background: var(--gradient-primary);
+    transform: translateY(-3px);
+    box-shadow: 0 5px 15px rgba(79, 70, 229, 0.4);
+  }
+</style>
+  

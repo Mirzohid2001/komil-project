@@ -1,0 +1,134 @@
+<nav class="navbar navbar-expand-lg sticky-top">
+  <div class="container">
+    <a class="navbar-brand d-flex align-items-center" href="{% url 'blog:home' %}">
+      <span class="brand-icon me-2 d-inline-flex align-items-center justify-content-center">
+        <i class="fas fa-blog text-white fs-4"></i>
+      </span>
+      <span class="fs-4 fw-bold text-gradient">Isomer Oil</span>
+    </a>
+    
+    <button class="navbar-toggler border-0 shadow-none" type="button" 
+            data-bs-toggle="collapse" data-bs-target="#navMenu" 
+            aria-controls="navMenu" aria-expanded="false" aria-label="Toggle navigation">
+      <span class="navbar-toggler-icon"></span>
+    </button>
+    
+    <div id="navMenu" class="collapse navbar-collapse">
+      <ul class="navbar-nav ms-auto align-items-center">
+        <li class="nav-item mx-2" data-aos="fade-down" data-aos-delay="100">
+          <a class="nav-link fw-medium nav-hover-effect" href="{% url 'blog:home' %}">
+            <i class="fas fa-home me-1"></i> Bosh Sahifa
+          </a>
+        </li>
+        <li class="nav-item mx-2" data-aos="fade-down" data-aos-delay="200">
+          <a class="nav-link fw-medium nav-hover-effect" href="{% url 'blog:category_list' %}">
+            <i class="fas fa-layer-group me-1"></i> Kategoriyalar
+          </a>
+        </li>
+
+        {% if request.user.is_authenticated %}
+          <li class="nav-item mx-2" data-aos="fade-down" data-aos-delay="300">
+            <a class="nav-link fw-medium nav-hover-effect" href="{% url 'accounts:profile' %}">
+              <i class="fas fa-user me-1"></i> Профиль
+            </a>
+          </li>
+          {% if request.user.role == 'админ' %}
+          <li class="nav-item mx-2" data-aos="fade-down" data-aos-delay="300">
+            <a class="nav-link fw-medium nav-hover-effect" href="{% url 'blog:analytics' %}">
+              <i class="fas fa-chart-bar me-1"></i> Аналитика
+            </a>
+          </li>
+          {% endif %}
+          <li class="nav-item ms-3 d-flex align-items-center" data-aos="fade-down" data-aos-delay="300">
+            <span class="badge rounded-pill bg-light text-primary me-3">
+              <i class="fas fa-user-circle me-1"></i>
+              {{ request.user.get_role_display }}
+            </span>
+            <form method="post" action="{% url 'accounts:logout' %}">
+              {% csrf_token %}
+              <button class="btn btn-sm btn-outline-danger rounded-pill px-3 py-2">
+                <i class="fas fa-sign-out-alt me-1"></i> Chiqish
+              </button>
+            </form>
+          </li>
+        {% else %}
+          <li class="nav-item mx-2" data-aos="fade-down" data-aos-delay="300">
+            <a class="btn btn-outline-primary rounded-pill px-4 py-2" href="{% url 'accounts:login' %}">
+              <i class="fas fa-sign-in-alt me-1"></i> Kirish
+            </a>
+          </li>
+          <li class="nav-item mx-2" data-aos="fade-down" data-aos-delay="400">
+            <a class="btn btn-primary rounded-pill px-4 py-2" href="{% url 'accounts:signup' %}">
+              <i class="fas fa-user-plus me-1"></i> Ro'yxatdan o'tish
+            </a>
+          </li>
+        {% endif %}
+      </ul>
+    </div>
+  </div>
+</nav>
+
+<style>
+  .navbar-brand .brand-icon {
+    width: 40px;
+    height: 40px;
+    background: var(--gradient-primary);
+    border-radius: 12px;
+    position: relative;
+    overflow: hidden;
+    box-shadow: 0 4px 10px rgba(79, 70, 229, 0.4);
+  }
+  
+  .text-gradient {
+    background: var(--gradient-primary);
+    background-clip: text;
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+  }
+  
+  .nav-hover-effect {
+    position: relative;
+    transition: all 0.3s ease;
+  }
+  
+  .nav-hover-effect:before {
+    content: '';
+    position: absolute;
+    bottom: 0;
+    left: 50%;
+    width: 0;
+    height: 2px;
+    background: var(--gradient-primary);
+    transition: all 0.3s ease;
+    transform: translateX(-50%);
+  }
+  
+  .nav-hover-effect:hover:before {
+    width: 70%;
+  }
+  
+  .nav-hover-effect:hover {
+    transform: translateY(-2px);
+  }
+  
+  .navbar .badge {
+    font-size: 0.85rem;
+    padding: 0.5em 1em;
+    border: 1px solid rgba(79, 70, 229, 0.3);
+  }
+  
+  @media (max-width: 991.98px) {
+    .navbar-collapse {
+      background: rgba(255, 255, 255, 0.95);
+      border-radius: 16px;
+      margin-top: 1rem;
+      padding: 1rem;
+      box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1);
+    }
+    
+    .navbar-nav .nav-item {
+      margin: 0.5rem 0;
+    }
+  }
+</style>
+  

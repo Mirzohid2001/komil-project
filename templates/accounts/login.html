@@ -1,0 +1,206 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Kirish{% endblock %}
+
+{% block extra_css %}
+<style>
+  .auth-section {
+    position: relative;
+    min-height: 75vh;
+    display: flex;
+    align-items: center;
+  }
+  
+  .auth-section::before {
+    content: '';
+    position: absolute;
+    top: -100px;
+    right: -100px;
+    width: 400px;
+    height: 400px;
+    background: radial-gradient(circle, rgba(139, 92, 246, 0.1) 0%, rgba(255,255,255,0) 70%);
+    border-radius: 50%;
+    z-index: -1;
+  }
+  
+  .auth-card {
+    border-radius: 24px;
+    overflow: hidden;
+    background: rgba(255, 255, 255, 0.8);
+    backdrop-filter: blur(20px);
+    box-shadow: 0 20px 50px -10px rgba(0, 0, 0, 0.15);
+    border: 1px solid rgba(255, 255, 255, 0.7);
+    transition: all 0.5s ease;
+    padding: 3rem 2rem;
+  }
+  
+  .auth-title {
+    font-weight: 800;
+    margin-bottom: 1.5rem;
+    text-align: center;
+    background: var(--gradient-primary);
+    background-clip: text;
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+  }
+  
+  .auth-form .form-control {
+    background-color: rgba(255, 255, 255, 0.8);
+    border: 1px solid rgba(0, 0, 0, 0.1);
+    border-radius: 12px;
+    padding: 0.75rem 1rem;
+    transition: all 0.3s ease;
+    font-size: 1rem;
+  }
+  
+  .auth-form .form-control:focus {
+    box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.2);
+    border-color: var(--primary);
+  }
+  
+  .auth-form .form-label {
+    font-weight: 600;
+    margin-bottom: 0.5rem;
+    color: var(--dark);
+  }
+  
+  .auth-form .btn-login {
+    border-radius: 12px;
+    padding: 0.75rem 1rem;
+    font-weight: 600;
+    transition: all 0.3s ease;
+    width: 100%;
+  }
+  
+  .auth-form .btn-login:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 10px 20px -5px rgba(79, 70, 229, 0.4);
+  }
+  
+  .auth-form .errorlist {
+    color: #ef4444;
+    font-size: 0.875rem;
+    margin-top: 0.5rem;
+    padding-left: 1.5rem;
+  }
+  
+  .auth-form .non-field-errors {
+    background-color: rgba(239, 68, 68, 0.1);
+    color: #ef4444;
+    padding: 1rem;
+    border-radius: 12px;
+    margin-bottom: 1.5rem;
+    list-style: none;
+  }
+  
+  .auth-link {
+    color: var(--primary);
+    font-weight: 600;
+    transition: all 0.3s ease;
+    text-decoration: none;
+  }
+  
+  .auth-link:hover {
+    color: var(--primary-dark);
+    text-decoration: underline;
+  }
+  
+  .auth-divider {
+    display: flex;
+    align-items: center;
+    margin: 1.5rem 0;
+  }
+  
+  .auth-divider::before,
+  .auth-divider::after {
+    content: '';
+    flex: 1;
+    height: 1px;
+    background: rgba(0, 0, 0, 0.1);
+  }
+  
+  .auth-divider span {
+    padding: 0 1rem;
+    color: #64748b;
+    font-size: 0.875rem;
+  }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="auth-section">
+  <div class="container">
+    <div class="row justify-content-center">
+      <div class="col-md-7 col-lg-5">
+        <!-- Auth Card -->
+        <div class="auth-card animate__animated animate__fadeInDown" data-aos="fade-down">
+          <h2 class="auth-title display-6">Tizimga kirish</h2>
+          
+          <!-- Login Form -->
+          <form method="post" class="auth-form" novalidate>
+            {% csrf_token %}
+            
+            <!-- Form Errors -->
+            {% if form.non_field_errors %}
+              <ul class="non-field-errors">
+                {% for error in form.non_field_errors %}
+                  <li><i class="fas fa-exclamation-circle me-2"></i>{{ error }}</li>
+                {% endfor %}
+              </ul>
+            {% endif %}
+            
+            <!-- Username Field -->
+            <div class="mb-4">
+              <label for="id_username" class="form-label">
+                <i class="fas fa-user me-2"></i>Foydalanuvchi nomi
+              </label>
+              <input type="text" name="username" class="form-control" id="id_username" placeholder="Foydalanuvchi nomingizni kiriting" autofocus>
+              {% if form.username.errors %}
+                <ul class="errorlist">
+                  {% for error in form.username.errors %}
+                    <li>{{ error }}</li>
+                  {% endfor %}
+                </ul>
+              {% endif %}
+            </div>
+            
+            <!-- Password Field -->
+            <div class="mb-4">
+              <label for="id_password" class="form-label">
+                <i class="fas fa-lock me-2"></i>Parol
+              </label>
+              <input type="password" name="password" class="form-control" id="id_password" placeholder="Parolingizni kiriting">
+              {% if form.password.errors %}
+                <ul class="errorlist">
+                  {% for error in form.password.errors %}
+                    <li>{{ error }}</li>
+                  {% endfor %}
+                </ul>
+              {% endif %}
+            </div>
+            
+            <!-- Submit Button -->
+            <button type="submit" class="btn btn-primary btn-login mt-4">
+              <i class="fas fa-sign-in-alt me-2"></i>Kirish
+            </button>
+          </form>
+          
+          <!-- Divider -->
+          <div class="auth-divider">
+            <span>Yoki</span>
+          </div>
+          
+          <!-- Registration Link -->
+          <p class="text-center mb-0">
+            Hisobingiz yo'qmi?
+            <a href="{% url 'accounts:signup' %}" class="auth-link">
+              Ro'yxatdan o'tish
+            </a>
+          </p>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

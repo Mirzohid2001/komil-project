@@ -1,0 +1,47 @@
+:root {
+    --primary: #6366f1;
+    --secondary: #4f46e5;
+    --accent: #ec4899;
+    --bg: #f3f4f6;
+    --text: #111827;
+  }
+  
+  body {
+    background-color: var(--bg);
+    color: var(--text);
+    font-family: 'Inter', sans-serif;
+    scroll-behavior: smooth;
+  }
+  
+  h1,h2,h3,h4,h5,h6 {
+    font-family: 'Poppins', sans-serif;
+  }
+  
+  nav.navbar {
+    background: rgba(255,255,255,0.8);
+    backdrop-filter: blur(10px);
+  }
+  
+  .btn-primary {
+    background-color: var(--primary);
+    border-color: var(--primary);
+    transition: transform .2s, box-shadow .2s;
+  }
+  .btn-primary:hover {
+    background-color: var(--secondary);
+    box-shadow: 0 6px 15px rgba(0,0,0,0.1);
+    transform: translateY(-2px);
+  }
+  
+  .glass-card {
+    background: rgba(255,255,255,0.6);
+    backdrop-filter: blur(8px);
+    border: none;
+    border-radius: 1rem;
+    transition: transform .3s, box-shadow .3s;
+  }
+  .glass-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 12px 20px rgba(0,0,0,0.1);
+  }
+  

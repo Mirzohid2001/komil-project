@@ -1,0 +1,219 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Ro'yxatdan o'tish{% endblock %}
+
+{% block extra_css %}
+<style>
+  .auth-section {
+    position: relative;
+    min-height: 75vh;
+    display: flex;
+    align-items: center;
+  }
+  
+  .auth-section::before {
+    content: '';
+    position: absolute;
+    top: -100px;
+    right: -100px;
+    width: 400px;
+    height: 400px;
+    background: radial-gradient(circle, rgba(139, 92, 246, 0.1) 0%, rgba(255,255,255,0) 70%);
+    border-radius: 50%;
+    z-index: -1;
+  }
+  
+  .auth-card {
+    border-radius: 24px;
+    overflow: hidden;
+    background: rgba(255, 255, 255, 0.8);
+    backdrop-filter: blur(20px);
+    box-shadow: 0 20px 50px -10px rgba(0, 0, 0, 0.15);
+    border: 1px solid rgba(255, 255, 255, 0.7);
+    transition: all 0.5s ease;
+    padding: 3rem 2rem;
+  }
+  
+  .auth-title {
+    font-weight: 800;
+    margin-bottom: 1.5rem;
+    text-align: center;
+    background: var(--gradient-secondary);
+    background-clip: text;
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+  }
+  
+  .auth-form .form-control {
+    background-color: rgba(255, 255, 255, 0.8);
+    border: 1px solid rgba(0, 0, 0, 0.1);
+    border-radius: 12px;
+    padding: 0.75rem 1rem;
+    transition: all 0.3s ease;
+    font-size: 1rem;
+  }
+  
+  .auth-form .form-control:focus {
+    box-shadow: 0 0 0 3px rgba(236, 72, 153, 0.2);
+    border-color: var(--secondary);
+  }
+  
+  .auth-form .form-label {
+    font-weight: 600;
+    margin-bottom: 0.5rem;
+    color: var(--dark);
+  }
+  
+  .auth-form .btn-signup {
+    border-radius: 12px;
+    padding: 0.75rem 1rem;
+    font-weight: 600;
+    transition: all 0.3s ease;
+    width: 100%;
+    background: var(--gradient-secondary);
+    border: none;
+  }
+  
+  .auth-form .btn-signup:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 10px 20px -5px rgba(236, 72, 153, 0.4);
+    opacity: 0.9;
+  }
+  
+  .auth-form .errorlist {
+    color: #ef4444;
+    font-size: 0.875rem;
+    margin-top: 0.5rem;
+    padding-left: 1.5rem;
+  }
+  
+  .auth-form .non-field-errors {
+    background-color: rgba(239, 68, 68, 0.1);
+    color: #ef4444;
+    padding: 1rem;
+    border-radius: 12px;
+    margin-bottom: 1.5rem;
+    list-style: none;
+  }
+  
+  .auth-form .help-text {
+    color: #64748b;
+    font-size: 0.875rem;
+    margin-top: 0.5rem;
+  }
+  
+  .auth-link {
+    color: var(--secondary);
+    font-weight: 600;
+    transition: all 0.3s ease;
+    text-decoration: none;
+  }
+  
+  .auth-link:hover {
+    color: #be185d;
+    text-decoration: underline;
+  }
+  
+  .auth-divider {
+    display: flex;
+    align-items: center;
+    margin: 1.5rem 0;
+  }
+  
+  .auth-divider::before,
+  .auth-divider::after {
+    content: '';
+    flex: 1;
+    height: 1px;
+    background: rgba(0, 0, 0, 0.1);
+  }
+  
+  .auth-divider span {
+    padding: 0 1rem;
+    color: #64748b;
+    font-size: 0.875rem;
+  }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="auth-section">
+  <div class="container">
+    <div class="row justify-content-center">
+      <div class="col-md-7 col-lg-5">
+        <!-- Auth Card -->
+        <div class="auth-card animate__animated animate__fadeInUp" data-aos="fade-up">
+          <h2 class="auth-title display-6">Ro'yxatdan o'tish</h2>
+          
+          <!-- Signup Form -->
+          <form method="post" class="auth-form" novalidate>
+            {% csrf_token %}
+            
+            <!-- Form Errors -->
+            {% if form.non_field_errors %}
+              <ul class="non-field-errors">
+                {% for error in form.non_field_errors %}
+                  <li><i class="fas fa-exclamation-circle me-2"></i>{{ error }}</li>
+                {% endfor %}
+              </ul>
+            {% endif %}
+            
+            <!-- Form Fields -->
+            {% for field in form %}
+              <div class="mb-4">
+                <label for="{{ field.id_for_label }}" class="form-label">
+                  <i class="fas {% if field.name == 'username' %}fa-user{% elif field.name == 'password1' or field.name == 'password2' %}fa-lock{% elif field.name == 'email' %}fa-envelope{% elif field.name == 'role' %}fa-user-tag{% else %}fa-info-circle{% endif %} me-2"></i>
+                  {{ field.label }}
+                </label>
+                
+                {% if field.name == 'role' %}
+                  <select name="role" id="{{ field.id_for_label }}" class="form-select form-control">
+                    {% for value, text in form.fields.role.choices %}
+                      <option value="{{ value }}">{{ text }}</option>
+                    {% endfor %}
+                  </select>
+                {% elif field.name == 'password1' or field.name == 'password2' %}
+                  <input type="{{ field.field.widget.input_type }}" name="{{ field.name }}" id="{{ field.id_for_label }}" class="form-control" placeholder="{{ field.label }}">
+                {% else %}
+                  <input type="text" name="{{ field.name }}" id="{{ field.id_for_label }}" class="form-control" placeholder="{{ field.label }}">
+                {% endif %}
+                
+                {% if field.help_text %}
+                  <small class="help-text"><i class="fas fa-info-circle me-1"></i>{{ field.help_text }}</small>
+                {% endif %}
+                
+                {% if field.errors %}
+                  <ul class="errorlist">
+                    {% for error in field.errors %}
+                      <li>{{ error }}</li>
+                    {% endfor %}
+                  </ul>
+                {% endif %}
+              </div>
+            {% endfor %}
+            
+            <!-- Submit Button -->
+            <button type="submit" class="btn btn-signup mt-4">
+              <i class="fas fa-user-plus me-2"></i>Ro'yxatdan o'tish
+            </button>
+          </form>
+          
+          <!-- Divider -->
+          <div class="auth-divider">
+            <span>Yoki</span>
+          </div>
+          
+          <!-- Login Link -->
+          <p class="text-center mb-0">
+            Allaqachon a'zomisiz?
+            <a href="{% url 'accounts:login' %}" class="auth-link">
+              Tizimga kirish
+            </a>
+          </p>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

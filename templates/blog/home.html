@@ -1,0 +1,364 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Bosh Sahifa{% endblock %}
+
+{% block extra_css %}
+<style>
+  .hero-section {
+    position: relative;
+    border-radius: 24px;
+    overflow: hidden;
+    background: radial-gradient(100% 225% at 0% 0%, rgba(79, 70, 229, 0.6) 0%, rgba(236, 72, 153, 0.3) 100%), var(--light);
+  }
+  
+  .hero-particles {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    overflow: hidden;
+    z-index: 0;
+  }
+  
+  .hero-particle {
+    position: absolute;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.3);
+    pointer-events: none;
+  }
+  
+  .post-card {
+    height: 100%;
+    border-radius: 16px;
+    overflow: hidden;
+    transition: all 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+  }
+  
+  .post-card:hover {
+    transform: translateY(-10px) scale(1.02);
+    box-shadow: 0 30px 60px -12px rgba(50, 50, 93, 0.25),
+                0 18px 36px -18px rgba(0, 0, 0, 0.3);
+  }
+  
+  .post-card .content {
+    z-index: 1;
+    position: relative;
+  }
+  
+  .post-card .overlay {
+    background: linear-gradient(to top, rgba(0,0,0,0.8) 0%, transparent 100%);
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    height: 50%;
+    z-index: 0;
+  }
+  
+  .post-video-container {
+    height: 200px;
+    overflow: hidden;
+    position: relative;
+  }
+  
+  .post-video-container::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0,0,0,0.1);
+    z-index: 1;
+  }
+  
+  .play-button {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    z-index: 2;
+    width: 60px;
+    height: 60px;
+    border-radius: 50%;
+    background: var(--gradient-primary);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-size: 1.5rem;
+    opacity: 0.9;
+    transition: all 0.3s ease;
+    box-shadow: 0 15px 35px rgba(50, 50, 93, 0.3);
+  }
+  
+  .post-card:hover .play-button {
+    transform: translate(-50%, -50%) scale(1.1);
+    opacity: 1;
+  }
+  
+  .card-badge {
+    position: absolute;
+    top: 15px;
+    right: 15px;
+    z-index: 2;
+    padding: 5px 12px;
+    border-radius: 30px;
+    font-size: 0.75rem;
+    font-weight: 600;
+    letter-spacing: 0.5px;
+    text-transform: uppercase;
+    background: rgba(255, 255, 255, 0.95);
+    color: var(--primary);
+    box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+  }
+  
+  .swiper-pagination-bullet {
+    width: 10px;
+    height: 10px;
+    background: var(--gradient-primary);
+    opacity: 0.5;
+  }
+  
+  .swiper-pagination-bullet-active {
+    opacity: 1;
+    width: 20px;
+    border-radius: 5px;
+  }
+</style>
+{% endblock %}
+
+{% block content %}
+<!-- Hero Section -->
+<section class="hero-section glass-card p-5 mb-5" data-aos="fade-up">
+  <div class="hero-particles"></div>
+  <div class="row align-items-center position-relative" style="z-index:1">
+    <div class="col-lg-7 py-4">
+      <h1 class="display-4 fw-bold text-white mb-4 animate__animated animate__fadeInUp">
+        Isomer  – Oil <span class="text-white">Blogga</span> Xush Kelibsiz!
+      </h1>
+      <p class="lead text-white opacity-90 mb-4 animate__animated animate__fadeInUp" style="animation-delay: 0.2s">
+        Zamonaviy platformada eng so'nggi postlar va video materiallarni bitta joyda ko'rishingiz mumkin.
+      </p>
+      <div class="d-flex gap-3 animate__animated animate__fadeInUp" style="animation-delay: 0.3s">
+        <a href="{% url 'blog:category_list' %}" class="btn btn-light btn-lg rounded-pill px-4">
+          <i class="fas fa-layer-group me-2"></i> Kategoriyalarni koʻrish
+        </a>
+        <a href="#latest-posts" class="btn btn-outline-light btn-lg rounded-pill px-4">
+          <i class="fas fa-arrow-down me-2"></i> So'nggi Postlar
+        </a>
+      </div>
+    </div>
+    <div class="col-lg-5 d-none d-lg-block">
+      <div class="text-center animate__animated animate__zoomIn" style="animation-delay: 0.3s">
+        <img src="https://cdn-icons-png.flaticon.com/512/2593/2593052.png" alt="Illustration" class="img-fluid" width="300">
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- Latest Posts Section -->
+<section id="latest-posts" class="mb-5">
+  <div class="d-flex justify-content-between align-items-center mb-4">
+    <h2 class="fw-bold" data-aos="fade-right">
+      <i class="fas fa-fire-alt text-primary me-2"></i> So'nggi Postlar
+    </h2>
+    <div class="d-flex">
+      {% if is_admin %}
+      <form method="get" class="me-3">
+        <div class="input-group">
+          <select name="view_as_role" class="form-select" style="max-width: 200px; border-top-right-radius: 0; border-bottom-right-radius: 0;">
+            <option value="">Все роли</option>
+            {% for role_key, role_name in roles %}
+              <option value="{{ role_key }}" {% if selected_role == role_key %}selected{% endif %}>{{ role_name }}</option>
+            {% endfor %}
+          </select>
+          <button class="btn btn-primary" type="submit">
+            <i class="fas fa-eye me-1"></i> Показать
+          </button>
+        </div>
+      </form>
+      {% endif %}
+      <a href="{% url 'blog:category_list' %}" class="btn btn-sm btn-outline-primary rounded-pill px-3" data-aos="fade-left">
+        <i class="fas fa-th-large me-1"></i> Barcha Kategoriyalar
+      </a>
+    </div>
+  </div>
+
+  {% if latest_posts %}
+    <div class="swiper-container">
+      <div class="swiper mySwiper">
+        <div class="swiper-wrapper">
+          {% for post in latest_posts %}
+            <div class="swiper-slide p-2" data-aos="fade-up" data-aos-delay="{{ forloop.counter|add:'100' }}">
+              <div class="post-card shadow-sm">
+                {% if post.video %}
+                  <div class="post-video-container">
+                    <video src="{{ post.video.url }}" class="w-100 h-100 object-fit-cover"></video>
+                    <div class="play-button">
+                      <i class="fas fa-play"></i>
+                    </div>
+                    <span class="card-badge">
+                      <i class="fas fa-folder-open me-1"></i> {{ post.category.name }}
+                    </span>
+                    <span class="card-badge" style="top: 55px;">
+                      <i class="fas fa-user-tag me-1"></i> {{ post.get_role_display }}
+                    </span>
+                  </div>
+                {% else %}
+                  <div class="post-video-container bg-light d-flex align-items-center justify-content-center">
+                    <i class="fas fa-file-alt fa-3x text-primary opacity-25"></i>
+                    <span class="card-badge">
+                      <i class="fas fa-folder-open me-1"></i> {{ post.category.name }}
+                    </span>
+                    <span class="card-badge" style="top: 55px;">
+                      <i class="fas fa-user-tag me-1"></i> {{ post.get_role_display }}
+                    </span>
+                  </div>
+                {% endif %}
+                <div class="p-4">
+                  <h5 class="fw-bold mb-3">{{ post.title }}</h5>
+                  <p class="text-muted mb-3">{{ post.content|truncatechars:85 }}</p>
+                  <div class="d-flex justify-content-between align-items-center">
+                    <span class="small text-muted">
+                      <i class="far fa-calendar-alt me-1"></i> {{ post.created_at|date:"d.m.Y" }}
+                    </span>
+                    <a href="{% url 'blog:post_detail' post.id %}" class="btn btn-sm btn-primary rounded-pill px-3">
+                      Batafsil
+                    </a>
+                  </div>
+                </div>
+              </div>
+            </div>
+          {% endfor %}
+        </div>
+        <div class="swiper-pagination mt-4"></div>
+      </div>
+    </div>
+  {% else %}
+    <div class="glass-card p-5 text-center" data-aos="fade-up">
+      <div class="mb-4">
+        <i class="fas fa-inbox fa-3x text-muted opacity-50"></i>
+      </div>
+      <h3 class="fw-bold">Hozircha hech qanday post mavjud emas</h3>
+      <p class="text-muted">Tez orada kontentlar qo'shiladi</p>
+    </div>
+  {% endif %}
+</section>
+
+<!-- Features Section -->
+<section class="mb-5">
+  <div class="row g-4">
+    <div class="col-md-4" data-aos="fade-up" data-aos-delay="100">
+      <div class="glass-card h-100 p-4 text-center">
+        <div class="feature-icon mb-3">
+          <i class="fas fa-shield-alt fa-2x text-primary"></i>
+        </div>
+        <h4 class="fw-bold mb-3">Himoyalangan</h4>
+        <p class="text-muted mb-0">Barcha ma'lumotlar xavfsiz saqlananadi va faqat ro'yxatdan o'tgan foydalanuvchilar uchun ochiq.</p>
+      </div>
+    </div>
+    <div class="col-md-4" data-aos="fade-up" data-aos-delay="200">
+      <div class="glass-card h-100 p-4 text-center">
+        <div class="feature-icon mb-3">
+          <i class="fas fa-mobile-alt fa-2x text-primary"></i>
+        </div>
+        <h4 class="fw-bold mb-3">Adaptiv Dizayn</h4>
+        <p class="text-muted mb-0">Barcha qurilmalarda mukammal ishlaydi - mobil telefonlar, planshetlar va kompyuterlar.</p>
+      </div>
+    </div>
+    <div class="col-md-4" data-aos="fade-up" data-aos-delay="300">
+      <div class="glass-card h-100 p-4 text-center">
+        <div class="feature-icon mb-3">
+          <i class="fas fa-video fa-2x text-primary"></i>
+        </div>
+        <h4 class="fw-bold mb-3">Video Kontentlar</h4>
+        <p class="text-muted mb-0">Zamonaviy video player bilan sifatli video materiallarni ko'rishingiz mumkin.</p>
+      </div>
+    </div>
+  </div>
+</section>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+  // Hero particles animation
+  document.addEventListener('DOMContentLoaded', function() {
+    const particlesContainer = document.querySelector('.hero-particles');
+    const particleCount = 20;
+    
+    for (let i = 0; i < particleCount; i++) {
+      const size = Math.random() * 10 + 5;
+      const particle = document.createElement('div');
+      particle.classList.add('hero-particle');
+      particle.style.width = `${size}px`;
+      particle.style.height = `${size}px`;
+      particle.style.opacity = Math.random() * 0.5 + 0.1;
+      particle.style.left = `${Math.random() * 100}%`;
+      particle.style.top = `${Math.random() * 100}%`;
+      
+      // Animation
+      const duration = Math.random() * 20 + 10;
+      const delay = Math.random() * 5;
+      
+      gsap.to(particle, {
+        y: -100,
+        x: Math.random() * 100 - 50,
+        duration: duration,
+        repeat: -1,
+        delay: delay,
+        ease: "linear"
+      });
+      
+      particlesContainer.appendChild(particle);
+    }
+  });
+  
+  // Initialize Swiper
+  document.addEventListener('DOMContentLoaded', function() {
+    new Swiper(".mySwiper", {
+      slidesPerView: 1,
+      spaceBetween: 20,
+      pagination: {
+        el: ".swiper-pagination",
+        clickable: true,
+      },
+      breakpoints: {
+        640: {
+          slidesPerView: 1,
+          spaceBetween: 20,
+        },
+        768: {
+          slidesPerView: 2,
+          spaceBetween: 30,
+        },
+        1024: {
+          slidesPerView: 3,
+          spaceBetween: 30,
+        },
+      },
+      autoplay: {
+        delay: 3500,
+        disableOnInteraction: false,
+      },
+    });
+    
+    // Video play functionality
+    const playButtons = document.querySelectorAll('.play-button');
+    playButtons.forEach(button => {
+      button.addEventListener('click', function() {
+        const video = this.parentElement.querySelector('video');
+        if (video.paused) {
+          video.play();
+          this.innerHTML = '<i class="fas fa-pause"></i>';
+        } else {
+          video.pause();
+          this.innerHTML = '<i class="fas fa-play"></i>';
+        }
+      });
+    });
+  });
+</script>
+{% endblock %}
