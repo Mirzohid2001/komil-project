@@ -21,6 +21,8 @@ from xhtml2pdf import pisa
 import qrcode
 from PIL import Image, ImageDraw, ImageFont
 import base64
+from django.urls import reverse
+from django.templatetags.static import static
 
 from .forms import SignUpForm, ProfileUpdateForm
 
@@ -193,79 +195,83 @@ def favorites_list(request):
 @login_required
 def learning_progress(request):
     """Страница с прогрессом обучения по категориям"""
-    # Получаем все категории и прогресс пользователя
-    categories = Category.objects.all()
+    from courses.models import Enrollment, Course, CompletedLesson
     
-    # Получаем или создаем записи о прогрессе для каждой категории
-    progress_by_category = {}
+    # Получаем записи о зачислении пользователя на курсы
+    enrollments = Enrollment.objects.filter(user=request.user).select_related('course')
     
-    for category in categories:
-        progress, created = LearningProgress.objects.get_or_create(
-            user=request.user,
-            category=category
-        )
+    # Обновляем статус завершения для каждой записи
+    for enrollment in enrollments:
+        enrollment.progress()
+    
+    # Получаем обновленные данные
+    enrollments = Enrollment.objects.filter(user=request.user).select_related('course')
+    
+    # Статистика по курсам
+    enrolled_courses_count = enrollments.count()
+    completed_courses_count = enrollments.filter(is_completed=True).count()
+    active_courses_count = enrollments.filter(is_completed=False).count()
+    
+    # Средний балл по курсам
+    average_score = 0
+    if enrollments.count() > 0:
+        total_progress = sum(enrollment.progress() for enrollment in enrollments)
+        average_score = round(total_progress / enrollments.count())
+    
+    # Получаем активные курсы
+    active_courses = []
+    for enrollment in enrollments.filter(is_completed=False):
+        # Получаем уроки и завершенные уроки
+        total_lessons = enrollment.course.total_lessons()
+        completed_lessons = CompletedLesson.objects.filter(
+            enrollment=enrollment, user=request.user
+        ).count()
         
-        # Получаем все посты в категории
-        posts = Post.objects.filter(category=category)
-        
-        # Считаем количество просмотренных постов в категории
-        viewed_posts = progress.posts_viewed.all()
-        
-        # Проверяем, завершена ли категория
-        total_posts = posts.count()
-        is_completed = (viewed_posts.count() == total_posts) and total_posts > 0
-        
-        # Если категория не отмечена как завершенная, но все посты просмотрены,
-        # обновляем статус и проверяем выдачу сертификата
-        if is_completed and not progress.is_completed:
-            progress.is_completed = True
-            progress.save()
-            
-            # Проверяем, нужно ли выдать сертификат
-            if not Certificate.objects.filter(user=request.user, category=category).exists():
-                # Генерируем уникальный ID сертификата
-                certificate_id = f"CERT-{category.id}-{request.user.id}-{uuid.uuid4().hex[:8].upper()}"
-                
-                # Создаем сертификат
-                certificate = Certificate.objects.create(
-                    user=request.user,
-                    category=category,
-                    certificate_id=certificate_id
-                )
-                
-                # Генерируем файл сертификата
-                generate_certificate_file(certificate)
-                
-                # Даем пользователю очки опыта за завершение категории
-                request.user.add_experience(200)
-                
-                # Проверяем достижение "Завершение категории"
-                check_category_completion_achievement(request.user)
-                
-                messages.success(
-                    request, 
-                    f"Поздравляем! Вы завершили категорию '{category.name}' и получили сертификат."
-                )
-        
-        # Собираем данные для отображения
-        progress_by_category[category.id] = {
-            'category': category,
-            'progress': progress,
-            'viewed_count': viewed_posts.count(),
-            'total_count': total_posts,
-            'percentage': progress.completion_percentage(),
-            'is_completed': progress.is_completed,
-            'posts': [
-                {
-                    'post': post,
-                    'is_viewed': post in viewed_posts
-                }
-                for post in posts
-            ]
+        course_data = {
+            'title': enrollment.course.title,
+            'url': reverse('courses:detail', args=[enrollment.course.slug]),
+            'image': enrollment.course.cover,
+            'teacher': 'Администратор',
+            'enrollment_date': enrollment.enrolled_at,
+            'progress': enrollment.progress(),
+            'completed_lessons': completed_lessons,
+            'total_lessons': total_lessons
         }
+        active_courses.append(course_data)
+    
+    # Получаем завершенные курсы
+    completed_courses = []
+    for enrollment in enrollments.filter(is_completed=True):
+        course_data = {
+            'title': enrollment.course.title,
+            'url': reverse('courses:detail', args=[enrollment.course.slug]),
+            'image': enrollment.course.cover,
+            'teacher': 'Администратор',
+            'completion_date': enrollment.completed_at,
+            'score': 100,
+            'has_certificate': hasattr(enrollment, 'certificate'),
+            'certificate_id': enrollment.certificate.certificate_id if hasattr(enrollment, 'certificate') else None
+        }
+        completed_courses.append(course_data)
+    
+    # Сортируем по дате завершения (сначала недавние)
+    completed_courses.sort(key=lambda x: x['completion_date'], reverse=True)
+    
+    # Получаем рекомендуемые курсы (курсы, на которые пользователь не записан)
+    recommended_courses = Course.objects.filter(
+        status='published'
+    ).exclude(
+        id__in=[enrollment.course.id for enrollment in enrollments]
+    )[:3]
     
     context = {
-        'progress_by_category': progress_by_category,
+        'enrolled_courses_count': enrolled_courses_count,
+        'completed_courses_count': completed_courses_count,
+        'active_courses_count': active_courses_count,
+        'average_score': average_score,
+        'active_courses': active_courses,
+        'completed_courses': completed_courses,
+        'recommended_courses': recommended_courses
     }
     
     return render(request, 'accounts/learning_progress.html', context)
@@ -278,68 +284,101 @@ def user_achievements(request):
     user_achievements = UserAchievement.objects.filter(user=request.user).select_related('achievement')
     
     # Получаем все достижения для отображения прогресса
-    all_achievements = Achievement.objects.all()
-    
-    # Группируем достижения по типам
-    achievement_types = dict(Achievement.ACHIEVEMENT_TYPES)
-    achievements_by_type = {}
-    
-    # Создаем словарь с информацией о достижениях пользователя
-    for ach_type, type_name in achievement_types.items():
-        achievements_of_type = []
+    try:
+        all_achievements = Achievement.objects.all()
         
-        for achievement in all_achievements.filter(type=ach_type):
-            # Проверяем, получено ли достижение пользователем
-            user_achievement = next(
-                (ua for ua in user_achievements if ua.achievement.id == achievement.id), 
-                None
-            )
+        # Группируем достижения по типам
+        achievement_types = dict(Achievement.ACHIEVEMENT_TYPES)
+        achievements_by_type = {}
+        
+        # Создаем словарь с информацией о достижениях пользователя
+        for ach_type, type_name in achievement_types.items():
+            achievements_of_type = []
             
-            # Если достижение получено
-            if user_achievement:
-                achievements_of_type.append({
-                    'achievement': achievement,
-                    'user_achievement': user_achievement,
-                    'is_earned': True,
-                    'progress': 100,
-                    'earned_at': user_achievement.earned_at
-                })
-            # Если достижение не получено, но не является секретным
-            elif not achievement.is_secret:
-                # Получаем текущий прогресс пользователя для этого достижения
-                progress = get_achievement_progress(request.user, achievement)
-                achievements_of_type.append({
-                    'achievement': achievement,
-                    'user_achievement': None,
-                    'is_earned': False,
-                    'progress': min(100, int(progress / achievement.required_value * 100)),
-                    'current_value': progress,
-                    'required_value': achievement.required_value
-                })
-            # Если достижение секретное и не получено, не показываем детали
-            elif achievement.is_secret:
-                achievements_of_type.append({
-                    'achievement': {
-                        'name': '???',
-                        'description': 'Секретное достижение',
-                        'icon': '/static/img/secret_achievement.png'
-                    },
-                    'user_achievement': None,
-                    'is_earned': False,
-                    'is_secret': True,
-                    'progress': 0
-                })
+            for achievement in all_achievements.filter(type=ach_type):
+                try:
+                    # Проверяем, получено ли достижение пользователем
+                    user_achievement = next(
+                        (ua for ua in user_achievements if ua.achievement.id == achievement.id), 
+                        None
+                    )
+                    
+                    # Если достижение получено
+                    if user_achievement:
+                        achievements_of_type.append({
+                            'achievement': achievement,
+                            'user_achievement': user_achievement,
+                            'is_earned': True,
+                            'progress': 100,
+                            'earned_at': user_achievement.earned_at
+                        })
+                    # Если достижение не получено, но не является секретным
+                    elif not achievement.is_secret:
+                        # Получаем текущий прогресс пользователя для этого достижения
+                        try:
+                            progress = get_achievement_progress(request.user, achievement)
+                            required_value = achievement.required_value if achievement.required_value > 0 else 1
+                            progress_percentage = min(100, int(progress / required_value * 100))
+                        except:
+                            progress = 0
+                            progress_percentage = 0
+                            
+                        achievements_of_type.append({
+                            'achievement': achievement,
+                            'user_achievement': None,
+                            'is_earned': False,
+                            'progress': progress_percentage,
+                            'current_value': progress,
+                            'required_value': achievement.required_value
+                        })
+                    # Если достижение секретное и не получено, не показываем детали
+                    elif achievement.is_secret:
+                        achievements_of_type.append({
+                            'achievement': {
+                                'name': '???',
+                                'description': 'Секретное достижение',
+                                'icon': '/static/img/secret_achievement.png'
+                            },
+                            'user_achievement': None,
+                            'is_earned': False,
+                            'is_secret': True,
+                            'progress': 0
+                        })
+                except Exception as e:
+                    # Если произошла ошибка при обработке достижения, пропускаем его
+                    continue
+            
+            if achievements_of_type:
+                achievements_by_type[type_name] = achievements_of_type
         
-        if achievements_of_type:
-            achievements_by_type[type_name] = achievements_of_type
-    
-    context = {
-        'achievements_by_type': achievements_by_type,
-        'total_achievements': all_achievements.count(),
-        'earned_achievements': user_achievements.count(),
-        'completion_percentage': (user_achievements.count() / all_achievements.count() * 100) if all_achievements.count() > 0 else 0,
-        'total_experience_gained': sum(ua.achievement.experience_reward for ua in user_achievements)
-    }
+        # Безопасный расчет показателей
+        total_achievements = all_achievements.count()
+        earned_achievements = user_achievements.count()
+        
+        try:
+            completion_percentage = (earned_achievements / total_achievements * 100) if total_achievements > 0 else 0
+            total_experience_gained = sum(ua.achievement.experience_reward for ua in user_achievements)
+        except:
+            completion_percentage = 0
+            total_experience_gained = 0
+        
+        context = {
+            'achievements_by_type': achievements_by_type,
+            'total_achievements': total_achievements,
+            'earned_achievements': earned_achievements,
+            'completion_percentage': completion_percentage,
+            'total_experience_gained': total_experience_gained
+        }
+    except Exception as e:
+        # В случае критической ошибки возвращаем пустой контекст
+        context = {
+            'achievements_by_type': {},
+            'total_achievements': 0,
+            'earned_achievements': 0,
+            'completion_percentage': 0,
+            'total_experience_gained': 0,
+            'error_message': 'Ошибка при загрузке достижений'
+        }
     
     return render(request, 'accounts/user_achievements.html', context)
 
@@ -347,7 +386,7 @@ def user_achievements(request):
 @login_required
 def user_certificates(request):
     """Страница с сертификатами пользователя"""
-    # Получаем сертификаты пользователя
+    # Получаем сертификаты пользователя (категории)
     certificates = Certificate.objects.filter(user=request.user).select_related('category')
     
     # Получаем категории, для которых нет сертификатов
@@ -366,8 +405,83 @@ def user_certificates(request):
             category = Category.objects.get(id=cat_id)
             missing_certificates.append(category)
     
+    # Обогащаем данные сертификатов для шаблона
+    enriched_certificates = []
+    for cert in certificates:
+        # Определяем данные для отображения в шаблоне
+        enriched_cert = {
+            'id': cert.id,
+            'category': cert.category,
+            'issued_at': cert.issued_at,
+            'certificate_id': cert.certificate_id,
+            'name': cert.category.name,
+            'type': 'category',
+            'type_display': 'Категория',
+            'issue_date': cert.issued_at,
+            'score': 100,
+            'instructor': 'Администратор системы',
+            'duration': '4 недели',
+            'view_url': f"#preview-{cert.id}",
+            'download_url': reverse('accounts:download_certificate', args=[cert.id]),
+            'background_image': static('img/certificate-background.jpg') if os.path.exists(
+                os.path.join(settings.STATIC_ROOT, 'img/certificate-background.jpg')
+            ) else None
+        }
+        enriched_certificates.append(enriched_cert)
+    
+    # Получаем сертификаты курсов пользователя
+    from courses.models import CourseCertificate, Enrollment, Course
+    
+    course_certificates = CourseCertificate.objects.filter(
+        enrollment__user=request.user
+    ).select_related('enrollment__course')
+    
+    # Добавляем сертификаты курсов
+    for cert in course_certificates:
+        course = cert.enrollment.course
+        
+        # Проверяем и получаем создателя курса, если он существует
+        course_creator = 'Администратор системы'
+        try:
+            if hasattr(course, 'creator') and course.creator:
+                if hasattr(course.creator, 'get_full_name') and course.creator.get_full_name():
+                    course_creator = course.creator.get_full_name()
+        except:
+            pass
+        
+        # Форматируем продолжительность курса
+        if course.duration:
+            hours = course.duration // 60
+            minutes = course.duration % 60
+            if hours > 0:
+                duration = f"{hours} час. {minutes} мин." if minutes > 0 else f"{hours} час."
+            else:
+                duration = f"{minutes} мин."
+        else:
+            duration = "Не указано"
+        
+        course_cert = {
+            'id': f"course_{cert.id}",  # Добавляем префикс для уникальности
+            'issued_at': cert.issue_date,
+            'certificate_id': cert.certificate_id,
+            'name': cert.title,
+            'type': 'course',
+            'type_display': 'Курс',
+            'issue_date': cert.issue_date,
+            'score': 100,
+            'instructor': course_creator,
+            'duration': duration,
+            'view_url': reverse('courses:view_certificate', args=[cert.certificate_id]),
+            'download_url': reverse('courses:download_certificate', args=[cert.certificate_id]),
+            'background_image': cert.preview_image.url if cert.preview_image else None
+        }
+        enriched_certificates.append(course_cert)
+    
+    # Сортируем все сертификаты по дате выдачи (сначала новые)
+    enriched_certificates.sort(key=lambda x: x['issue_date'], reverse=True)
+    
     context = {
-        'certificates': certificates,
+        'certificates': enriched_certificates,
         'missing_certificates': missing_certificates
     }
     
@@ -406,6 +520,7 @@ def user_statistics(request):
         activity_type__in=['view_post', 'view_video']
     ).count()
     
+    # Безопасно получаем результаты тестов
     test_results = TestResult.objects.filter(user=request.user)
     tests_taken = test_results.count()
     tests_passed = test_results.filter(is_passed=True).count()
@@ -435,26 +550,154 @@ def user_statistics(request):
     daily_activity = UserActivity.objects.filter(
         user=request.user,
         timestamp__range=[start_date, end_date]
-    ).values('timestamp__date').annotate(count=Count('id')).order_by('timestamp__date')
+    ).values('timestamp__date').annotate(
+        count=Count('id'),
+        total_duration=Sum('duration', default=0)
+    ).order_by('timestamp__date')
     
     activity_data = {
         'labels': [item['timestamp__date'].strftime('%d.%m.%Y') for item in daily_activity],
-        'data': [item['count'] for item in daily_activity]
+        'data': [item['total_duration'] for item in daily_activity]
+    }
+    
+    # Получаем информацию о курсах пользователя
+    from courses.models import Enrollment, Course, CompletedLesson
+    
+    # Получаем все записи пользователя на курсы
+    enrollments = Enrollment.objects.filter(user=request.user).select_related('course')
+    
+    # Принудительно обновляем статус завершения для каждой записи на курс
+    for enrollment in enrollments:
+        # Вызываем метод progress() для проверки и обновления статуса
+        enrollment.progress()
+    
+    # Обновляем запрос после возможных изменений
+    enrollments = Enrollment.objects.filter(user=request.user).select_related('course')
+    
+    # Общая статистика по курсам
+    enrolled_courses_count = enrollments.count()
+    completed_courses_count = enrollments.filter(is_completed=True).count()
+    active_courses_count = enrollments.filter(is_completed=False).count()
+    
+    # Завершенные курсы в процентном соотношении
+    completed_courses_percentage = (completed_courses_count / enrolled_courses_count * 100) if enrolled_courses_count > 0 else 0
+    
+    # Подготовка данных о курсах для отображения в таблице
+    courses_data = []
+    total_scores = 0
+    courses_with_scores = 0
+    
+    for enrollment in enrollments:
+        # Получаем завершенные уроки для этой конкретной записи
+        completed_lessons_count = CompletedLesson.objects.filter(
+            enrollment=enrollment,
+            user=request.user
+        ).count()
+        
+        total_lessons = enrollment.course.total_lessons()
+        progress_percentage = (completed_lessons_count / total_lessons * 100) if total_lessons > 0 else 0
+        
+        # Безопасно получаем результаты тестов пользователя по этому курсу
+        try:
+            course_test_results = TestResult.objects.filter(
+                user=request.user,
+                test__lesson__module__course=enrollment.course
+            )
+            
+            # Средний балл по курсу
+            if course_test_results.exists():
+                course_score = course_test_results.aggregate(avg_score=Avg('score'))['avg_score']
+                total_scores += course_score
+                courses_with_scores += 1
+            else:
+                course_score = progress_percentage  # Если нет тестов, используем прогресс
+                total_scores += course_score
+                courses_with_scores += 1
+        except Exception as e:
+            # Если произошла ошибка при получении результатов тестов, используем прогресс
+            course_score = progress_percentage
+            total_scores += course_score
+            courses_with_scores += 1
+        
+        # Безопасно получаем данные о создателе курса
+        try:
+            teacher = enrollment.course.creator.get_full_name() if hasattr(enrollment.course, 'creator') and enrollment.course.creator else 'Администратор'
+        except:
+            teacher = 'Администратор'
+        
+        # Информация о курсе для шаблона
+        course_info = {
+            'title': enrollment.course.title,
+            'url': reverse('courses:detail', args=[enrollment.course.slug]),
+            'teacher': teacher,
+            'progress': int(progress_percentage),
+            'score': int(course_score),
+            'completion_date': enrollment.completed_at if enrollment.is_completed else None
+        }
+        
+        courses_data.append(course_info)
+    
+    # Сортируем курсы - сначала завершенные, затем по прогрессу
+    courses_data.sort(key=lambda x: (-1 if x['completion_date'] else 0, x['progress']), reverse=True)
+    
+    # Средний балл по всем курсам
+    average_score = int(total_scores / courses_with_scores) if courses_with_scores > 0 else 0
+    
+    # Статистика активности по дням недели (для графика)
+    # Получаем данные за последние 30 дней
+    now = timezone.now()
+    week_ago = now - timedelta(days=7)
+    
+    # Получаем активность пользователя за последнюю неделю по дням недели
+    weekly_activity = UserActivity.objects.filter(
+        user=request.user,
+        timestamp__range=[week_ago, now]
+    ).values('timestamp__week_day').annotate(
+        count=Count('id'),
+        total_duration=Sum('duration', default=0)
+    ).order_by('timestamp__week_day')
+    
+    # Словарь для преобразования номера дня недели в название
+    weekdays = {
+        1: 'Dushanba',
+        2: 'Seshanba',
+        3: 'Chorshanba',
+        4: 'Payshanba',
+        5: 'Juma',
+        6: 'Shanba',
+        7: 'Yakshanba'
+    }
+    
+    # Создаем полный набор данных для всех дней недели (даже если нет активности)
+    weekly_data = {day: 0 for day in range(1, 8)}
+    for item in weekly_activity:
+        day_num = item['timestamp__week_day']
+        weekly_data[day_num] = item['total_duration']
+    
+    # Формируем данные для графика
+    weekly_activity_data = {
+        'labels': [weekdays[day] for day in sorted(weekly_data.keys())],
+        'data': [weekly_data[day] for day in sorted(weekly_data.keys())]
     }
     
     context = {
+        'user_points': request.user.experience_points,
+        'user_points_percentage': min(100, request.user.experience_points / 1000 * 100),
         'view_count': view_count,
         'tests_taken': tests_taken,
         'tests_passed': tests_passed,
-        'pass_rate': pass_rate,
+        'pass_rate': int(pass_rate),
         'xp_stats': xp_stats,
         'recent_achievements': recent_achievements,
         'level_ups': level_ups,
-        'activity_data_json': json.dumps(activity_data),
-        'certificates_count': Certificate.objects.filter(user=request.user).count(),
-        'achievements_count': UserAchievement.objects.filter(user=request.user).count(),
-        'categories_completed': LearningProgress.objects.filter(user=request.user, is_completed=True).count(),
-        'avg_test_score': test_results.aggregate(avg=Avg('percentage'))['avg'] or 0
+        'activity_data': activity_data,
+        'enrolled_courses_count': enrolled_courses_count,
+        'completed_courses_count': completed_courses_count,
+        'active_courses_count': active_courses_count,
+        'completed_courses_percentage': int(completed_courses_percentage),
+        'courses': courses_data,
+        'average_score': average_score,
+        'weekly_activity': weekly_activity_data
     }
     
     return render(request, 'accounts/user_statistics.html', context)
@@ -464,130 +707,199 @@ def user_statistics(request):
 
 def generate_certificate_file(certificate):
     """Генерирует PDF файл сертификата"""
-    # Создаем контекст для шаблона
-    context = {
-        'certificate': certificate,
-        'user': certificate.user,
-        'category': certificate.category,
-        'date': certificate.issued_at.strftime('%d.%m.%Y'),
-        'qr_code': generate_certificate_qr(certificate)
-    }
-    
-    # Получаем шаблон
-    template = get_template('accounts/certificate_template.html')
-    html = template.render(context)
-    
-    # Создаем PDF
-    result = BytesIO()
-    pdf = pisa.pisaDocument(BytesIO(html.encode("UTF-8")), result)
-    
-    if not pdf.err:
-        # Сохраняем PDF в поле файла сертификата
-        file_name = f"certificate_{certificate.certificate_id}.pdf"
-        file_path = os.path.join(settings.MEDIA_ROOT, 'certificates', file_name)
+    try:
+        # Создаем контекст для шаблона
+        verification_url = f"{settings.BASE_URL}/verify-certificate/{certificate.certificate_id}"
         
-        # Создаем директорию, если не существует
-        os.makedirs(os.path.dirname(file_path), exist_ok=True)
+        try:
+            qr_code_url = generate_certificate_qr(certificate)
+        except Exception:
+            # В случае ошибки генерации QR-кода используем пустое значение
+            qr_code_url = ""
         
-        # Сохраняем файл
-        with open(file_path, 'wb') as f:
-            f.write(result.getvalue())
+        # Получаем путь к изображению подписи или используем заглушку
+        signature_path = os.path.join(settings.STATIC_ROOT, 'img/signature.png')
+        if os.path.exists(signature_path):
+            # Если файл существует, кодируем его в base64
+            try:
+                with open(signature_path, 'rb') as img_file:
+                    signature_data = base64.b64encode(img_file.read()).decode('utf-8')
+                    signature_url = f"data:image/png;base64,{signature_data}"
+            except Exception:
+                signature_url = ""
+        else:
+            # Если файла нет, используем пустую строку
+            signature_url = ""
+            
+        context = {
+            'certificate': certificate,
+            'user': certificate.user,
+            'category': certificate.category,
+            'date': certificate.issued_at.strftime('%d.%m.%Y'),
+            'qr_code': qr_code_url,
+            'qr_code_url': qr_code_url,
+            'verification_url': verification_url,
+            'signature_url': signature_url
+        }
         
-        # Обновляем поле файла в модели
-        relative_path = os.path.join('certificates', file_name)
-        certificate.certificate_file = relative_path
-        certificate.save()
+        # Получаем шаблон
+        try:
+            template = get_template('accounts/certificate_template.html')
+            html = template.render(context)
+            
+            # Создаем PDF
+            result = BytesIO()
+            pdf = pisa.pisaDocument(BytesIO(html.encode("UTF-8")), result)
+            
+            if not pdf.err:
+                # Сохраняем PDF в поле файла сертификата
+                file_name = f"certificate_{certificate.certificate_id}.pdf"
+                file_path = os.path.join(settings.MEDIA_ROOT, 'certificates', file_name)
+                
+                # Создаем директорию, если не существует
+                try:
+                    os.makedirs(os.path.dirname(file_path), exist_ok=True)
+                    
+                    # Сохраняем файл
+                    with open(file_path, 'wb') as f:
+                        f.write(result.getvalue())
+                    
+                    # Обновляем поле файла в модели
+                    relative_path = os.path.join('certificates', file_name)
+                    certificate.certificate_file = relative_path
+                    certificate.save()
+                    
+                    return True
+                except Exception:
+                    # Если не удалось сохранить файл
+                    return False
+        except Exception:
+            # Если не удалось создать шаблон или PDF
+            return False
         
-        return True
-    
-    return False
+        return False
+    except Exception:
+        # В случае любой критической ошибки
+        return False
 
 def generate_certificate_qr(certificate):
     """Генерирует QR-код для сертификата"""
-    # Создаем QR-код с ссылкой для проверки сертификата
-    verification_url = f"{settings.BASE_URL}/verify-certificate/{certificate.certificate_id}"
-    qr = qrcode.QRCode(
-        version=1,
-        error_correction=qrcode.constants.ERROR_CORRECT_L,
-        box_size=10,
-        border=4,
-    )
-    qr.add_data(verification_url)
-    qr.make(fit=True)
-    
-    # Создаем изображение QR-кода
-    img = qr.make_image(fill_color="black", back_color="white")
-    
-    # Конвертируем изображение в base64 для вставки в HTML
-    buffered = BytesIO()
-    img.save(buffered, format="PNG")
-    img_str = base64.b64encode(buffered.getvalue()).decode()
-    
-    return f"data:image/png;base64,{img_str}"
+    try:
+        # Создаем QR-код с ссылкой для проверки сертификата
+        verification_url = f"{settings.BASE_URL}/verify-certificate/{certificate.certificate_id}"
+        qr = qrcode.QRCode(
+            version=1,
+            error_correction=qrcode.constants.ERROR_CORRECT_L,
+            box_size=10,
+            border=4,
+        )
+        qr.add_data(verification_url)
+        qr.make(fit=True)
+        
+        # Создаем изображение QR-кода
+        img = qr.make_image(fill_color="black", back_color="white")
+        
+        # Конвертируем изображение в base64 для вставки в HTML
+        buffered = BytesIO()
+        img.save(buffered, format="PNG")
+        img_str = base64.b64encode(buffered.getvalue()).decode()
+        
+        return f"data:image/png;base64,{img_str}"
+    except Exception as e:
+        # В случае любой ошибки возвращаем пустую строку
+        return ""
 
 def get_achievement_progress(user, achievement):
     """Возвращает текущий прогресс пользователя по достижению"""
-    if achievement.type == 'videos_watched':
-        return UserActivity.objects.filter(user=user, activity_type='view_video').count()
-    
-    elif achievement.type == 'tests_passed':
-        return TestResult.objects.filter(user=user, is_passed=True).count()
-    
-    elif achievement.type == 'perfect_score':
-        return TestResult.objects.filter(user=user, percentage=100).count()
-    
-    elif achievement.type == 'login_streak':
-        # Здесь должна быть логика подсчета последовательных дней входа
-        # Временно возвращаем количество логинов
-        return UserActivity.objects.filter(user=user, activity_type='login').count()
-    
-    elif achievement.type == 'category_complete':
-        return LearningProgress.objects.filter(user=user, is_completed=True).count()
-    
-    elif achievement.type == 'level_reached':
-        return user.level
-    
-    return 0
+    try:
+        if achievement.type == 'videos_watched':
+            return UserActivity.objects.filter(user=user, activity_type='view_video').count()
+        
+        elif achievement.type == 'tests_passed':
+            try:
+                return TestResult.objects.filter(user=user, is_passed=True).count()
+            except:
+                # Если возникла ошибка при доступе к TestResult, возвращаем 0
+                return 0
+        
+        elif achievement.type == 'perfect_score':
+            try:
+                return TestResult.objects.filter(user=user, percentage=100).count()
+            except:
+                # Если возникла ошибка при доступе к TestResult, возвращаем 0
+                return 0
+        
+        elif achievement.type == 'login_streak':
+            # Здесь должна быть логика подсчета последовательных дней входа
+            # Временно возвращаем количество логинов
+            return UserActivity.objects.filter(user=user, activity_type='login').count()
+        
+        elif achievement.type == 'category_complete':
+            try:
+                return LearningProgress.objects.filter(user=user, is_completed=True).count()
+            except:
+                # Если возникла ошибка при доступе к LearningProgress, возвращаем 0
+                return 0
+        
+        elif achievement.type == 'level_reached':
+            return user.level
+        
+        return 0
+    except Exception as e:
+        # В случае любой другой ошибки возвращаем 0
+        return 0
 
 def check_category_completion_achievement(user):
     """Проверяет достижение по завершению категорий"""
-    # Получаем количество завершенных категорий
-    completed_categories = LearningProgress.objects.filter(
-        user=user, is_completed=True
-    ).count()
-    
-    # Получаем достижения по завершению категорий
-    achievements = Achievement.objects.filter(
-        type='category_complete'
-    ).order_by('required_value')
-    
-    for achievement in achievements:
-        # Если пользователь достиг требуемого значения
-        if completed_categories >= achievement.required_value:
-            # Создаем запись о достижении, если её еще нет
-            user_achievement, created = UserAchievement.objects.get_or_create(
-                user=user,
-                achievement=achievement,
-                defaults={'current_value': completed_categories}
-            )
-            
-            # Если достижение было только что получено
-            if created:
-                # Даем пользователю опыт
-                user.add_experience(achievement.experience_reward)
-                
-                # Записываем информацию о событии
-                UserActivity.objects.create(
-                    user=user,
-                    activity_type='favorite_add',  # Используем существующий тип
-                    details={
-                        'action': 'achievement_earned',
-                        'achievement_id': achievement.id,
-                        'achievement_name': achievement.name,
-                        'reward': achievement.experience_reward
-                    }
-                )
-            # Если достижение уже было, обновляем его значение
-            elif user_achievement.current_value < completed_categories:
-                user_achievement.current_value = completed_categories
-                user_achievement.save()
+    try:
+        # Получаем количество завершенных категорий
+        completed_categories = LearningProgress.objects.filter(
+            user=user, is_completed=True
+        ).count()
+        
+        # Получаем достижения по завершению категорий
+        achievements = Achievement.objects.filter(
+            type='category_complete'
+        ).order_by('required_value')
+        
+        for achievement in achievements:
+            try:
+                # Если пользователь достиг требуемого значения
+                if completed_categories >= achievement.required_value:
+                    # Создаем запись о достижении, если её еще нет
+                    user_achievement, created = UserAchievement.objects.get_or_create(
+                        user=user,
+                        achievement=achievement,
+                        defaults={'current_value': completed_categories}
+                    )
+                    
+                    # Если достижение было только что получено
+                    if created:
+                        try:
+                            # Даем пользователю опыт
+                            user.add_experience(achievement.experience_reward)
+                            
+                            # Записываем информацию о событии
+                            UserActivity.objects.create(
+                                user=user,
+                                activity_type='favorite_add',  # Используем существующий тип
+                                details={
+                                    'action': 'achievement_earned',
+                                    'achievement_id': achievement.id,
+                                    'achievement_name': achievement.name,
+                                    'reward': achievement.experience_reward
+                                }
+                            )
+                        except Exception as e:
+                            # Если не удалось дать опыт или создать запись активности, продолжаем
+                            pass
+                    # Если достижение уже было, обновляем его значение
+                    elif user_achievement.current_value < completed_categories:
+                        user_achievement.current_value = completed_categories
+                        user_achievement.save()
+            except Exception as e:
+                # Если произошла ошибка при обработке конкретного достижения, пропускаем его
+                continue
+    except Exception as e:
+        # Если произошла критическая ошибка, просто выходим из функции
+        pass

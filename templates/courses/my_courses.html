@@ -1,0 +1,230 @@
+{% extends 'courses/base.html' %}
+{% load static %}
+
+{% block title %}Mening kurslarim{% endblock %}
+
+{% block breadcrumb_items %}
+<li class="breadcrumb-item active" aria-current="page">Mening kurslarim</li>
+{% endblock %}
+
+{% block courses_content %}
+<div class="row">
+  <div class="col-lg-9">
+    <!-- Активные курсы -->
+    <div class="mb-5">
+      <h2 class="h4 mb-4">Davom etayotgan kurslar</h2>
+      
+      {% if active_enrollments %}
+        <div class="row row-cols-1 row-cols-md-2 row-cols-lg-3 g-4">
+          {% for enrollment in active_enrollments %}
+            <div class="col">
+              <div class="card h-100 glass-card">
+                {% if enrollment.course.cover %}
+                <img src="{{ enrollment.course.cover.url }}" class="card-img-top" alt="{{ enrollment.course.title }}" 
+                     style="height: 160px; object-fit: cover;">
+                {% else %}
+                <div class="card-img-top bg-light d-flex align-items-center justify-content-center" 
+                     style="height: 160px;">
+                  <i class="fas fa-book-open fa-3x text-muted"></i>
+                </div>
+                {% endif %}
+                <div class="card-body">
+                  <h5 class="card-title fw-bold">{{ enrollment.course.title }}</h5>
+                  <p class="card-text small text-muted">{{ enrollment.course.short_description|truncatechars:80 }}</p>
+                  
+                  <!-- Прогресс курса -->
+                  <div class="progress mt-3 mb-2" style="height: 8px;">
+                    <div class="progress-bar progress-bar-striped progress-bar-animated" role="progressbar" 
+                         style="width: {{ enrollment.progress_percent }}%;" 
+                         aria-valuenow="{{ enrollment.progress_percent }}" aria-valuemin="0" aria-valuemax="100"></div>
+                  </div>
+                  <p class="small text-muted mb-0">
+                    <strong>{{ enrollment.progress_percent }}%</strong> yakunlangan
+                  </p>
+                </div>
+                <div class="card-footer bg-transparent border-top-0">
+                  <div class="d-flex justify-content-between align-items-center">
+                    <small class="text-muted">
+                      <i class="fas fa-calendar-alt me-1"></i> {{ enrollment.enrolled_at|date:"d.m.Y" }}
+                    </small>
+                    <a href="{% url 'courses:learn' enrollment.course.slug %}" class="btn btn-sm btn-primary rounded-pill px-3">
+                      Davom ettirish
+                    </a>
+                  </div>
+                </div>
+              </div>
+            </div>
+          {% endfor %}
+        </div>
+      {% else %}
+        <div class="card shadow-sm p-4 text-center">
+          <div class="mb-3">
+            <i class="fas fa-book fa-3x text-muted opacity-50"></i>
+          </div>
+          <h3 class="h4 fw-bold">Siz hali hech qanday kursga yozilmagansiz</h3>
+          <p class="text-muted mb-4">Quyidagi tavsiya etilgan kurslardan birini tanlang yoki barcha kurslarni ko'ring</p>
+          <a href="{% url 'courses:list' %}" class="btn btn-primary rounded-pill px-4">
+            <i class="fas fa-list me-2"></i> Barcha kurslar
+          </a>
+        </div>
+      {% endif %}
+    </div>
+    
+    <!-- Завершенные курсы -->
+    {% if completed_enrollments %}
+    <div class="mb-5">
+      <h2 class="h4 mb-4">Yakunlangan kurslar</h2>
+      
+      <div class="row row-cols-1 row-cols-md-2 row-cols-lg-3 g-4">
+        {% for enrollment in completed_enrollments %}
+          <div class="col">
+            <div class="card h-100 glass-card">
+              {% if enrollment.course.cover %}
+              <img src="{{ enrollment.course.cover.url }}" class="card-img-top" alt="{{ enrollment.course.title }}" 
+                   style="height: 160px; object-fit: cover;">
+              {% else %}
+              <div class="card-img-top bg-light d-flex align-items-center justify-content-center" 
+                   style="height: 160px;">
+                <i class="fas fa-book-open fa-3x text-muted"></i>
+              </div>
+              {% endif %}
+              
+              <!-- Бейдж о завершении -->
+              <div class="position-absolute" style="top: 10px; right: 10px;">
+                <span class="badge bg-success">
+                  <i class="fas fa-check-circle me-1"></i> Yakunlangan
+                </span>
+              </div>
+              
+              <div class="card-body">
+                <h5 class="card-title fw-bold">{{ enrollment.course.title }}</h5>
+                <p class="card-text small text-muted">{{ enrollment.course.short_description|truncatechars:80 }}</p>
+                
+                <div class="d-flex align-items-center mt-3">
+                  <div class="me-2">
+                    <i class="fas fa-trophy text-warning fa-2x"></i>
+                  </div>
+                  <div>
+                    <p class="small text-muted mb-0">
+                      <strong>{{ enrollment.completed_at|date:"d.m.Y" }}</strong> da yakunlangan
+                    </p>
+                  </div>
+                </div>
+              </div>
+              <div class="card-footer bg-transparent border-top-0">
+                <div class="d-grid gap-2">
+                  {% if enrollment.course.certificates.all %}
+                    <a href="{% url 'courses:view_certificate' enrollment.course.certificates.first.certificate_id %}" 
+                       class="btn btn-sm btn-outline-primary rounded-pill">
+                      <i class="fas fa-certificate me-1"></i> Sertifikatni ko'rish
+                    </a>
+                  {% endif %}
+                  <a href="{% url 'courses:detail' enrollment.course.slug %}" class="btn btn-sm btn-primary rounded-pill">
+                    <i class="fas fa-redo me-1"></i> Qayta o'qish
+                  </a>
+                </div>
+              </div>
+            </div>
+          </div>
+        {% endfor %}
+      </div>
+    </div>
+    {% endif %}
+    
+    <!-- Рекомендуемые курсы -->
+    {% if recommended_courses %}
+    <div>
+      <h2 class="h4 mb-4">Tavsiya etilgan kurslar</h2>
+      
+      <div class="row row-cols-1 row-cols-md-2 row-cols-lg-3 g-4">
+        {% for course in recommended_courses %}
+          <div class="col">
+            <div class="card h-100 glass-card">
+              {% if course.cover %}
+              <img src="{{ course.cover.url }}" class="card-img-top" alt="{{ course.title }}" 
+                   style="height: 160px; object-fit: cover;">
+              {% else %}
+              <div class="card-img-top bg-light d-flex align-items-center justify-content-center" 
+                   style="height: 160px;">
+                <i class="fas fa-book-open fa-3x text-muted"></i>
+              </div>
+              {% endif %}
+              <div class="card-body">
+                <div class="d-flex align-items-center mb-2">
+                  <span class="badge difficulty-{{ course.difficulty }} me-2">
+                    {{ course.get_difficulty_display }}
+                  </span>
+                  {% if course.is_free %}
+                    <span class="badge bg-success">Bepul</span>
+                  {% else %}
+                    <span class="badge bg-primary">{{ course.price }} so'm</span>
+                  {% endif %}
+                </div>
+                <h5 class="card-title fw-bold">{{ course.title }}</h5>
+                <p class="card-text small text-muted">{{ course.short_description|truncatechars:80 }}</p>
+              </div>
+              <div class="card-footer bg-transparent border-top-0">
+                <div class="d-flex justify-content-between align-items-center">
+                  <small class="text-muted">
+                    <i class="fas fa-users me-1"></i> {{ course.enrollments.count }} o'quvchi
+                  </small>
+                  <a href="{% url 'courses:detail' course.slug %}" class="btn btn-sm btn-primary rounded-pill px-3">
+                    Batafsil
+                  </a>
+                </div>
+              </div>
+            </div>
+          </div>
+        {% endfor %}
+      </div>
+    </div>
+    {% endif %}
+  </div>
+  
+  <!-- Боковая панель -->
+  <div class="col-lg-3">
+    <div class="card shadow-sm mb-4">
+      <div class="card-header bg-white">
+        <h5 class="card-title mb-0">O'qish statistikasi</h5>
+      </div>
+      <div class="card-body">
+        <ul class="list-group list-group-flush">
+          <li class="list-group-item d-flex justify-content-between align-items-center">
+            Barcha kurslar
+            <span class="badge bg-primary rounded-pill">{{ active_enrollments|length|add:completed_enrollments|length }}</span>
+          </li>
+          <li class="list-group-item d-flex justify-content-between align-items-center">
+            Davom etayotgan
+            <span class="badge bg-warning text-dark rounded-pill">{{ active_enrollments|length }}</span>
+          </li>
+          <li class="list-group-item d-flex justify-content-between align-items-center">
+            Yakunlangan
+            <span class="badge bg-success rounded-pill">{{ completed_enrollments|length }}</span>
+          </li>
+        </ul>
+      </div>
+    </div>
+    
+    <div class="card shadow-sm">
+      <div class="card-header bg-white">
+        <h5 class="card-title mb-0">Tez havolalar</h5>
+      </div>
+      <div class="card-body">
+        <div class="d-grid gap-2">
+          <a href="{% url 'courses:list' %}" class="btn btn-outline-primary rounded-pill">
+            <i class="fas fa-list me-2"></i> Barcha kurslar
+          </a>
+          {% if user.role == 'instructor' or user.is_staff %}
+          <a href="#" class="btn btn-outline-primary rounded-pill">
+            <i class="fas fa-chalkboard-teacher me-2"></i> O'qituvchi paneli
+          </a>
+          {% endif %}
+          <a href="{% url 'accounts:profile' %}" class="btn btn-outline-primary rounded-pill">
+            <i class="fas fa-user me-2"></i> Profil
+          </a>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %} 

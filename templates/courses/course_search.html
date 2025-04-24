@@ -1,0 +1,175 @@
+{% extends 'courses/base.html' %}
+{% load static %}
+
+{% block title %}Поиск курсов{% endblock %}
+
+{% block breadcrumb_items %}
+<li class="breadcrumb-item active" aria-current="page">Поиск: {{ query }}</li>
+{% endblock %}
+
+{% block courses_content %}
+<div class="row">
+  <div class="col-lg-9">
+    <!-- Панель поиска -->
+    <div class="card shadow-sm mb-4">
+      <div class="card-body py-3">
+        <form method="get" action="{% url 'courses:search' %}" class="d-flex">
+          <input type="text" name="q" class="form-control" placeholder="Kurs nomini kiriting..." 
+                 value="{{ query }}" aria-label="Kurs qidirish">
+          <button class="btn btn-primary ms-2" type="submit">Qidirish</button>
+        </form>
+      </div>
+    </div>
+
+    <!-- Результаты поиска -->
+    <h2 class="h4 mb-4">
+      {% if query %}
+        "{{ query }}" bo'yicha qidiruv natijalari
+      {% else %}
+        Qidiruv natijalari
+      {% endif %}
+    </h2>
+
+    {% if courses %}
+      <div class="row row-cols-1 row-cols-md-2 row-cols-lg-3 g-4">
+        {% for course in courses %}
+          <div class="col">
+            <div class="card h-100 glass-card">
+              {% if course.cover %}
+              <img src="{{ course.cover.url }}" class="card-img-top" alt="{{ course.title }}" 
+                   style="height: 160px; object-fit: cover;">
+              {% else %}
+              <div class="card-img-top bg-light d-flex align-items-center justify-content-center" 
+                   style="height: 160px;">
+                <i class="fas fa-book-open fa-3x text-muted"></i>
+              </div>
+              {% endif %}
+              <div class="card-body">
+                <div class="d-flex align-items-center mb-2">
+                  <span class="badge difficulty-{{ course.difficulty }} me-2">
+                    {{ course.get_difficulty_display }}
+                  </span>
+                  {% if course.is_free %}
+                    <span class="badge bg-success">Bepul</span>
+                  {% else %}
+                    <span class="badge bg-primary">{{ course.price }} so'm</span>
+                  {% endif %}
+                </div>
+                <h5 class="card-title fw-bold">{{ course.title }}</h5>
+                <p class="card-text small text-muted">{{ course.short_description|truncatechars:80 }}</p>
+              </div>
+              <div class="card-footer bg-transparent border-top-0">
+                <div class="d-flex justify-content-between align-items-center">
+                  <small class="text-muted">
+                    <i class="fas fa-users me-1"></i> {{ course.enrollments.count }} o'quvchi
+                  </small>
+                  <a href="{% url 'courses:detail' course.slug %}" class="btn btn-sm btn-primary rounded-pill px-3">
+                    Batafsil
+                  </a>
+                </div>
+              </div>
+            </div>
+          </div>
+        {% endfor %}
+      </div>
+      
+      <!-- Пагинация -->
+      {% if courses.has_other_pages %}
+      <nav aria-label="Page navigation" class="mt-4">
+        <ul class="pagination justify-content-center">
+          {% if courses.has_previous %}
+            <li class="page-item">
+              <a class="page-link" href="?q={{ query }}&page={{ courses.previous_page_number }}" aria-label="Previous">
+                <span aria-hidden="true">&laquo;</span>
+              </a>
+            </li>
+          {% else %}
+            <li class="page-item disabled">
+              <span class="page-link" aria-hidden="true">&laquo;</span>
+            </li>
+          {% endif %}
+          
+          {% for i in courses.paginator.page_range %}
+            {% if courses.number == i %}
+              <li class="page-item active" aria-current="page">
+                <span class="page-link">{{ i }}</span>
+              </li>
+            {% else %}
+              <li class="page-item">
+                <a class="page-link" href="?q={{ query }}&page={{ i }}">{{ i }}</a>
+              </li>
+            {% endif %}
+          {% endfor %}
+          
+          {% if courses.has_next %}
+            <li class="page-item">
+              <a class="page-link" href="?q={{ query }}&page={{ courses.next_page_number }}" aria-label="Next">
+                <span aria-hidden="true">&raquo;</span>
+              </a>
+            </li>
+          {% else %}
+            <li class="page-item disabled">
+              <span class="page-link" aria-hidden="true">&raquo;</span>
+            </li>
+          {% endif %}
+        </ul>
+      </nav>
+      {% endif %}
+      
+    {% else %}
+      <!-- Сообщение если нет результатов -->
+      <div class="card shadow-sm p-5 text-center">
+        <div class="mb-4">
+          <i class="fas fa-search fa-3x text-muted opacity-50"></i>
+        </div>
+        {% if query %}
+          <h3 class="fw-bold">"{{ query }}" bo'yicha kurslar topilmadi</h3>
+          <p class="text-muted mb-4">Boshqa so'zlarni qidirib ko'ring yoki kategoriyalar bo'yicha ko'ring</p>
+          <a href="{% url 'courses:list' %}" class="btn btn-primary rounded-pill px-4">
+            <i class="fas fa-list me-2"></i> Barcha kurslar
+          </a>
+        {% else %}
+          <h3 class="fw-bold">Qidiruv so'zini kiriting</h3>
+          <p class="text-muted">Kurs nomini yoki kalit so'zlarini kiriting</p>
+        {% endif %}
+      </div>
+    {% endif %}
+  </div>
+  
+  <!-- Боковая панель -->
+  <div class="col-lg-3">
+    <div class="card shadow-sm mb-4">
+      <div class="card-header bg-white">
+        <h5 class="card-title mb-0">Kategoriyalar</h5>
+      </div>
+      <div class="card-body p-0">
+        <div class="list-group list-group-flush">
+          <a href="{% url 'courses:list' %}" class="list-group-item list-group-item-action d-flex justify-content-between align-items-center">
+            Barchasi
+            <span class="badge bg-primary rounded-pill">{{ categories.count }}</span>
+          </a>
+          {% for category in categories %}
+          <a href="{% url 'courses:category' category.slug %}" class="list-group-item list-group-item-action d-flex justify-content-between align-items-center">
+            {{ category.name }}
+            <span class="badge bg-primary rounded-pill">{{ category.course_count }}</span>
+          </a>
+          {% endfor %}
+        </div>
+      </div>
+    </div>
+    
+    <div class="card shadow-sm">
+      <div class="card-header bg-white">
+        <h5 class="card-title mb-0">Qidiruvga yordam</h5>
+      </div>
+      <div class="card-body">
+        <p class="card-text small">Kurs nomini, mavzusini yoki kalit so'zlarini kiritib qidirishingiz mumkin.</p>
+        <p class="card-text small">Qidiruv natijalarini ko'rish uchun kurs nomini kiritib "Qidirish" tugmasini bosing.</p>
+        <a href="{% url 'courses:list' %}" class="btn btn-outline-primary w-100 rounded-pill">
+          <i class="fas fa-th-large me-2"></i> Barcha kurslar
+        </a>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %} 

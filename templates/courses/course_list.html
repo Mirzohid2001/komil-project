@@ -1,0 +1,322 @@
+{% extends 'courses/base.html' %}
+{% load static %}
+
+{% block title %}Kurslar{% endblock %}
+
+{% block breadcrumb_items %}
+<li class="breadcrumb-item active" aria-current="page">Kurslar</li>
+{% endblock %}
+
+{% block courses_content %}
+<div class="row g-4">
+  <!-- Боковая панель фильтров -->
+  <div class="col-lg-3">
+    <div class="card shadow-sm border-0 rounded-4 sticky-lg-top" style="top: 100px;">
+      <div class="card-header bg-gradient-primary text-white border-0 rounded-top-4">
+        <h5 class="card-title mb-0">
+          <i class="fas fa-filter me-2"></i> Filtrlar
+        </h5>
+      </div>
+      <div class="card-body">
+        <form method="get" action="{% url 'courses:list' %}">
+          <!-- Уровень сложности -->
+          <div class="mb-4">
+            <h6 class="fw-bold mb-3 text-uppercase small">Qiyinlik darajasi</h6>
+            <div class="form-check custom-radio mb-2">
+              <input class="form-check-input" type="radio" name="difficulty" id="difficultyAll" value="" 
+                     {% if not current_difficulty %}checked{% endif %}>
+              <label class="form-check-label d-flex align-items-center" for="difficultyAll">
+                <span class="ms-2">Barchasi</span>
+              </label>
+            </div>
+            {% for code, name in difficulty_choices %}
+            <div class="form-check custom-radio mb-2">
+              <input class="form-check-input" type="radio" name="difficulty" id="difficulty{{ code }}" value="{{ code }}" 
+                     {% if current_difficulty == code %}checked{% endif %}>
+              <label class="form-check-label d-flex align-items-center" for="difficulty{{ code }}">
+                <span class="badge difficulty-{{ code }} me-2">{{ name }}</span>
+                <span>{{ name }}</span>
+              </label>
+            </div>
+            {% endfor %}
+          </div>
+          
+          <!-- Сортировка -->
+          <div class="mb-4">
+            <h6 class="fw-bold mb-3 text-uppercase small">Saralash</h6>
+            <select class="form-select" name="sort">
+              <option value="newest" {% if current_sort == 'newest' %}selected{% endif %}>Eng yangi</option>
+              <option value="oldest" {% if current_sort == 'oldest' %}selected{% endif %}>Eng eski</option>
+              <option value="name" {% if current_sort == 'name' %}selected{% endif %}>Nomi bo'yicha</option>
+              <option value="popular" {% if current_sort == 'popular' %}selected{% endif %}>Eng mashxur</option>
+            </select>
+          </div>
+          
+          <!-- Применить фильтры -->
+          <div class="d-grid gap-2">
+            <button type="submit" class="btn btn-primary btn-lg rounded-pill">
+              <i class="fas fa-check-circle me-2"></i> Qo'llash
+            </button>
+            <a href="{% url 'courses:list' %}" class="btn btn-outline-secondary rounded-pill">
+              <i class="fas fa-sync me-2"></i> Tozalash
+            </a>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+  
+  <!-- Основной контент -->
+  <div class="col-lg-9">
+    <div class="d-flex flex-column h-100">
+      <!-- Заголовок и поиск -->
+      <div class="card shadow-sm border-0 rounded-4 mb-4">
+        <div class="card-body">
+          <div class="row align-items-center">
+            <div class="col-md-6 mb-3 mb-md-0">
+              <div class="d-flex align-items-center">
+                <h2 class="h3 mb-0 me-3">
+                  {% if current_category %}
+                    {{ current_category|title }} kurslari
+                  {% else %}
+                    Barcha kurslar
+                  {% endif %}
+                </h2>
+                <span class="badge bg-primary rounded-pill fs-6">Jami: {{ courses.paginator.count }}</span>
+              </div>
+            </div>
+            <div class="col-md-6">
+              <div class="d-flex gap-2">
+                <div class="dropdown">
+                  <button class="btn btn-outline-primary dropdown-toggle rounded-pill" type="button" data-bs-toggle="dropdown">
+                    <i class="fas fa-layer-group me-2"></i> Kategoriyalar
+                  </button>
+                  <ul class="dropdown-menu dropdown-menu-end">
+                    <li>
+                      <a class="dropdown-item {% if not current_category %}active{% endif %}" 
+                         href="{% url 'courses:list' %}">
+                        Barchasi
+                      </a>
+                    </li>
+                    {% for category in categories %}
+                    <li>
+                      <a class="dropdown-item {% if current_category == category.slug %}active{% endif %}" 
+                         href="{% url 'courses:category' category.slug %}">
+                        {{ category.name }}
+                      </a>
+                    </li>
+                    {% endfor %}
+                  </ul>
+                </div>
+                <div class="position-relative flex-grow-1">
+                  <form method="get" action="{% url 'courses:search' %}">
+                    <div class="input-group">
+                      <input type="text" name="q" class="form-control rounded-pill-start" placeholder="Kurs nomini kiriting..." aria-label="Search">
+                      <button class="btn btn-primary rounded-pill-end" type="submit">
+                        <i class="fas fa-search"></i> <span class="d-none d-md-inline">Qidirish</span>
+                      </button>
+                    </div>
+                  </form>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      
+      <!-- Список курсов -->
+      {% if courses %}
+        <div class="row row-cols-1 row-cols-md-2 row-cols-lg-3 g-4 mb-4">
+          {% for course in courses %}
+            <div class="col">
+              <div class="card h-100 course-card border-0 shadow-sm rounded-4 overflow-hidden transform-hover">
+                <div class="position-relative">
+                  {% if course.cover %}
+                    <img src="{{ course.cover.url }}" class="card-img-top" alt="{{ course.title }}" 
+                         style="height: 180px; object-fit: cover;">
+                  {% else %}
+                    <div class="card-img-top bg-light d-flex align-items-center justify-content-center" 
+                         style="height: 180px;">
+                      <i class="fas fa-book-open fa-3x text-muted"></i>
+                    </div>
+                  {% endif %}
+                  
+                  <!-- Бейдж трудности в верхнем левом углу -->
+                  <div class="position-absolute top-0 start-0 m-3">
+                    <span class="badge difficulty-{{ course.difficulty }} rounded-pill text-white px-3 py-2 shadow-sm">
+                      {{ course.get_difficulty_display }}
+                    </span>
+                  </div>
+                  
+                  <!-- Бейдж бесплатного курса -->
+                  <div class="position-absolute top-0 end-0 m-3">
+                    <span class="badge bg-success rounded-pill px-3 py-2 shadow-sm">Bepul</span>
+                  </div>
+                </div>
+                <div class="card-body position-relative">
+                  <!-- Категория -->
+                  <a href="{% url 'courses:category' course.category.slug %}" class="text-decoration-none">
+                    <span class="badge bg-light text-dark mb-2">
+                      <i class="fas fa-tag me-1"></i> {{ course.category.name }}
+                    </span>
+                  </a>
+                  
+                  <!-- Название курса -->
+                  <h5 class="card-title mb-3">
+                    <a href="{% url 'courses:detail' course.slug %}" class="text-decoration-none text-dark stretched-link hover-primary">
+                      {{ course.title }}
+                    </a>
+                  </h5>
+                  
+                  <!-- Описание -->
+                  <p class="card-text text-muted small mb-4">{{ course.short_description|truncatechars:100 }}</p>
+                  
+                  <!-- Детали курса -->
+                  <div class="d-flex justify-content-between course-meta">
+                    <div class="d-flex align-items-center text-muted small">
+                      <i class="fas fa-users me-1"></i>
+                      <span>{{ course.students_count }} o'quvchi</span>
+                    </div>
+                    <div class="d-flex align-items-center text-muted small">
+                      <i class="fas fa-clock me-1"></i>
+                      <span>{{ course.total_duration }} daqiqa</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          {% endfor %}
+        </div>
+        
+        <!-- Пагинация -->
+        {% if courses.has_other_pages %}
+          <nav aria-label="Page navigation" class="mt-4">
+            <ul class="pagination justify-content-center">
+              {% if courses.has_previous %}
+                <li class="page-item">
+                  <a class="page-link rounded-pill" href="?page={{ courses.previous_page_number }}{% if current_difficulty %}&difficulty={{ current_difficulty }}{% endif %}{% if current_sort %}&sort={{ current_sort }}{% endif %}" aria-label="Previous">
+                    <i class="fas fa-chevron-left"></i>
+                  </a>
+                </li>
+              {% else %}
+                <li class="page-item disabled">
+                  <span class="page-link rounded-pill" aria-hidden="true"><i class="fas fa-chevron-left"></i></span>
+                </li>
+              {% endif %}
+              
+              {% for i in courses.paginator.page_range %}
+                {% if courses.number == i %}
+                  <li class="page-item active" aria-current="page">
+                    <span class="page-link rounded-pill">{{ i }}</span>
+                  </li>
+                {% else %}
+                  <li class="page-item">
+                    <a class="page-link rounded-pill" href="?page={{ i }}{% if current_difficulty %}&difficulty={{ current_difficulty }}{% endif %}{% if current_sort %}&sort={{ current_sort }}{% endif %}">{{ i }}</a>
+                  </li>
+                {% endif %}
+              {% endfor %}
+              
+              {% if courses.has_next %}
+                <li class="page-item">
+                  <a class="page-link rounded-pill" href="?page={{ courses.next_page_number }}{% if current_difficulty %}&difficulty={{ current_difficulty }}{% endif %}{% if current_sort %}&sort={{ current_sort }}{% endif %}" aria-label="Next">
+                    <i class="fas fa-chevron-right"></i>
+                  </a>
+                </li>
+              {% else %}
+                <li class="page-item disabled">
+                  <span class="page-link rounded-pill" aria-hidden="true"><i class="fas fa-chevron-right"></i></span>
+                </li>
+              {% endif %}
+            </ul>
+          </nav>
+        {% endif %}
+      {% else %}
+        <!-- Сообщение если нет курсов -->
+        <div class="card shadow-sm p-5 text-center rounded-4 border-0 flex-grow-1">
+          <div class="py-5">
+            <div class="display-1 mb-4 text-muted">
+              <i class="fas fa-graduation-cap"></i>
+            </div>
+            <h2 class="display-6 fw-bold mb-3">Kurslar topilmadi</h2>
+            <p class="lead text-muted mb-4">Bu bo'limda hozircha kurslar mavjud emas.</p>
+            
+            {% if current_category or current_difficulty %}
+              <a href="{% url 'courses:list' %}" class="btn btn-primary btn-lg rounded-pill px-5">
+                <i class="fas fa-sync-alt me-2"></i> Barcha kurslarni ko'rish
+              </a>
+            {% endif %}
+          </div>
+        </div>
+      {% endif %}
+    </div>
+  </div>
+</div>
+
+<style>
+  /* Стили для уровней сложности */
+  .badge.difficulty-beginner {
+    background: linear-gradient(135deg, #28a745, #20c997);
+  }
+  
+  .badge.difficulty-intermediate {
+    background: linear-gradient(135deg, #fd7e14, #ffc107);
+  }
+  
+  .badge.difficulty-advanced {
+    background: linear-gradient(135deg, #dc3545, #ff6b6b);
+  }
+  
+  /* Стили карточек курсов */
+  .course-card {
+    transition: all 0.3s ease;
+    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.05);
+  }
+
+  .transform-hover:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 12px 30px rgba(0, 0, 0, 0.1);
+  }
+  
+  .hover-primary:hover {
+    color: var(--bs-primary) !important;
+  }
+  
+  /* Кастомные стили для радиокнопок */
+  .custom-radio .form-check-input {
+    width: 1.2rem;
+    height: 1.2rem;
+    margin-top: 0.15rem;
+  }
+  
+  .custom-radio .form-check-input:checked {
+    background-color: var(--bs-primary);
+    border-color: var(--bs-primary);
+  }
+  
+  /* Скругленная кнопка в группе инпутов */
+  .rounded-pill-start {
+    border-top-left-radius: 50rem !important;
+    border-bottom-left-radius: 50rem !important;
+  }
+  
+  .rounded-pill-end {
+    border-top-right-radius: 50rem !important;
+    border-bottom-right-radius: 50rem !important;
+  }
+  
+  /* Градиентный фон для заголовка */
+  .bg-gradient-primary {
+    background: linear-gradient(135deg, var(--bs-primary), #6610f2);
+  }
+  
+  /* Анимации для бейджей */
+  .badge {
+    transition: all 0.3s ease;
+  }
+  
+  .badge:hover {
+    transform: scale(1.05);
+  }
+</style>
+
+{% endblock %} 

@@ -43,40 +43,81 @@
   }
   
   .profile-nav {
-    padding: 1.5rem 0;
+    padding: 1rem 0;
   }
   
   .profile-nav .nav-link {
     display: flex;
     align-items: center;
-    padding: 0.75rem 1.5rem;
-    color: var(--dark);
+    padding: 0.85rem 1.5rem;
+    color: #4b5563;
     font-weight: 500;
     transition: all 0.3s ease;
     position: relative;
+    border-radius: 8px;
+    margin: 0.25rem 0.75rem;
   }
   
-  .profile-nav .nav-link:hover,
-  .profile-nav .nav-link.active {
+  .profile-nav .nav-link:hover {
     color: var(--primary);
     background: rgba(79, 70, 229, 0.08);
+    transform: translateX(5px);
   }
   
-  .profile-nav .nav-link.active::before {
-    content: '';
-    position: absolute;
-    left: 0;
-    top: 0;
-    bottom: 0;
-    width: 4px;
-    background: var(--gradient-primary);
-    border-radius: 0 4px 4px 0;
+  .profile-nav .nav-link.active {
+    color: white;
+    background: linear-gradient(135deg, #6366f1, #8b5cf6);
+    box-shadow: 0 4px 12px rgba(99, 102, 241, 0.3);
+    font-weight: 600;
   }
   
   .profile-nav .nav-link i {
-    width: 20px;
+    width: 24px;
+    height: 24px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
     margin-right: 0.75rem;
-    opacity: 0.7;
+    font-size: 1rem;
+    transition: all 0.3s ease;
+  }
+  
+  .profile-nav .nav-link:hover i {
+    transform: scale(1.1);
+  }
+  
+  .profile-nav .nav-link.active i {
+    color: white;
+  }
+  
+  .profile-nav .border-top {
+    margin: 0.5rem 1.5rem;
+    opacity: 0.5;
+  }
+
+  /* Специальные стили для образовательных разделов */
+  .profile-nav .nav-link[href*="learning_progress"] i {
+    color: #059669;
+  }
+  
+  .profile-nav .nav-link[href*="user_certificates"] i {
+    color: #7c3aed;
+  }
+  
+  .profile-nav .nav-link[href*="user_achievements"] i {
+    color: #d97706;
+  }
+  
+  .profile-nav .nav-link[href*="user_statistics"] i {
+    color: #2563eb;
+  }
+  
+  /* Активные элементы меню сохраняют свои цвета иконок */
+  .profile-nav .nav-link.active[href*="learning_progress"] i,
+  .profile-nav .nav-link.active[href*="user_certificates"] i,
+  .profile-nav .nav-link.active[href*="user_achievements"] i,
+  .profile-nav .nav-link.active[href*="user_statistics"] i {
+    color: white;
   }
   
   .profile-content {
@@ -227,6 +268,22 @@
             <a href="{% url 'accounts:activity_history' %}" class="nav-link {% if request.resolver_match.url_name == 'activity_history' %}active{% endif %}">
               <i class="fas fa-history"></i> Faollik tarixi
             </a>
+            
+            <div class="border-top my-3"></div>
+            
+            <a href="{% url 'accounts:learning_progress' %}" class="nav-link {% if request.resolver_match.url_name == 'learning_progress' %}active{% endif %}">
+              <i class="fas fa-graduation-cap"></i> O'quv jarayoni
+            </a>
+            <a href="{% url 'accounts:user_certificates' %}" class="nav-link {% if request.resolver_match.url_name == 'user_certificates' %}active{% endif %}">
+              <i class="fas fa-certificate"></i> Sertifikatlar
+            </a>
+            <a href="{% url 'accounts:user_achievements' %}" class="nav-link {% if request.resolver_match.url_name == 'user_achievements' %}active{% endif %}">
+              <i class="fas fa-trophy"></i> Yutuqlar
+            </a>
+            <a href="{% url 'accounts:user_statistics' %}" class="nav-link {% if request.resolver_match.url_name == 'user_statistics' %}active{% endif %}">
+              <i class="fas fa-chart-line"></i> Statistika
+            </a>
+            
             <div class="border-top my-3"></div>
             <a href="{% url 'blog:home' %}" class="nav-link">
               <i class="fas fa-home"></i> Bosh sahifaga

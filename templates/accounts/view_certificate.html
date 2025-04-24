@@ -1,0 +1,29 @@
+                <div class="certificate-content">
+                    <div class="certificate-header">
+                        <img src="{% static 'img/logo.png' %}" alt="Logo" class="certificate-logo">
+                        <h1 class="certificate-title">Sertifikat</h1>
+                    </div>
+                    <div class="certificate-body">
+                        <p class="certificate-text">Bu sertifikat</p>
+                        <h2 class="certificate-name">{{ user.get_full_name|default:user.username }}</h2>
+                        <p class="certificate-text">
+                            muvaffaqiyatli yakunlagan
+                        </p>
+                        <h3 class="certificate-course">{{ course.title }}</h3>
+                        <p class="certificate-description">
+                            {{ course.short_description }}
+                        </p>
+                        <div class="certificate-date">{{ certificate.created_at|date:"d F, Y" }}</div>
+                    </div>
+                    <div class="certificate-footer">
+                        <div class="certificate-signature">
+                            <img src="{% static 'img/signature.png' %}" alt="Signature" class="img-signature">
+                            <p class="signature-name">{{ course.teacher.get_full_name }}</p>
+                            <p class="signature-title">O'qituvchi</p>
+                        </div>
+                        <div class="certificate-code">
+                            <p>Sertifikat raqami: <strong>{{ certificate.uuid }}</strong></p>
+                            <p>Tekshirish uchun: <a href="{% url 'certificates:verify' certificate.uuid %}">havola</a></p>
+                        </div>
+                    </div>
+                </div> 

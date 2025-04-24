@@ -1,0 +1,319 @@
+{% extends 'accounts/profile_base.html' %}
+
+{% block profile_title %}Yutuqlar{% endblock %}
+
+{% block profile_content %}
+<div class="row g-4">
+    <!-- Статистика достижений -->
+    <div class="col-12">
+        <div class="card shadow-sm">
+            <div class="card-body">
+                <h5 class="card-title mb-4">Yutuqlar statistikasi</h5>
+                
+                <div class="row g-3">
+                    <div class="col-md-3">
+                        <div class="bg-light rounded p-3 text-center">
+                            <h4 class="fw-bold text-primary mb-1">{{ achievements_count }}</h4>
+                            <p class="text-muted small mb-0">Jami yutuqlar</p>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="bg-light rounded p-3 text-center">
+                            <h4 class="fw-bold text-success mb-1">{{ badges_count }}</h4>
+                            <p class="text-muted small mb-0">Nishonlar</p>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="bg-light rounded p-3 text-center">
+                            <h4 class="fw-bold text-info mb-1">{{ awards_count }}</h4>
+                            <p class="text-muted small mb-0">Mukofotlar</p>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="bg-light rounded p-3 text-center">
+                            <h4 class="fw-bold text-warning mb-1">{{ points }}</h4>
+                            <p class="text-muted small mb-0">Ballar</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Мои достижения -->
+    <div class="col-12">
+        <div class="card shadow-sm">
+            <div class="card-header bg-white d-flex justify-content-between align-items-center">
+                <h5 class="card-title mb-0">Mening yutuqlarim</h5>
+                
+                <div class="btn-group" role="group">
+                    <button type="button" class="btn btn-sm btn-outline-primary active" data-filter="all">
+                        Barcha yutuqlar
+                    </button>
+                    <button type="button" class="btn btn-sm btn-outline-primary" data-filter="badge">
+                        Nishonlar
+                    </button>
+                    <button type="button" class="btn btn-sm btn-outline-primary" data-filter="award">
+                        Mukofotlar
+                    </button>
+                </div>
+            </div>
+            <div class="card-body">
+                {% if achievements %}
+                <div class="row row-cols-1 row-cols-md-2 row-cols-lg-3 g-4" id="achievementsContainer">
+                    {% for achievement in achievements %}
+                    <div class="col achievement-item" data-type="{{ achievement.type }}">
+                        <div class="card h-100">
+                            <div class="card-header d-flex align-items-center {% if achievement.type == 'badge' %}bg-info text-white{% else %}bg-warning text-dark{% endif %}">
+                                <i class="bi {% if achievement.type == 'badge' %}bi-award{% else %}bi-trophy{% endif %} me-2"></i>
+                                <span>{{ achievement.get_type_display }}</span>
+                                <span class="ms-auto small">{{ achievement.date_earned|date:"d.m.Y" }}</span>
+                            </div>
+                            
+                            <div class="card-body text-center">
+                                <div class="mb-3">
+                                    {% if achievement.icon %}
+                                    <img src="{{ achievement.icon.url }}" class="img-thumbnail" style="max-width: 100px; max-height: 100px;" 
+                                         alt="{{ achievement.title }}">
+                                    {% else %}
+                                    <div class="bg-light rounded-circle mx-auto d-flex align-items-center justify-content-center" 
+                                         style="width: 100px; height: 100px;">
+                                        <i class="bi {% if achievement.type == 'badge' %}bi-award{% else %}bi-trophy{% endif %}" 
+                                           style="font-size: 2.5rem; color: #6c757d;"></i>
+                                    </div>
+                                    {% endif %}
+                                </div>
+                                
+                                <h5 class="card-title">{{ achievement.title }}</h5>
+                                <p class="text-muted">{{ achievement.description }}</p>
+                                
+                                {% if achievement.points %}
+                                <div class="mt-3">
+                                    <span class="badge bg-success">+{{ achievement.points }} ball</span>
+                                </div>
+                                {% endif %}
+                            </div>
+                            
+                            <div class="card-footer bg-white text-center">
+                                <button type="button" class="btn btn-sm btn-outline-primary view-details" 
+                                        data-id="{{ achievement.id }}" data-bs-toggle="modal" data-bs-target="#achievementModal">
+                                    Batafsil ma'lumot
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+                
+                <!-- Пагинация -->
+                {% if is_paginated %}
+                <nav aria-label="Sahifalar" class="mt-4">
+                    <ul class="pagination justify-content-center">
+                        {% if page_obj.has_previous %}
+                        <li class="page-item">
+                            <a class="page-link" href="?page=1" aria-label="Birinchi">
+                                <span aria-hidden="true">&laquo;&laquo;</span>
+                            </a>
+                        </li>
+                        <li class="page-item">
+                            <a class="page-link" href="?page={{ page_obj.previous_page_number }}" aria-label="Oldingi">
+                                <span aria-hidden="true">&laquo;</span>
+                            </a>
+                        </li>
+                        {% endif %}
+                        
+                        {% for num in page_obj.paginator.page_range %}
+                            {% if num == page_obj.number %}
+                            <li class="page-item active"><span class="page-link">{{ num }}</span></li>
+                            {% elif num > page_obj.number|add:'-3' and num < page_obj.number|add:'3' %}
+                            <li class="page-item"><a class="page-link" href="?page={{ num }}">{{ num }}</a></li>
+                            {% endif %}
+                        {% endfor %}
+                        
+                        {% if page_obj.has_next %}
+                        <li class="page-item">
+                            <a class="page-link" href="?page={{ page_obj.next_page_number }}" aria-label="Keyingi">
+                                <span aria-hidden="true">&raquo;</span>
+                            </a>
+                        </li>
+                        <li class="page-item">
+                            <a class="page-link" href="?page={{ page_obj.paginator.num_pages }}" aria-label="Oxirgi">
+                                <span aria-hidden="true">&raquo;&raquo;</span>
+                            </a>
+                        </li>
+                        {% endif %}
+                    </ul>
+                </nav>
+                {% endif %}
+                
+                {% else %}
+                <div class="text-center py-5">
+                    <div class="mb-3">
+                        <i class="bi bi-trophy" style="font-size: 3rem; color: #ccc;"></i>
+                    </div>
+                    <h4>Yutuqlar topilmadi</h4>
+                    <p class="text-muted">Kurslarda qatnashib, mashqlarni bajarib yutuqlar olishingiz mumkin</p>
+                    <a href="{% url 'blog:index' %}" class="btn btn-primary mt-2">
+                        Kurslarga o'tish
+                    </a>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+    
+    <!-- Рейтинг лидеров -->
+    <div class="col-12">
+        <div class="card shadow-sm">
+            <div class="card-header bg-white">
+                <h5 class="card-title mb-0">Yetakchilar reytingi</h5>
+            </div>
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table table-hover">
+                        <thead>
+                            <tr>
+                                <th scope="col" width="60">#</th>
+                                <th scope="col">Foydalanuvchi</th>
+                                <th scope="col" class="text-center">Yutuqlar</th>
+                                <th scope="col" class="text-center">Ballar</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for user in leaderboard %}
+                            <tr {% if user.user == request.user %}class="table-primary"{% endif %}>
+                                <td>{{ forloop.counter }}</td>
+                                <td>
+                                    <div class="d-flex align-items-center">
+                                        {% if user.user.profile.avatar %}
+                                        <img src="{{ user.user.profile.avatar.url }}" class="rounded-circle me-2" 
+                                             width="40" height="40" alt="{{ user.user.get_full_name }}">
+                                        {% else %}
+                                        <div class="bg-light rounded-circle me-2 d-flex align-items-center justify-content-center" 
+                                             style="width: 40px; height: 40px;">
+                                            <i class="bi bi-person" style="font-size: 1.2rem;"></i>
+                                        </div>
+                                        {% endif %}
+                                        <div>
+                                            <div>{{ user.user.get_full_name }}</div>
+                                            <small class="text-muted">@{{ user.user.username }}</small>
+                                        </div>
+                                    </div>
+                                </td>
+                                <td class="text-center">{{ user.achievements_count }}</td>
+                                <td class="text-center">
+                                    <span class="badge bg-warning text-dark">{{ user.points }}</span>
+                                </td>
+                            </tr>
+                            {% empty %}
+                            <tr>
+                                <td colspan="4" class="text-center py-3">Hozircha ma'lumotlar yo'q</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Модальное окно для просмотра деталей достижения -->
+<div class="modal fade" id="achievementModal" tabindex="-1" aria-labelledby="achievementModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="achievementModalLabel">Yutuq haqida ma'lumot</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Yopish"></button>
+            </div>
+            <div class="modal-body text-center" id="achievementModalContent">
+                <div class="placeholder-glow">
+                    <div class="placeholder rounded-circle mx-auto mb-3" style="width: 100px; height: 100px;"></div>
+                    <h5 class="placeholder col-6 mx-auto"></h5>
+                    <p class="placeholder col-8 mx-auto"></p>
+                    <p class="placeholder col-4 mx-auto"></p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Фильтрация достижений
+        const filterButtons = document.querySelectorAll('[data-filter]');
+        const achievementItems = document.querySelectorAll('.achievement-item');
+        
+        filterButtons.forEach(button => {
+            button.addEventListener('click', function() {
+                const filterValue = this.getAttribute('data-filter');
+                
+                filterButtons.forEach(btn => btn.classList.remove('active'));
+                this.classList.add('active');
+                
+                achievementItems.forEach(item => {
+                    if (filterValue === 'all' || item.getAttribute('data-type') === filterValue) {
+                        item.style.display = '';
+                    } else {
+                        item.style.display = 'none';
+                    }
+                });
+            });
+        });
+        
+        // Просмотр деталей достижения
+        const viewDetailsButtons = document.querySelectorAll('.view-details');
+        const modalContent = document.getElementById('achievementModalContent');
+        
+        viewDetailsButtons.forEach(button => {
+            button.addEventListener('click', function() {
+                const achievementId = this.getAttribute('data-id');
+                
+                // Здесь должен быть AJAX запрос к серверу для получения деталей достижения
+                // Для примера показываем плейсхолдер и простую загрузку
+                
+                modalContent.innerHTML = `
+                    <div class="text-center">
+                        <div class="spinner-border text-primary mb-3" role="status">
+                            <span class="visually-hidden">Yuklanmoqda...</span>
+                        </div>
+                        <p>Ma'lumotlar yuklanmoqda...</p>
+                    </div>
+                `;
+                
+                // Имитация загрузки данных
+                setTimeout(() => {
+                    const achievementCard = this.closest('.achievement-item');
+                    const title = achievementCard.querySelector('.card-title').textContent;
+                    const description = achievementCard.querySelector('.text-muted').textContent;
+                    const type = achievementCard.getAttribute('data-type');
+                    const iconElement = achievementCard.querySelector('.card-body .mb-3').innerHTML;
+                    
+                    modalContent.innerHTML = `
+                        <div class="mb-4">
+                            ${iconElement}
+                        </div>
+                        <h4>${title}</h4>
+                        <p class="text-muted">${description}</p>
+                        <div class="mt-3">
+                            <span class="badge ${type === 'badge' ? 'bg-info' : 'bg-warning text-dark'}">
+                                ${type === 'badge' ? 'Nishon' : 'Mukofot'}
+                            </span>
+                        </div>
+                        <div class="mt-4 text-start">
+                            <h6>Olish shartlari:</h6>
+                            <ul class="list-group list-group-flush">
+                                <li class="list-group-item">Biror vazifani bajarish</li>
+                                <li class="list-group-item">Kursni muvaffaqiyatli yakunlash</li>
+                                <li class="list-group-item">Barcha mashqlarni to'g'ri bajarish</li>
+                            </ul>
+                        </div>
+                    `;
+                }, 800);
+            });
+        });
+    });
+</script>
+{% endblock %} 

@@ -1,0 +1,252 @@
+{% extends 'courses/base.html' %}
+{% load static %}
+
+{% block title %}{{ course.title }} - O'qish{% endblock %}
+
+{% block breadcrumb_items %}
+<li class="breadcrumb-item"><a href="{% url 'courses:detail' course.slug %}">{{ course.title }}</a></li>
+<li class="breadcrumb-item active" aria-current="page">O'qish</li>
+{% endblock %}
+
+{% block courses_content %}
+<div class="row">
+  <div class="col-lg-9">
+    <div class="card shadow-sm mb-4">
+      <div class="card-body">
+        <div class="d-sm-flex justify-content-between align-items-center mb-4">
+          <h1 class="h3 mb-sm-0">{{ course.title }}</h1>
+          <a href="{% url 'courses:detail' course.slug %}" class="btn btn-sm btn-outline-primary rounded-pill">
+            <i class="fas fa-info-circle me-1"></i> Kurs haqida
+          </a>
+        </div>
+        
+        <!-- Прогресс прохождения курса -->
+        <div class="mb-3">
+          <div class="d-flex justify-content-between align-items-center mb-1">
+            <span class="text-muted"><strong>{{ completed_count }}</strong> / {{ total_lessons }} darslar yakunlangan</span>
+            <span class="badge bg-primary">{{ progress_percent }}%</span>
+          </div>
+          <div class="progress" style="height: 10px;">
+            <div class="progress-bar progress-bar-striped progress-bar-animated" role="progressbar" 
+                 style="width: {{ progress_percent }}%;" 
+                 aria-valuenow="{{ progress_percent }}" aria-valuemin="0" aria-valuemax="100"></div>
+          </div>
+        </div>
+        
+        {% if next_lesson %}
+        <div class="mt-4">
+          <a href="{% url 'courses:lesson_detail' course.slug next_lesson.module.id next_lesson.id %}" 
+             class="btn btn-primary rounded-pill">
+            <i class="fas fa-play-circle me-2"></i> Davom ettirish
+          </a>
+          <p class="mt-2 small text-muted">
+            Keyingi dars: <strong>{{ next_lesson.title }}</strong>
+          </p>
+        </div>
+        {% else %}
+          {% if enrollment.is_completed %}
+          <div class="alert alert-success d-flex align-items-center" role="alert">
+            <i class="fas fa-check-circle me-2"></i>
+            <div>Tabriklaymiz! Siz ushbu kursni muvaffaqiyatli yakunladingiz.</div>
+          </div>
+          {% if enrollment.course.certificates.all %}
+          <a href="{% url 'courses:view_certificate' enrollment.course.certificates.first.certificate_id %}" 
+             class="btn btn-outline-success rounded-pill">
+            <i class="fas fa-certificate me-2"></i> Sertifikatni ko'rish
+          </a>
+          {% endif %}
+          {% endif %}
+        {% endif %}
+      </div>
+    </div>
+    
+    <!-- Модули и уроки курса -->
+    <div class="card shadow-sm">
+      <div class="card-header bg-white">
+        <h5 class="card-title mb-0">Kurs kontenti</h5>
+      </div>
+      <div class="card-body p-0">
+        <div class="accordion" id="courseModules">
+          {% for module in modules %}
+          <div class="accordion-item">
+            <h2 class="accordion-header" id="heading{{ module.id }}">
+              <button class="accordion-button {% if not forloop.first %}collapsed{% endif %}" type="button" 
+                      data-bs-toggle="collapse" data-bs-target="#collapse{{ module.id }}" 
+                      aria-expanded="{% if forloop.first %}true{% else %}false{% endif %}" 
+                      aria-controls="collapse{{ module.id }}">
+                <div class="d-flex w-100 justify-content-between align-items-center">
+                  <span>{{ module.title }}</span>
+                  <span class="badge bg-light text-dark ms-2">{{ module.lessons.count }} dars</span>
+                </div>
+              </button>
+            </h2>
+            <div id="collapse{{ module.id }}" class="accordion-collapse collapse {% if forloop.first %}show{% endif %}" 
+                 aria-labelledby="heading{{ module.id }}" data-bs-parent="#courseModules">
+              <div class="accordion-body p-0">
+                <ul class="list-group list-group-flush">
+                  {% for lesson in module.lessons.all %}
+                  <li class="list-group-item d-flex justify-content-between align-items-center lesson-item 
+                           {% if lesson.id in completed_lesson_ids %}completed-lesson{% endif %}">
+                    <div class="d-flex align-items-center">
+                      <div class="me-3">
+                        {% if lesson.id in completed_lesson_ids %}
+                          <i class="fas fa-check-circle text-success"></i>
+                        {% else %}
+                          <i class="fas fa-circle text-muted"></i>
+                        {% endif %}
+                      </div>
+                      <div>
+                        <div class="d-flex align-items-center">
+                          <span class="badge lesson-type-{{ lesson.lesson_type }} me-2">
+                            {% if lesson.lesson_type == 'video' %}
+                              <i class="fas fa-play-circle me-1"></i> Video
+                            {% elif lesson.lesson_type == 'text' %}
+                              <i class="fas fa-file-alt me-1"></i> Matn
+                            {% elif lesson.lesson_type == 'quiz' %}
+                              <i class="fas fa-question-circle me-1"></i> Test
+                            {% elif lesson.lesson_type == 'assignment' %}
+                              <i class="fas fa-tasks me-1"></i> Vazifa
+                            {% endif %}
+                          </span>
+                          <h6 class="mb-0">{{ lesson.title }}</h6>
+                        </div>
+                        <p class="small text-muted mb-0">
+                          <i class="fas fa-clock me-1"></i> {{ lesson.duration }} daqiqa
+                        </p>
+                      </div>
+                    </div>
+                    <a href="{% url 'courses:lesson_detail' course.slug module.id lesson.id %}" 
+                       class="btn btn-sm btn-primary rounded-pill">
+                      {% if lesson.id in completed_lesson_ids %}
+                        <i class="fas fa-redo me-1"></i> Qayta ko'rish
+                      {% else %}
+                        <i class="fas fa-play me-1"></i> Boshlash
+                      {% endif %}
+                    </a>
+                  </li>
+                  {% endfor %}
+                </ul>
+              </div>
+            </div>
+          </div>
+          {% endfor %}
+        </div>
+      </div>
+    </div>
+  </div>
+  
+  <!-- Боковая панель информации о курсе -->
+  <div class="col-lg-3">
+    <div class="card shadow-sm mb-4">
+      <div class="card-header bg-white">
+        <h5 class="card-title mb-0">Kurs ma'lumotlari</h5>
+      </div>
+      <div class="card-body">
+        <ul class="list-group list-group-flush">
+          <li class="list-group-item d-flex justify-content-between align-items-center">
+            Modullar
+            <span class="badge bg-primary rounded-pill">{{ course.total_modules }}</span>
+          </li>
+          <li class="list-group-item d-flex justify-content-between align-items-center">
+            Darslar
+            <span class="badge bg-primary rounded-pill">{{ total_lessons }}</span>
+          </li>
+          <li class="list-group-item d-flex justify-content-between align-items-center">
+            Davomiyligi
+            <span class="badge bg-primary rounded-pill">{{ course.total_duration }} daqiqa</span>
+          </li>
+          <li class="list-group-item d-flex justify-content-between align-items-center">
+            Boshlangan sana
+            <span class="badge bg-light text-dark">{{ enrollment.enrolled_at|date:"d.m.Y" }}</span>
+          </li>
+        </ul>
+      </div>
+    </div>
+    
+    <div class="card shadow-sm">
+      <div class="card-header bg-white">
+        <h5 class="card-title mb-0">Qo'shimcha</h5>
+      </div>
+      <div class="card-body">
+        <div class="d-grid gap-2">
+          <a href="{% url 'courses:my_courses' %}" class="btn btn-outline-primary rounded-pill">
+            <i class="fas fa-arrow-left me-2"></i> Mening kurslarim
+          </a>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<style>
+  .completed-lesson {
+    background-color: rgba(25, 135, 84, 0.05);
+  }
+  
+  .lesson-item {
+    transition: all 0.2s ease;
+  }
+  
+  .lesson-item:hover {
+    background-color: rgba(13, 110, 253, 0.05);
+  }
+  
+  .badge.lesson-type-video {
+    background-color: #ff6b6b;
+  }
+  
+  .badge.lesson-type-text {
+    background-color: #4dabf7;
+  }
+  
+  .badge.lesson-type-quiz {
+    background-color: #9775fa;
+  }
+  
+  .badge.lesson-type-assignment {
+    background-color: #fd7e14;
+  }
+</style>
+
+{% block extra_js %}
+<script>
+  // При загрузке страницы запрашиваем актуальный прогресс
+  document.addEventListener('DOMContentLoaded', function() {
+    // Если пользователь уже завершил курс, нет необходимости запрашивать прогресс
+    {% if not enrollment.is_completed %}
+      fetchCourseProgress();
+    {% endif %}
+  });
+  
+  function fetchCourseProgress() {
+    fetch('{% url "courses:get_course_progress" course.slug %}')
+      .then(response => response.json())
+      .then(data => {
+        if (data.status === 'success') {
+          // Обновляем прогресс-бар
+          document.querySelector('.progress-bar').style.width = data.progress + '%';
+          document.querySelector('.progress-bar').setAttribute('aria-valuenow', data.progress);
+          document.querySelector('.badge.bg-primary').textContent = data.progress + '%';
+          
+          // Обновляем статус уроков (выполнено/не выполнено)
+          const completedLessons = new Set(data.completed_lessons);
+          document.querySelectorAll('.lesson-item').forEach(item => {
+            const lessonId = parseInt(item.getAttribute('data-lesson-id'));
+            if (completedLessons.has(lessonId)) {
+              item.classList.add('completed-lesson');
+              item.querySelector('.fas').classList.remove('fa-circle', 'text-muted');
+              item.querySelector('.fas').classList.add('fa-check-circle', 'text-success');
+            }
+          });
+          
+          // Если курс завершен, обновляем интерфейс
+          if (data.is_completed && !window.location.reload) {
+            window.location.reload();
+          }
+        }
+      })
+      .catch(error => console.error('Error fetching course progress:', error));
+  }
+</script>
+{% endblock %}
+{% endblock %} 

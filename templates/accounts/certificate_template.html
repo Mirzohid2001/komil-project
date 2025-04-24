@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Сертификат об окончании</title>
+    <title>Sertifikat</title>
     <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700&family=Playfair+Display:wght@700&display=swap" rel="stylesheet">
     <style>
         @page {
@@ -60,115 +60,129 @@
             height: calc(100% - 50mm);
             justify-content: space-between;
         }
-        .header {
+        
+        .logo {
             display: flex;
-            justify-content: space-between;
             align-items: center;
+            justify-content: center;
             margin-bottom: 10mm;
         }
-        .logo {
-            width: 50mm;
+        
+        .logo img {
+            height: 15mm;
+            margin-right: 5mm;
         }
-        .certificate-number {
-            font-size: 10pt;
-            text-align: right;
-            color: #6b7280;
-        }
-        .title {
-            font-family: 'Playfair Display', serif;
-            font-size: 32pt;
+        
+        .logo-text {
+            font-size: 24px;
             font-weight: 700;
-            margin-top: 0;
-            margin-bottom: 5mm;
-            color: #1f2937;
-        }
-        .subtitle {
-            font-size: 14pt;
-            font-weight: 500;
-            margin-top: 0;
-            margin-bottom: 15mm;
-            color: #4b5563;
-        }
-        .recipient-name {
-            font-family: 'Playfair Display', serif;
-            font-size: 24pt;
-            font-weight: 700;
-            margin-bottom: 5mm;
             color: #4f46e5;
         }
+        
+        .certificate-title {
+            font-family: 'Playfair Display', serif;
+            font-size: 42px;
+            color: #1e293b;
+            margin-bottom: 5mm;
+        }
+        
+        .certificate-subtitle {
+            font-size: 18px;
+            color: #64748b;
+            margin-bottom: 15mm;
+        }
+        
+        .recipient {
+            font-family: 'Playfair Display', serif;
+            font-size: 30px;
+            color: #1e293b;
+            margin-bottom: 5mm;
+            font-weight: 700;
+        }
+        
+        .completion-text {
+            font-size: 16px;
+            line-height: 1.6;
+            margin-bottom: 15mm;
+            color: #334155;
+        }
+        
         .course-name {
-            font-size: 16pt;
+            font-size: 24px;
             font-weight: 600;
-            margin-top: 5mm;
+            color: #4f46e5;
             margin-bottom: 10mm;
-            color: #1f2937;
         }
-        .description {
-            font-size: 11pt;
-            line-height: 1.5;
-            margin-bottom: 10mm;
-            color: #4b5563;
-            max-width: 70%;
-            margin-left: auto;
-            margin-right: auto;
-        }
-        .details {
+        
+        .date-container {
             display: flex;
-            justify-content: space-around;
-            width: 80%;
-            margin: 0 auto 10mm auto;
+            justify-content: center;
+            margin-bottom: 15mm;
         }
-        .detail-item {
-            display: flex;
-            flex-direction: column;
+        
+        .date-item {
+            text-align: center;
+            margin: 0 15mm;
         }
-        .detail-label {
-            font-size: 10pt;
-            color: #6b7280;
+        
+        .date-label {
+            font-size: 14px;
+            color: #64748b;
             margin-bottom: 2mm;
         }
-        .detail-value {
-            font-size: 12pt;
+        
+        .date-value {
+            font-size: 16px;
             font-weight: 600;
-            color: #1f2937;
+            color: #1e293b;
         }
+        
         .footer {
             display: flex;
             justify-content: space-between;
             align-items: flex-end;
-            margin-top: 10mm;
         }
+        
         .verification {
+            font-size: 10px;
+            color: #64748b;
             text-align: left;
-            font-size: 9pt;
-            color: #6b7280;
+            flex: 1;
         }
+        
         .verification a {
             color: #4f46e5;
             text-decoration: none;
         }
+        
         .signature {
+            flex: 1;
             text-align: center;
         }
+        
         .signature img {
-            height: 20mm;
-            margin-bottom: 2mm;
+            height: 15mm;
+            margin-bottom: 3mm;
         }
+        
         .signature-name {
             font-weight: 600;
-            font-size: 12pt;
-            margin-bottom: 1mm;
+            font-size: 14px;
+            color: #1e293b;
         }
+        
         .signature-title {
-            font-size: 10pt;
-            color: #6b7280;
+            font-size: 12px;
+            color: #64748b;
         }
+        
         .qr-code {
+            flex: 1;
             text-align: right;
         }
+        
         .qr-code img {
-            width: 20mm;
-            height: 20mm;
+            height: 25mm;
         }
     </style>
 </head>
@@ -180,51 +194,48 @@
         <div class="border"></div>
         <div class="content">
             <div class="header">
-                <img src="{{ logo_url }}" alt="Лого" class="logo">
-                <div class="certificate-number">Сертификат № {{ certificate.unique_id }}</div>
+                <div class="logo">
+                    <div class="logo-text">Isomer Oil Group</div>
+                </div>
+                <div class="certificate-title">Sertifikat</div>
+                <div class="certificate-subtitle">O'quv dasturi muvaffaqiyatli yakunlanganligi to'g'risida</div>
             </div>
             
-            <div>
-                <h1 class="title">Сертификат</h1>
-                <p class="subtitle">об успешном окончании курса</p>
+            <div class="main-content">
+                <div class="recipient">{{ user.get_full_name|default:user.username }}</div>
+                <div class="completion-text">
+                    Ushbu sertifikat bilan tasdiqlanadiki, yuqorida nomi ko'rsatilgan kishi muvaffaqiyatli o'qishni yakunladi
+                </div>
+                <div class="course-name">{{ category.name }}</div>
                 
-                <h2 class="recipient-name">{{ certificate.user.get_full_name }}</h2>
-                <p class="course-name">{{ certificate.name }}</p>
-                
-                <p class="description">
-                    {{ certificate.description }}
-                </p>
-                
-                <div class="details">
-                    <div class="detail-item">
-                        <span class="detail-label">Дата выдачи</span>
-                        <span class="detail-value">{{ certificate.issue_date|date:"d.m.Y" }}</span>
+                <div class="date-container">
+                    <div class="date-item">
+                        <div class="date-label">Sertifikat raqami</div>
+                        <div class="date-value">{{ certificate.certificate_id }}</div>
                     </div>
-                    <div class="detail-item">
-                        <span class="detail-label">Длительность</span>
-                        <span class="detail-value">{{ certificate.duration }}</span>
-                    </div>
-                    <div class="detail-item">
-                        <span class="detail-label">Успеваемость</span>
-                        <span class="detail-value">{{ certificate.score }}%</span>
+                    <div class="date-item">
+                        <div class="date-label">Berilgan sana</div>
+                        <div class="date-value">{{ date }}</div>
                     </div>
                 </div>
             </div>
             
             <div class="footer">
                 <div class="verification">
-                    Подлинность данного сертификата можно проверить по адресу:<br>
+                    Sertifikat haqiqiyligini quyidagi manzil orqali tekshirishingiz mumkin:<br>
                     <a href="{{ verification_url }}">{{ verification_url }}</a>
                 </div>
                 
                 <div class="signature">
-                    <img src="{{ signature_url }}" alt="Подпись">
-                    <div class="signature-name">{{ certificate.instructor }}</div>
-                    <div class="signature-title">Преподаватель курса</div>
+                    {% if signature_url %}
+                    <img src="{{ signature_url }}" alt="Imzo">
+                    {% endif %}
+                    <div class="signature-name">Kurs rahbari</div>
+                    <div class="signature-title">Isomer Oil Group</div>
                 </div>
                 
                 <div class="qr-code">
-                    <img src="{{ qr_code_url }}" alt="QR-код для проверки">
+                    <img src="{{ qr_code }}" alt="QR-kod">
                 </div>
             </div>
         </div>

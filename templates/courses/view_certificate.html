@@ -1,0 +1,218 @@
+{% extends 'courses/base.html' %}
+{% load static %}
+
+{% block title %}Sertifikat - {{ certificate.title }}{% endblock %}
+
+{% block breadcrumb_items %}
+<li class="breadcrumb-item"><a href="{% url 'courses:detail' certificate.course.slug %}">{{ certificate.course.title }}</a></li>
+<li class="breadcrumb-item active" aria-current="page">Sertifikat</li>
+{% endblock %}
+
+{% block courses_content %}
+<div class="container my-4">
+  <div class="card shadow-lg">
+    <!-- Шапка сертификата -->
+    <div class="card-header bg-white py-4 border-bottom border-primary border-3">
+      <div class="d-flex justify-content-between align-items-center">
+        <div>
+          <h1 class="h2 mb-0 text-gradient">Sertifikat</h1>
+          <p class="text-muted mb-0">{{ certificate.issue_date|date:"d.m.Y" }}</p>
+        </div>
+        <div class="d-flex">
+          {% if not is_verification %}
+          <a href="{% url 'courses:download_certificate' certificate.certificate_id %}" class="btn btn-outline-primary rounded-pill me-2">
+            <i class="fas fa-download me-2"></i> Yuklash
+          </a>
+          {% endif %}
+          <a href="{{ request.build_absolute_uri }}" class="btn btn-outline-secondary rounded-pill">
+            <i class="fas fa-link me-2"></i> Havola
+          </a>
+        </div>
+      </div>
+    </div>
+    
+    <!-- Основной контент сертификата -->
+    <div class="card-body p-5 text-center">
+      {% if certificate.preview_image %}
+        <img src="{{ certificate.preview_image.url }}" alt="Sertifikat" class="img-fluid mb-4 rounded shadow" />
+      {% else %}
+        <div class="certificate-container p-5 border border-2 rounded-3 mx-auto mb-4" style="max-width: 800px; background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);">
+          <!-- Заголовок сертификата -->
+          <div class="certificate-header mb-5">
+            <h2 class="display-4 text-gradient fw-bold mb-2">SERTIFIKAT</h2>
+            <div class="certificate-id mb-4">
+              <span class="badge bg-light text-dark fw-normal p-2">ID: {{ certificate.certificate_id }}</span>
+            </div>
+            <div class="divider mx-auto my-4" style="width: 150px; height: 3px; background: var(--gradient-primary);"></div>
+          </div>
+          
+          <!-- Текст сертификата -->
+          <div class="certificate-content mb-5">
+            <p class="lead mb-1">Ushbu sertifikat</p>
+            <h3 class="fw-bold mb-3 display-6">{{ certificate.user.get_full_name }}</h3>
+            <p class="lead mb-1">ga</p>
+            <h3 class="fw-bold text-primary mb-4">{{ certificate.course.title }}</h3>
+            <p class="lead">kursini muvaffaqiyatli tugatganligi uchun beriladi</p>
+          </div>
+          
+          <!-- Подпись и дата -->
+          <div class="certificate-footer d-flex justify-content-between mt-5">
+            <div class="text-start">
+              <div class="mb-2">
+                <img src="{% static 'img/signature.png' %}" alt="Signature" class="img-fluid" style="height: 60px;">
+              </div>
+              <div class="signature-line" style="width: 150px; height: 1px; background-color: #212529;"></div>
+              <p class="mt-2">{{ certificate.course.teacher.get_full_name }}</p>
+              <p class="text-muted small">O'qituvchi</p>
+            </div>
+            <div class="text-end">
+              <div style="height: 60px;"></div>
+              <div class="signature-line" style="width: 150px; height: 1px; background-color: #212529;"></div>
+              <p class="mt-2">{{ certificate.issue_date|date:"d.m.Y" }}</p>
+              <p class="text-muted small">Sana</p>
+            </div>
+          </div>
+        </div>
+      {% endif %}
+      
+      <!-- Информация о сертификате -->
+      <div class="certificate-info bg-light p-4 rounded mx-auto" style="max-width: 800px;">
+        <div class="row text-start g-4">
+          <div class="col-md-6">
+            <h5>Sertifikat ma'lumotlari</h5>
+            <ul class="list-unstyled">
+              <li class="mb-2">
+                <span class="text-muted">Sertifikat ID:</span> 
+                <strong>{{ certificate.certificate_id }}</strong>
+              </li>
+              <li class="mb-2">
+                <span class="text-muted">Berilgan sana:</span> 
+                <strong>{{ certificate.issue_date|date:"d.m.Y" }}</strong>
+              </li>
+              <li>
+                <span class="text-muted">Sertifikat turi:</span> 
+                <strong>Kurs yakunlanishi</strong>
+              </li>
+            </ul>
+          </div>
+          <div class="col-md-6">
+            <h5>Kurs ma'lumotlari</h5>
+            <ul class="list-unstyled">
+              <li class="mb-2">
+                <span class="text-muted">Kurs nomi:</span> 
+                <strong>{{ certificate.course.title }}</strong>
+              </li>
+              <li class="mb-2">
+                <span class="text-muted">O'qituvchi:</span> 
+                <strong>{{ certificate.course.teacher.get_full_name }}</strong>
+              </li>
+              <li>
+                <span class="text-muted">Davomiyligi:</span> 
+                <strong>{{ certificate.course.total_duration }} daqiqa</strong>
+              </li>
+            </ul>
+          </div>
+        </div>
+      </div>
+    </div>
+    
+    <!-- Футер сертификата с информацией о проверке -->
+    <div class="card-footer bg-white py-4 text-center">
+      <h5 class="mb-3">Sertifikatni tekshirish</h5>
+      <p class="mb-3">Ushbu sertifikatni tekshirish uchun quyidagi havoladan foydalaning:</p>
+      <div class="input-group mb-3 mx-auto" style="max-width: 600px;">
+        <input type="text" class="form-control" value="{{ request.build_absolute_uri }}?verify=true" id="certificateUrl" readonly>
+        <button class="btn btn-outline-primary" type="button" onclick="copyCertificateUrl()">
+          <i class="far fa-copy"></i>
+        </button>
+      </div>
+      <p class="text-muted small mb-0">Yoki sertifikat ID orqali tekshiring: <strong>{{ certificate.certificate_id }}</strong></p>
+    </div>
+  </div>
+  
+  {% if is_verification %}
+  <!-- Информация о проверке сертификата -->
+  <div class="card shadow mt-4">
+    <div class="card-body">
+      <div class="d-flex align-items-center mb-3">
+        <div class="me-3">
+          <i class="fas fa-check-circle text-success fa-3x"></i>
+        </div>
+        <div>
+          <h5 class="mb-1">Sertifikat tasdiqlangan</h5>
+          <p class="mb-0 text-muted">Ushbu sertifikat haqiqiy va {{ certificate.issue_date|date:"d.m.Y" }} da berilgan</p>
+        </div>
+      </div>
+      <div class="alert alert-light">
+        <div class="d-flex align-items-center mb-3">
+          <img src="{% if certificate.user.avatar %}{{ certificate.user.avatar.url }}{% else %}{% static 'img/user-profile.png' %}{% endif %}" 
+               alt="{{ certificate.user.get_full_name }}" 
+               class="rounded-circle me-3" 
+               style="width: 50px; height: 50px; object-fit: cover;">
+          <div>
+            <h6 class="mb-0">{{ certificate.user.get_full_name }}</h6>
+            <p class="mb-0 small text-muted">{{ certificate.user.email }}</p>
+          </div>
+        </div>
+        <hr>
+        <p class="mb-0">
+          <strong>{{ certificate.course.title }}</strong> kursini muvaffaqiyatli tugatgan
+        </p>
+      </div>
+    </div>
+  </div>
+  {% else %}
+  <!-- Еще курсы пользователя, если это не проверка сертификата -->
+  <div class="mt-5">
+    <h2 class="h4 mb-4">Boshqa sertifikatlar</h2>
+    <div class="row row-cols-1 row-cols-md-2 row-cols-lg-3 g-4">
+      {% for cert in certificate.user.course_certificates.all %}
+        {% if cert.id != certificate.id %}
+        <div class="col">
+          <div class="card h-100 shadow-sm">
+            <div class="card-body">
+              <div class="d-flex align-items-center mb-3">
+                <div class="certificate-icon me-3">
+                  <i class="fas fa-certificate text-warning fa-2x"></i>
+                </div>
+                <div>
+                  <h5 class="card-title mb-0">{{ cert.title }}</h5>
+                  <p class="card-text small text-muted">{{ cert.issue_date|date:"d.m.Y" }}</p>
+                </div>
+              </div>
+              <p class="card-text">{{ cert.course.short_description|truncatechars:80 }}</p>
+            </div>
+            <div class="card-footer bg-transparent">
+              <a href="{% url 'courses:view_certificate' cert.certificate_id %}" class="btn btn-sm btn-outline-primary rounded-pill w-100">
+                <i class="fas fa-eye me-1"></i> Ko'rish
+              </a>
+            </div>
+          </div>
+        </div>
+        {% endif %}
+      {% endfor %}
+    </div>
+  </div>
+  {% endif %}
+</div>
+
+{% block extra_js %}
+<script>
+  function copyCertificateUrl() {
+    var copyText = document.getElementById("certificateUrl");
+    copyText.select();
+    copyText.setSelectionRange(0, 99999); /* For mobile devices */
+    document.execCommand("copy");
+    
+    // Изменяем текст кнопки на короткое время
+    var button = copyText.nextElementSibling;
+    var originalHtml = button.innerHTML;
+    button.innerHTML = '<i class="fas fa-check"></i>';
+    
+    setTimeout(function() {
+      button.innerHTML = originalHtml;
+    }, 2000);
+  }
+</script>
+{% endblock %}
+{% endblock %} 

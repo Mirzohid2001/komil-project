@@ -44,6 +44,7 @@ INSTALLED_APPS = [
 
     'blog',                         
     'accounts.apps.AccountsConfig',
+    'courses.apps.CoursesConfig',
 ]
 
 

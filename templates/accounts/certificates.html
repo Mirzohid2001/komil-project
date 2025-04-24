@@ -1,0 +1,259 @@
+{% extends 'accounts/profile_base.html' %}
+
+{% block profile_title %}Sertifikatlar{% endblock %}
+
+{% block profile_content %}
+<div class="row g-4">
+    <!-- Статистика сертификатов -->
+    <div class="col-12">
+        <div class="card shadow-sm">
+            <div class="card-body">
+                <h5 class="card-title mb-4">Sertifikatlar statistikasi</h5>
+                
+                <div class="row g-3">
+                    <div class="col-md-4">
+                        <div class="bg-light rounded p-3 text-center">
+                            <h4 class="fw-bold text-primary mb-1">{{ total_certificates }}</h4>
+                            <p class="text-muted small mb-0">Jami sertifikatlar</p>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="bg-light rounded p-3 text-center">
+                            <h4 class="fw-bold text-success mb-1">{{ course_certificates }}</h4>
+                            <p class="text-muted small mb-0">Kurs sertifikatlari</p>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="bg-light rounded p-3 text-center">
+                            <h4 class="fw-bold text-info mb-1">{{ event_certificates }}</h4>
+                            <p class="text-muted small mb-0">Tadbir sertifikatlari</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Сертификаты -->
+    <div class="col-12">
+        <div class="card shadow-sm">
+            <div class="card-header bg-white d-flex justify-content-between align-items-center">
+                <h5 class="card-title mb-0">Mening sertifikatlarim</h5>
+                
+                <div class="input-group" style="max-width: 300px;">
+                    <input type="text" id="certificateSearch" class="form-control form-control-sm" 
+                           placeholder="Sertifikat nomini kiriting...">
+                    <button class="btn btn-outline-secondary btn-sm" type="button">
+                        <i class="bi bi-search"></i>
+                    </button>
+                </div>
+            </div>
+            <div class="card-body">
+                <div class="mb-3">
+                    <div class="btn-group" role="group">
+                        <button type="button" class="btn btn-sm btn-outline-primary active filter-btn" data-filter="all">
+                            Barcha sertifikatlar
+                        </button>
+                        <button type="button" class="btn btn-sm btn-outline-primary filter-btn" data-filter="course">
+                            Kurs sertifikatlari
+                        </button>
+                        <button type="button" class="btn btn-sm btn-outline-primary filter-btn" data-filter="event">
+                            Tadbir sertifikatlari
+                        </button>
+                    </div>
+                </div>
+                
+                {% if certificates %}
+                <div class="row row-cols-1 row-cols-md-2 row-cols-lg-3 g-4" id="certificatesContainer">
+                    {% for certificate in certificates %}
+                    <div class="col certificate-item" data-type="{{ certificate.certificate_type }}">
+                        <div class="card h-100">
+                            <div class="position-relative">
+                                {% if certificate.preview_image %}
+                                <img src="{{ certificate.preview_image.url }}" class="card-img-top" alt="{{ certificate.title }}"
+                                     style="height: 160px; object-fit: cover;">
+                                {% else %}
+                                <div class="bg-light" style="height: 160px;">
+                                    <div class="d-flex h-100 align-items-center justify-content-center">
+                                        <i class="bi bi-award" style="font-size: 3rem; color: #ddd;"></i>
+                                    </div>
+                                </div>
+                                {% endif %}
+                                
+                                <div class="position-absolute top-0 end-0 m-2">
+                                    <span class="badge {% if certificate.certificate_type == 'course' %}bg-success{% else %}bg-primary{% endif %}">
+                                        {% if certificate.certificate_type == 'course' %}Kurs{% else %}Tadbir{% endif %}
+                                    </span>
+                                </div>
+                            </div>
+                            
+                            <div class="card-body">
+                                <h5 class="card-title">{{ certificate.title }}</h5>
+                                
+                                <div class="mt-2">
+                                    <small class="text-muted">
+                                        <i class="bi bi-calendar me-1"></i> {{ certificate.issue_date|date:"d.m.Y" }}
+                                    </small>
+                                </div>
+                                
+                                {% if certificate.certificate_type == 'course' and certificate.course %}
+                                <div class="mt-1">
+                                    <small class="text-muted">
+                                        <i class="bi bi-book me-1"></i> {{ certificate.course.title|truncatechars:30 }}
+                                    </small>
+                                </div>
+                                {% endif %}
+                                
+                                {% if certificate.certificate_type == 'event' and certificate.event %}
+                                <div class="mt-1">
+                                    <small class="text-muted">
+                                        <i class="bi bi-calendar-event me-1"></i> {{ certificate.event.title|truncatechars:30 }}
+                                    </small>
+                                </div>
+                                {% endif %}
+                                
+                                <div class="mt-1">
+                                    <small class="text-muted">
+                                        <i class="bi bi-hash me-1"></i> {{ certificate.certificate_id }}
+                                    </small>
+                                </div>
+                            </div>
+                            
+                            <div class="card-footer bg-white d-grid gap-2">
+                                <div class="btn-group" role="group">
+                                    <a href="{{ certificate.pdf_file.url }}" target="_blank" class="btn btn-primary">
+                                        <i class="bi bi-eye me-1"></i> Ko'rish
+                                    </a>
+                                    <a href="{{ certificate.pdf_file.url }}" download class="btn btn-outline-primary">
+                                        <i class="bi bi-download me-1"></i> Yuklab olish
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+                
+                <!-- Пагинация -->
+                {% if is_paginated %}
+                <nav aria-label="Sahifalar" class="mt-4">
+                    <ul class="pagination justify-content-center">
+                        {% if page_obj.has_previous %}
+                        <li class="page-item">
+                            <a class="page-link" href="?page=1" aria-label="Birinchi">
+                                <span aria-hidden="true">&laquo;&laquo;</span>
+                            </a>
+                        </li>
+                        <li class="page-item">
+                            <a class="page-link" href="?page={{ page_obj.previous_page_number }}" aria-label="Oldingi">
+                                <span aria-hidden="true">&laquo;</span>
+                            </a>
+                        </li>
+                        {% endif %}
+                        
+                        {% for num in page_obj.paginator.page_range %}
+                            {% if num == page_obj.number %}
+                            <li class="page-item active"><span class="page-link">{{ num }}</span></li>
+                            {% elif num > page_obj.number|add:'-3' and num < page_obj.number|add:'3' %}
+                            <li class="page-item"><a class="page-link" href="?page={{ num }}">{{ num }}</a></li>
+                            {% endif %}
+                        {% endfor %}
+                        
+                        {% if page_obj.has_next %}
+                        <li class="page-item">
+                            <a class="page-link" href="?page={{ page_obj.next_page_number }}" aria-label="Keyingi">
+                                <span aria-hidden="true">&raquo;</span>
+                            </a>
+                        </li>
+                        <li class="page-item">
+                            <a class="page-link" href="?page={{ page_obj.paginator.num_pages }}" aria-label="Oxirgi">
+                                <span aria-hidden="true">&raquo;&raquo;</span>
+                            </a>
+                        </li>
+                        {% endif %}
+                    </ul>
+                </nav>
+                {% endif %}
+                
+                {% else %}
+                <div class="text-center py-5">
+                    <div class="mb-3">
+                        <i class="bi bi-award" style="font-size: 3rem; color: #ccc;"></i>
+                    </div>
+                    <h4>Sertifikatlar topilmadi</h4>
+                    <p class="text-muted">Siz hali birorta ham sertifikat olmadingiz</p>
+                    <a href="{% url 'blog:index' %}" class="btn btn-primary mt-2">
+                        Kurslarni ko'rish
+                    </a>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+    
+    <!-- Проверить сертификат -->
+    <div class="col-12">
+        <div class="card shadow-sm">
+            <div class="card-header bg-white">
+                <h5 class="card-title mb-0">Sertifikatni tekshirish</h5>
+            </div>
+            <div class="card-body">
+                <p class="text-muted mb-4">Sertifikat haqiqiyligini tekshirish uchun sertifikat ID raqamini kiriting</p>
+                
+                <form action="{% url 'accounts:verify_certificate' %}" method="get" class="row g-3">
+                    <div class="col-md-8">
+                        <input type="text" name="certificate_id" class="form-control" placeholder="Sertifikat ID raqami" required>
+                    </div>
+                    <div class="col-md-4">
+                        <button type="submit" class="btn btn-primary w-100">Tekshirish</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Фильтрация сертификатов
+        const filterButtons = document.querySelectorAll('.filter-btn');
+        const certificateItems = document.querySelectorAll('.certificate-item');
+        
+        filterButtons.forEach(button => {
+            button.addEventListener('click', function() {
+                const filterValue = this.getAttribute('data-filter');
+                
+                filterButtons.forEach(btn => btn.classList.remove('active'));
+                this.classList.add('active');
+                
+                certificateItems.forEach(item => {
+                    if (filterValue === 'all' || item.getAttribute('data-type') === filterValue) {
+                        item.style.display = '';
+                    } else {
+                        item.style.display = 'none';
+                    }
+                });
+            });
+        });
+        
+        // Поиск сертификатов
+        const searchInput = document.getElementById('certificateSearch');
+        
+        searchInput.addEventListener('input', function() {
+            const searchTerm = this.value.toLowerCase();
+            
+            certificateItems.forEach(item => {
+                const certificateTitle = item.querySelector('.card-title').textContent.toLowerCase();
+                
+                if (certificateTitle.includes(searchTerm)) {
+                    item.style.display = '';
+                } else {
+                    item.style.display = 'none';
+                }
+            });
+        });
+    });
+</script>
+{% endblock %} 

@@ -25,26 +25,31 @@
             <i class="fas fa-layer-group me-1"></i> Kategoriyalar
           </a>
         </li>
+        <li class="nav-item mx-2" data-aos="fade-down" data-aos-delay="250">
+          <a class="nav-link fw-medium nav-hover-effect" href="{% url 'courses:list' %}">
+            <i class="fas fa-graduation-cap me-1"></i> Kurslar
+          </a>
+        </li>
 
         {% if request.user.is_authenticated %}
-          <li class="nav-item mx-2" data-aos="fade-down" data-aos-delay="250">
+          <li class="nav-item mx-2" data-aos="fade-down" data-aos-delay="300">
             <a class="nav-link fw-medium nav-hover-effect" href="{% url 'blog:test_list' %}">
               <i class="fas fa-tasks me-1"></i> Testlar
             </a>
           </li>
-          <li class="nav-item mx-2" data-aos="fade-down" data-aos-delay="300">
+          <li class="nav-item mx-2" data-aos="fade-down" data-aos-delay="350">
             <a class="nav-link fw-medium nav-hover-effect" href="{% url 'accounts:profile' %}">
               <i class="fas fa-user me-1"></i> Profil
             </a>
           </li>
           {% if request.user.role == 'admin' %}
-          <li class="nav-item mx-2" data-aos="fade-down" data-aos-delay="350">
+          <li class="nav-item mx-2" data-aos="fade-down" data-aos-delay="400">
             <a class="nav-link fw-medium nav-hover-effect" href="{% url 'blog:analytics' %}">
               <i class="fas fa-chart-bar me-1"></i> Analitika
             </a>
           </li>
           {% endif %}
-          <li class="nav-item ms-3 d-flex align-items-center" data-aos="fade-down" data-aos-delay="400">
+          <li class="nav-item ms-3 d-flex align-items-center" data-aos="fade-down" data-aos-delay="450">
             <span class="badge rounded-pill bg-light text-primary me-3">
               <i class="fas fa-user-circle me-1"></i>
               {{ request.user.get_role_display }}
