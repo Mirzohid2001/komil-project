@@ -1,4 +1,5 @@
 {% extends 'accounts/profile_base.html' %}
+{% load custom_filters %}
 
 {% block profile_title %}Mening profilim{% endblock %}
 
@@ -142,19 +143,19 @@
                 <div class="col-6 col-md-3">
                   <div class="p-3 rounded-3" style="background-color: #f8f9fa;">
                     <div class="small text-muted mb-1">O'tilgan</div>
-                    <div class="fs-4 fw-bold text-success">{{ user.test_results.filter.is_passed.count }}</div>
+                    <div class="fs-4 fw-bold text-success">{{ passed_tests_count }}</div>
                   </div>
                 </div>
                 <div class="col-6 col-md-3">
                   <div class="p-3 rounded-3" style="background-color: #f8f9fa;">
                     <div class="small text-muted mb-1">O'tilmagan</div>
-                    <div class="fs-4 fw-bold text-danger">{{ user.test_results.filter.is_passed.False.count }}</div>
+                    <div class="fs-4 fw-bold text-danger">{{ failed_tests_count }}</div>
                   </div>
                 </div>
                 <div class="col-6 col-md-3">
                   <div class="p-3 rounded-3" style="background-color: #f8f9fa;">
                     <div class="small text-muted mb-1">O'rtacha ball</div>
-                    <div class="fs-4 fw-bold">{{ user.test_results.aggregate.Avg.percentage|floatformat:1 }}%</div>
+                    <div class="fs-4 fw-bold">{{ avg_score|default:"0" }}%</div>
                   </div>
                 </div>
               </div>

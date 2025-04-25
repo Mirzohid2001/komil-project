@@ -87,10 +87,23 @@ def profile_view(request):
     # Получаем историю активности
     activities = UserActivity.objects.filter(user=user)[:10]  # последние 10 активностей
     
+    # Рассчитываем статистику по тестам
+    test_results = user.test_results.all()
+    passed_tests_count = test_results.filter(is_passed=True).count()
+    failed_tests_count = test_results.filter(is_passed=False).count()
+    
+    # Рассчитываем средний балл по тестам
+    avg_score = 0
+    if test_results.exists():
+        avg_score = round(sum(result.percentage for result in test_results) / test_results.count(), 1)
+    
     return render(request, 'accounts/profile.html', {
         'user': user,
         'favorites': favorites,
         'activities': activities,
+        'avg_score': avg_score,
+        'passed_tests_count': passed_tests_count,
+        'failed_tests_count': failed_tests_count,
     })
 
 

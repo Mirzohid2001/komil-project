@@ -166,18 +166,6 @@
     // Har soniyada vaqt hisoblagichini yangilash
     updateTimer();
     setInterval(updateTimer, 1000);
-    
-    // Foydalanuvchining tasodifan sahifadan chiqib ketishini oldini olish
-    window.addEventListener('beforeunload', function(e) {
-      const confirmationMessage = 'Siz rostdan ham sahifadan chiqishni xohlaysizmi? Testdagi jarayoningiz yo\'qoladi.';
-      (e || window.event).returnValue = confirmationMessage;
-      return confirmationMessage;
-    });
-    
-    // Forma yuborilganda ogohlantirishni o'chirish
-    document.getElementById('questionForm').addEventListener('submit', function() {
-      window.removeEventListener('beforeunload', function() {});
-    });
   });
 </script>
 {% endblock %} 
