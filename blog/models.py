@@ -83,6 +83,20 @@ class Test(models.Model):
     def get_random_questions(self, count=30):
         """Tasodifiy savollar to'plamini qaytaradi"""
         return self.questions.order_by('?')[:count]
+    
+    def get_valid_questions_count(self):
+        """Logik aloqaga ega bo'lgan savollar sonini qaytaradi"""
+        from blog.views import check_question_options_consistency
+        valid_count = 0
+        for question in self.questions.prefetch_related('options').all():
+            options = list(question.options.all())
+            if options and question.get_correct_option() and check_question_options_consistency(question.text, options):
+                valid_count += 1
+        return valid_count
+    
+    def has_enough_valid_questions(self, min_count=10):
+        """Testda kamida min_count ta to'g'ri savol borligini tekshiradi"""
+        return self.get_valid_questions_count() >= min_count
 
 class Question(models.Model):
     """Testlar uchun savollar"""

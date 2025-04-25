@@ -1,0 +1,73 @@
+{% extends "admin/base_site.html" %}
+{% load i18n admin_urls static %}
+
+{% block extrastyle %}
+  {{ block.super }}
+  <link rel="stylesheet" type="text/css" href="{% static "admin/css/forms.css" %}">
+  <style>
+    .validation-form {
+      max-width: 800px;
+      margin: 20px auto;
+      padding: 20px;
+      background-color: #f8f9fa;
+      border-radius: 4px;
+      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+    }
+    .validation-form select {
+      width: 100%;
+      margin-bottom: 10px;
+    }
+    .submit-row {
+      margin-top: 20px;
+    }
+    .help-text {
+      font-size: 13px;
+      color: #666;
+      margin: 10px 0 20px;
+    }
+  </style>
+{% endblock %}
+
+{% block breadcrumbs %}
+<div class="breadcrumbs">
+<a href="{% url 'admin:index' %}">{% trans 'Home' %}</a>
+&rsaquo; <a href="{% url 'admin:app_list' app_label=app_label %}">{{ app_label|capfirst }}</a>
+&rsaquo; <a href="{% url 'admin:blog_test_changelist' %}">Тесты</a>
+&rsaquo; Проверка логической связи вопросов и ответов
+</div>
+{% endblock %}
+
+{% block content %}
+<div id="content-main">
+  <div class="validation-form">
+    <h1>{{ title }}</h1>
+    
+    <p class="help-text">
+      Этот инструмент анализирует вопросы и варианты ответов на предмет логического соответствия. 
+      Он поможет выявить вопросы, где варианты ответов могут не соответствовать типу вопроса.
+      Например, если вопрос содержит "nechta" (сколько), но варианты ответов не содержат чисел.
+    </p>
+    
+    <form method="post">
+      {% csrf_token %}
+      
+      <div class="form-row">
+        <label for="test_id">Выберите тест для проверки:</label>
+        <select name="test_id" id="test_id" required>
+          <option value="">---------</option>
+          {% for test in tests %}
+            <option value="{{ test.id }}" {% if request.GET.test_id == test.id|stringformat:"s" %}selected{% endif %}>
+              {{ test.title }} ({{ test.get_total_questions }} вопросов, 
+              {{ test.get_valid_questions_count }} логичных)
+            </option>
+          {% endfor %}
+        </select>
+      </div>
+      
+      <div class="submit-row">
+        <input type="submit" value="Проверить вопросы" class="default">
+      </div>
+    </form>
+  </div>
+</div>
+{% endblock %} 

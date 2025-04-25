@@ -392,13 +392,29 @@ def test_start(request, test_id):
         messages.error(request, "Этот тест в настоящее время недоступен")
         return redirect('blog:test_list')
     
-    # Получаем случайные вопросы для теста (30 вопросов или все, если их меньше)
-    questions = test.get_random_questions(count=30)
-    
-    # Если вопросов нет, сообщаем об этом
-    if not questions:
+    # Проверяем предварительно количество вопросов в тесте
+    total_questions = test.get_total_questions()
+    if total_questions == 0:
         messages.error(request, "В этом тесте нет вопросов")
         return redirect('blog:test_list')
+    
+    # Получаем вопросы для теста с проверкой на логическую связь
+    filtered_questions = get_valid_questions(test, max_count=30)
+    
+    # Если нет логически правильных вопросов, возвращаем ошибку
+    if not filtered_questions:
+        messages.error(request, "В тесте недостаточно корректных вопросов. Пожалуйста, обратитесь к администратору.")
+        return redirect('blog:test_list')
+    
+    # Ограничиваем количество вопросов (не более 30)
+    max_questions = min(30, len(filtered_questions))
+    
+    # Перемешиваем отфильтрованные вопросы и берем подмножество
+    if len(filtered_questions) > max_questions:
+        random.shuffle(filtered_questions)
+        questions = filtered_questions[:max_questions]
+    else:
+        questions = filtered_questions
     
     # Создаем сессионные данные для теста
     request.session['current_test'] = {
@@ -407,18 +423,178 @@ def test_start(request, test_id):
         'question_ids': [q.id for q in questions],
         'current_question': 0,
         'answers': {},
+        'max_questions': max_questions,
     }
     
     # Записываем начало теста в активность пользователя
     UserActivity.objects.create(
         user=request.user,
         activity_type='view_post',  # Используем существующий тип
-        details={'action': 'test_start', 'test_id': test.id},
+        details={
+            'action': 'test_start', 
+            'test_id': test.id,
+            'test_title': test.title,
+            'questions_count': max_questions
+        },
         ip_address=request.META.get('REMOTE_ADDR')
     )
     
     # Перенаправляем на первый вопрос
     return redirect('blog:test_question')
+
+def get_valid_questions(test, max_count=30):
+    """
+    Получает вопросы теста с проверкой логической связи между 
+    вопросами и вариантами ответов.
+    
+    Аргументы:
+        test: объект Test, для которого нужно получить вопросы
+        max_count: максимальное количество вопросов для проверки
+    
+    Возвращает:
+        list: список объектов Question, прошедших проверку
+    """
+    # Получаем все вопросы теста с вариантами ответов
+    all_questions = list(Question.objects.filter(test=test).prefetch_related('options')[:max_count*3])
+    
+    if not all_questions:
+        return []
+    
+    # Список для хранения корректных вопросов
+    valid_questions = []
+    
+    # Проверка каждого вопроса на соответствие с его вариантами ответов
+    for question in all_questions:
+        options = list(question.options.all())
+        
+        # Пропускаем вопросы без вариантов ответов
+        if not options:
+            continue
+        
+        # Проверяем, есть ли у вопроса правильный вариант ответа
+        correct_option = question.get_correct_option()
+        if not correct_option:
+            continue
+        
+        # Запускаем проверку логической связи
+        if check_question_options_consistency(question.text, options):
+            valid_questions.append(question)
+            
+            # Если у нас уже достаточно вопросов, завершаем поиск
+            if len(valid_questions) >= max_count:
+                break
+    
+    return valid_questions
+
+def check_question_options_consistency(question_text, options):
+    """
+    Проверяет логическую связь между вопросом и вариантами ответов.
+    
+    Аргументы:
+        question_text: текст вопроса
+        options: список объектов Option
+        
+    Возвращает:
+        bool: True если вопрос и варианты логически связаны, иначе False
+    """
+    question_text = question_text.lower()
+    
+    # 1. Проверка на вопросы о количестве/числе
+    quantity_keywords = [
+        'nechta', 'qancha', 'necha', 'nechanchi', 'qanchasi', 'miqdori', 'soni',
+        'nechtasi', 'qaysisi', 'nechta', 'qaysi raqam', 'necha marta', 'necha kun',
+        'qiymati qancha', 'qanday qiymat'
+    ]
+    
+    is_quantity_question = any(keyword in question_text for keyword in quantity_keywords)
+    
+    if is_quantity_question:
+        # Для вопросов о количестве варианты должны содержать числа
+        has_numeric_options = False
+        for option in options:
+            # Проверяем, содержит ли вариант ответа числа или числовые значения
+            if any(char.isdigit() for char in option.text):
+                has_numeric_options = True
+                break
+        
+        if not has_numeric_options:
+            return False
+    
+    # 2. Проверка на вопросы "что нужно делать?"
+    action_keywords = [
+        'nima qilish kerak', 'qanday qilish kerak', 'kerak bo\'ladi', 'qilinadi',
+        'bajariladi', 'amalga oshiriladi', 'qilish usuli', 'qanday amalga', 'qilish tartibi'
+    ]
+    
+    is_action_question = any(keyword in question_text for keyword in action_keywords)
+    
+    if is_action_question:
+        # Варианты ответов должны содержать глаголы действия
+        action_verb_endings = [
+            'lash', 'ish', 'ash', 'moq', 'sini', 'shni', 'tiladi', 'dirish', 'iladi'
+        ]
+        
+        has_action_options = False
+        for option in options:
+            if any(option.text.lower().endswith(ending) for ending in action_verb_endings):
+                has_action_options = True
+                break
+        
+        if not has_action_options:
+            return False
+    
+    # 3. Проверка на вопросы о времени
+    time_keywords = [
+        'qachon', 'qaysi vaqtda', 'qaysi muddatda', 'qancha vaqt', 'vaqti', 'soatda',
+        'daqiqada', 'qaysi kun', 'qaysi oy', 'qaysi yil'
+    ]
+    
+    is_time_question = any(keyword in question_text for keyword in time_keywords)
+    
+    if is_time_question:
+        # Варианты ответов должны содержать указания на время/даты
+        time_indicators = [
+            'soat', 'daqiqa', 'kun', 'oy', 'yil', 'hafta', 'sana', 'muddat', 
+            'boshla', 'tugash', 'yakunla', 'davomida', 'oralig\'ida'
+        ]
+        
+        has_time_options = False
+        for option in options:
+            option_text = option.text.lower()
+            if any(indicator in option_text for indicator in time_indicators) or any(char.isdigit() for char in option_text):
+                has_time_options = True
+                break
+        
+        if not has_time_options:
+            return False
+    
+    # 4. Проверка на вопросы о месте или локации
+    location_keywords = [
+        'qayerda', 'qaysi joyda', 'qayerga', 'qaysi manzilda', 'joylashgan',
+        'manzili', 'turadi', 'topiladi'
+    ]
+    
+    is_location_question = any(keyword in question_text for keyword in location_keywords)
+    
+    if is_location_question:
+        # Варианты ответов должны содержать указания на места
+        location_indicators = [
+            'xona', 'bino', 'markaz', 'joy', 'ko\'cha', 'viloyat', 'tuman', 'shahar', 
+            'qishloq', 'mahalla', 'hudud', 'mintaqa', 'mamlakat', 'davlat'
+        ]
+        
+        has_location_options = False
+        for option in options:
+            if any(indicator in option.text.lower() for indicator in location_indicators):
+                has_location_options = True
+                break
+                
+        if not has_location_options:
+            return False
+    
+    # По умолчанию, если никаких проблем не найдено или тип вопроса не определен,
+    # считаем что вопрос и варианты ответов соответствуют друг другу
+    return True
 
 @login_required
 def test_question(request):
@@ -431,16 +607,27 @@ def test_question(request):
     test_data = request.session['current_test']
     test = get_object_or_404(Test, id=test_data['test_id'])
     
+    # Проверка на корректность индекса текущего вопроса
+    current_idx = test_data.get('current_question', 0)
+    question_ids = test_data.get('question_ids', [])
+    total_questions = len(question_ids)
+    
+    if current_idx < 0 or current_idx >= total_questions:
+        messages.error(request, "Ошибка при загрузке вопроса")
+        return redirect('blog:test_list')
+    
     # Получаем текущий вопрос
-    question_id = test_data['question_ids'][test_data['current_question']]
-    question = get_object_or_404(Question, id=question_id)
+    question_id = question_ids[current_idx]
+    question = get_object_or_404(Question.objects.prefetch_related('options'), id=question_id)
     
     # Получаем варианты ответов
-    options = question.options.all()
+    options = list(question.options.all())
+    
+    # Перемешиваем варианты ответов для большей случайности
+    random.shuffle(options)
     
     # Вычисляем прогресс
-    total_questions = len(test_data['question_ids'])
-    progress = (test_data['current_question'] + 1) / total_questions * 100
+    progress = (current_idx + 1) / total_questions * 100
     
     # Проверяем, был ли отправлен ответ
     if request.method == 'POST':
@@ -449,24 +636,28 @@ def test_question(request):
         if not selected_option_id:
             messages.error(request, "Пожалуйста, выберите вариант ответа")
         else:
-            # Сохраняем ответ в сессии
-            test_data['answers'][question_id] = int(selected_option_id)
-            request.session['current_test'] = test_data
-            
-            # Переходим к следующему вопросу или завершаем тест
-            if test_data['current_question'] + 1 < total_questions:
-                test_data['current_question'] += 1
+            try:
+                # Сохраняем ответ в сессии
+                selected_id = int(selected_option_id)
+                test_data['answers'][str(question_id)] = selected_id
                 request.session['current_test'] = test_data
-                return redirect('blog:test_question')
-            else:
-                # Завершаем тест
-                return redirect('blog:test_finish')
+                
+                # Переходим к следующему вопросу или завершаем тест
+                if current_idx + 1 < total_questions:
+                    test_data['current_question'] = current_idx + 1
+                    request.session['current_test'] = test_data
+                    return redirect('blog:test_question')
+                else:
+                    # Завершаем тест
+                    return redirect('blog:test_finish')
+            except (ValueError, TypeError):
+                messages.error(request, "Некорректный формат ответа")
     
     context = {
         'test': test,
         'question': question,
         'options': options,
-        'current': test_data['current_question'] + 1,
+        'current': current_idx + 1,
         'total': total_questions,
         'progress': progress,
         'time_limit': test.time_limit,
@@ -486,19 +677,18 @@ def test_finish(request):
     test_data = request.session['current_test']
     test = get_object_or_404(Test, id=test_data['test_id'])
     
-    # Рассчитываем результаты
-    total_questions = len(test_data['question_ids'])
-    correct_answers = 0
+    # Получаем все вопросы теста и правильные ответы
+    question_ids = test_data['question_ids']
+    total_questions = len(question_ids)
     
-    # Получаем все вопросы и правильные ответы
-    questions = {}
-    for question_id in test_data['question_ids']:
-        question = Question.objects.get(id=question_id)
-        correct_option = question.get_correct_option()
-        questions[question_id] = {
-            'question': question,
-            'correct_option': correct_option
-        }
+    # Получаем все вопросы из базы данных одним запросом
+    questions_db = Question.objects.filter(id__in=question_ids).prefetch_related('options')
+    questions_dict = {q.id: q for q in questions_db}
+    
+    # Получаем все опции из базы одним запросом
+    options_ids = list(map(int, test_data['answers'].values()))
+    options_db = Option.objects.filter(id__in=options_ids)
+    options_dict = {o.id: o for o in options_db}
     
     # Создаем объект результата теста
     test_result = TestResult.objects.create(
@@ -512,25 +702,46 @@ def test_finish(request):
     )
     
     # Проверяем ответы и создаем записи об ответах пользователя
-    for question_id, answer_id in test_data['answers'].items():
-        question_id = int(question_id)
-        answer_id = int(answer_id)
+    correct_answers = 0
+    user_answers = []
+    
+    for question_id_str, answer_id_str in test_data['answers'].items():
+        question_id = int(question_id_str)
+        answer_id = int(answer_id_str)
         
-        question = questions[question_id]['question']
-        correct_option = questions[question_id]['correct_option']
-        selected_option = Option.objects.get(id=answer_id)
+        if question_id not in questions_dict:
+            continue  # Пропускаем, если вопрос не найден
+            
+        question = questions_dict[question_id]
+        selected_option = options_dict.get(answer_id)
         
+        if not selected_option:
+            continue  # Пропускаем, если опция не найдена
+            
+        # Получаем правильный вариант для вопроса
+        correct_option = question.get_correct_option()
+        
+        if not correct_option:
+            continue  # Пропускаем, если нет правильного варианта
+            
         is_correct = (selected_option.id == correct_option.id)
+        
         if is_correct:
             correct_answers += 1
         
-        # Создаем запись об ответе
-        UserAnswer.objects.create(
-            test_result=test_result,
-            question=question,
-            selected_option=selected_option,
-            is_correct=is_correct
+        # Создаем запись об ответе (добавляем в список для массовой вставки)
+        user_answers.append(
+            UserAnswer(
+                test_result=test_result,
+                question=question,
+                selected_option=selected_option,
+                is_correct=is_correct
+            )
         )
+    
+    # Массовое создание записей ответов
+    if user_answers:
+        UserAnswer.objects.bulk_create(user_answers)
     
     # Обновляем результат теста
     score = correct_answers
@@ -584,21 +795,45 @@ def test_finish(request):
 @login_required
 def test_result(request, result_id):
     """Отображение результатов теста"""
-    # Получаем результат теста
-    result = get_object_or_404(TestResult, id=result_id)
+    # Получаем результат теста с предзагрузкой связанных данных
+    result = get_object_or_404(
+        TestResult.objects.select_related('user', 'test'),
+        id=result_id
+    )
     
     # Проверяем, принадлежит ли результат текущему пользователю
     if result.user != request.user and request.user.role != 'админ':
         messages.error(request, "У вас нет доступа к этому результату")
         return redirect('blog:test_list')
     
-    # Получаем ответы пользователя
-    answers = result.answers.all().select_related('question', 'selected_option')
+    # Получаем ответы пользователя с дополнительной предзагрузкой для оптимизации
+    answers = result.answers.select_related(
+        'question', 
+        'selected_option'
+    ).prefetch_related(
+        'question__options'
+    ).order_by('id')
     
     # Считаем статистику
     total_questions = answers.count()
-    correct_answers = answers.filter(is_correct=True).count()
+    correct_answers = sum(1 for answer in answers if answer.is_correct)
     incorrect_answers = total_questions - correct_answers
+    
+    # Группируем данные для более удобного отображения
+    grouped_result = {
+        'summary': {
+            'total': total_questions,
+            'correct': correct_answers,
+            'incorrect': incorrect_answers,
+            'percentage': result.percentage,
+            'is_passed': result.is_passed,
+            'duration': result.get_duration(),
+            'passing_score': result.test.passing_score,
+        },
+        'test': result.test,
+        'user': result.user,
+        'completed_at': result.completed_at,
+    }
     
     context = {
         'result': result,
@@ -609,6 +844,7 @@ def test_result(request, result_id):
         'percentage': result.percentage,
         'is_passed': result.is_passed,
         'duration': result.get_duration(),
+        'grouped_result': grouped_result,
     }
     
     return render(request, 'blog/test_result.html', context)

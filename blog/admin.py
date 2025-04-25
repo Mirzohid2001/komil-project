@@ -6,11 +6,97 @@ from django.utils.safestring import mark_safe
 from django.db.models.functions import TruncDate, TruncMonth
 from datetime import datetime, timedelta
 import json
-from django.shortcuts import render
+from django.shortcuts import render, redirect
 from django.contrib.admin.views.decorators import staff_member_required
+from django.contrib import messages
 
 from .models import Category, Post, VideoView, Test, Question, Option, TestResult, UserAnswer
 from accounts.models import UserActivity, User
+
+# Добавляем форму проверки вопросов
+class QuestionValidationForm:
+    def __init__(self, data=None):
+        self.data = data or {}
+        self.errors = {}
+        
+    def is_valid(self):
+        return not bool(self.errors)
+
+@staff_member_required
+def validate_questions_view(request):
+    """Представление для валидации логической связи между вопросами и ответами"""
+    
+    if request.method == 'POST':
+        test_id = request.POST.get('test_id')
+        if not test_id:
+            messages.error(request, "Выберите тест для проверки")
+            return redirect('admin:blog_test_changelist')
+        
+        test = Test.objects.get(id=test_id)
+        questions = Question.objects.filter(test=test).prefetch_related('options')
+        
+        # Проверяем каждый вопрос
+        invalid_questions = []
+        checker = QuestionAdmin(Question, admin.site)
+        
+        for question in questions:
+            options = list(question.options.all())
+            valid_question_types = checker._check_question_type(question.text, options)
+            
+            # Если вопрос не проходит проверку
+            if not valid_question_types:
+                invalid_questions.append({
+                    'id': question.id,
+                    'text': question.text,
+                    'options': [option.text for option in options],
+                    'url': reverse('admin:blog_question_change', args=[question.id])
+                })
+        
+        context = {
+            'title': f"Результаты проверки теста: {test.title}",
+            'test': test,
+            'invalid_questions': invalid_questions,
+            'total_questions': questions.count(),
+            'invalid_count': len(invalid_questions),
+            'app_label': 'blog',
+            'opts': Test._meta,
+            'has_permission': True,
+            'site_header': admin.site.site_header,
+            'site_title': admin.site.site_title,
+            'index_title': admin.site.index_title,
+        }
+        
+        return render(request, 'admin/question_validation_results.html', context)
+    
+    # Если GET-запрос, показываем форму выбора теста
+    tests = Test.objects.all()
+    
+    # Проверяем, был ли передан ID теста в параметрах запроса
+    pre_selected_test_id = request.GET.get('test_id')
+    if pre_selected_test_id:
+        # Если да, можно автоматически выбрать этот тест
+        try:
+            test_id = int(pre_selected_test_id)
+            # Отправляем POST-запрос на проверку этого теста
+            request.method = 'POST'
+            request.POST = request.POST.copy()
+            request.POST['test_id'] = test_id
+            return validate_questions_view(request)
+        except (ValueError, TypeError):
+            pass  # Если ID невалидный, просто показываем форму
+    
+    context = {
+        'title': "Проверка логической связи вопросов и ответов",
+        'tests': tests,
+        'app_label': 'blog',
+        'opts': Test._meta,
+        'has_permission': True,
+        'site_header': admin.site.site_header,
+        'site_title': admin.site.site_title,
+        'index_title': admin.site.index_title,
+    }
+    
+    return render(request, 'admin/question_validation_form.html', context)
 
 class VideoViewInline(admin.TabularInline):
     model = VideoView
@@ -357,7 +443,14 @@ def analytics_view(request):
 
 # Переопределяем админку для регистрации URL аналитики
 class BlogAdminSite(admin.AdminSite):
-    pass
+    site_header = 'Панель управления заводом'
+    site_title = 'Завод администрирование'
+    index_title = 'Администрирование'
+    
+    def each_context(self, request):
+        context = super().each_context(request)
+        context['has_permission'] = request.user.is_active and request.user.is_staff and request.user.role == 'админ'
+        return context
 
 # Получаем оригинальный объект AdminSite
 original_admin_site = admin.site
@@ -381,9 +474,134 @@ class QuestionAdmin(admin.ModelAdmin):
     inlines = [OptionInline]
     
     def get_correct_option(self, obj):
-        correct = obj.options.filter(is_correct=True).first()
+        correct = obj.get_correct_option()
         return correct.text if correct else "Нет правильного ответа"
     get_correct_option.short_description = "Правильный ответ"
+    
+    def save_model(self, request, obj, form, change):
+        """Сохраняем вопрос и проверяем логическую связь с вариантами ответов"""
+        # Сохраняем вопрос
+        super().save_model(request, obj, form, change)
+        
+        # Если это новый вопрос, мы не можем проверить варианты ответов,
+        # так как они сохраняются в InlineFormSet после сохранения вопроса
+        if not change:
+            return
+        
+        # Проверяем наличие правильного ответа
+        correct_option = obj.get_correct_option()
+        if not correct_option:
+            self.message_user(request, f"Внимание! У вопроса '{obj.text[:50]}...' нет правильного варианта ответа.", level=messages.WARNING)
+            return
+        
+        # Получаем все варианты ответов
+        options = list(obj.options.all())
+        
+        # Проверка логической связи вопроса и ответов
+        valid_question_types = self._check_question_type(obj.text, options)
+        if not valid_question_types:
+            self.message_user(request, 
+                f"Внимание! Вопрос '{obj.text[:50]}...' и варианты ответов могут не соответствовать логически.", 
+                level=messages.WARNING)
+    
+    def _check_question_type(self, question_text, options):
+        """Проверяет соответствие типа вопроса и вариантов ответов"""
+        question_text = question_text.lower()
+        
+        # 1. Проверка на вопросы о количестве/числе
+        quantity_keywords = [
+            'nechta', 'qancha', 'necha', 'nechanchi', 'qanchasi', 'miqdori', 'soni',
+            'nechtasi', 'qaysisi', 'nechta', 'qaysi raqam', 'necha marta', 'necha kun'
+        ]
+        
+        is_quantity_question = any(keyword in question_text for keyword in quantity_keywords)
+        
+        if is_quantity_question:
+            # Для вопросов о количестве варианты должны содержать числа
+            has_numeric_options = False
+            for option in options:
+                # Проверяем, содержит ли вариант ответа числа или числовые значения
+                if any(char.isdigit() for char in option.text):
+                    has_numeric_options = True
+                    break
+            
+            if not has_numeric_options:
+                return False
+        
+        # 2. Проверка на вопросы "что нужно делать?"
+        action_keywords = [
+            'nima qilish kerak', 'qanday qilish kerak', 'kerak bo\'ladi', 'qilinadi',
+            'bajariladi', 'amalga oshiriladi', 'qilish usuli', 'qanday amalga', 'qilish tartibi'
+        ]
+        
+        is_action_question = any(keyword in question_text for keyword in action_keywords)
+        
+        if is_action_question:
+            # Варианты ответов должны содержать глаголы действия
+            action_verb_endings = [
+                'lash', 'ish', 'ash', 'moq', 'sini', 'shni', 'tiladi', 'dirish', 'iladi'
+            ]
+            
+            has_action_options = False
+            for option in options:
+                if any(option.text.lower().endswith(ending) for ending in action_verb_endings):
+                    has_action_options = True
+                    break
+            
+            if not has_action_options:
+                return False
+        
+        # 3. Проверка на вопросы о времени
+        time_keywords = [
+            'qachon', 'qaysi vaqtda', 'qaysi muddatda', 'qancha vaqt', 'vaqti', 'soatda',
+            'daqiqada', 'qaysi kun', 'qaysi oy', 'qaysi yil'
+        ]
+        
+        is_time_question = any(keyword in question_text for keyword in time_keywords)
+        
+        if is_time_question:
+            # Варианты ответов должны содержать указания на время/даты
+            time_indicators = [
+                'soat', 'daqiqa', 'kun', 'oy', 'yil', 'hafta', 'sana', 'muddat', 
+                'boshla', 'tugash', 'yakunla', 'davomida', 'oralig\'ida'
+            ]
+            
+            has_time_options = False
+            for option in options:
+                option_text = option.text.lower()
+                if any(indicator in option_text for indicator in time_indicators) or any(char.isdigit() for char in option_text):
+                    has_time_options = True
+                    break
+            
+            if not has_time_options:
+                return False
+        
+        # 4. Проверка на вопросы о месте или локации
+        location_keywords = [
+            'qayerda', 'qaysi joyda', 'qayerga', 'qaysi manzilda', 'joylashgan',
+            'manzili', 'turadi', 'topiladi'
+        ]
+        
+        is_location_question = any(keyword in question_text for keyword in location_keywords)
+        
+        if is_location_question:
+            # Варианты ответов должны содержать указания на места
+            location_indicators = [
+                'xona', 'bino', 'markaz', 'joy', 'ko\'cha', 'viloyat', 'tuman', 'shahar', 
+                'qishloq', 'mahalla', 'hudud', 'mintaqa', 'mamlakat', 'davlat'
+            ]
+            
+            has_location_options = False
+            for option in options:
+                if any(indicator in option.text.lower() for indicator in location_indicators):
+                    has_location_options = True
+                    break
+                    
+            if not has_location_options:
+                return False
+                
+        # По умолчанию, если никаких проблем не найдено, считаем что всё соответствует
+        return True
 
 class QuestionInline(admin.TabularInline):
     model = Question
@@ -395,16 +613,132 @@ class QuestionInline(admin.TabularInline):
     max_num = 0
 
 class TestAdmin(admin.ModelAdmin):
-    list_display = ('title', 'role', 'get_question_count', 'passing_score', 'is_active', 'updated_at')
+    list_display = ('title', 'role', 'get_question_count', 'get_valid_questions_count', 'passing_score', 'is_active', 'updated_at')
     list_filter = ('role', 'is_active', 'created_at', 'updated_at')
     search_fields = ('title', 'description')
-    readonly_fields = ('created_at', 'updated_at')
+    readonly_fields = ('created_at', 'updated_at', 'valid_questions_info')
     inlines = [QuestionInline]
+    change_list_template = 'admin/test_changelist.html'
     
     def get_question_count(self, obj):
-        return obj.questions.count()
-    get_question_count.short_description = "Кол-во вопросов"
+        return obj.get_total_questions()
+    get_question_count.short_description = "Количество вопросов"
     
+    def get_valid_questions_count(self, obj):
+        valid_count = obj.get_valid_questions_count()
+        total = obj.get_total_questions()
+        
+        if total == 0:
+            return "0"
+        
+        percent = (valid_count / total) * 100
+        if percent < 50:
+            return format_html('<span style="color: #dc3545; font-weight: bold;">{} ({}%)</span>', valid_count, int(percent))
+        elif percent < 80:
+            return format_html('<span style="color: #ffc107; font-weight: bold;">{} ({}%)</span>', valid_count, int(percent))
+        else:
+            return format_html('<span style="color: #28a745; font-weight: bold;">{} ({}%)</span>', valid_count, int(percent))
+    get_valid_questions_count.short_description = "Логичных вопросов"
+    
+    def valid_questions_info(self, obj):
+        valid_count = obj.get_valid_questions_count()
+        total = obj.get_total_questions()
+        
+        if total == 0:
+            return "Нет вопросов в тесте"
+        
+        percent = (valid_count / total) * 100
+        
+        html = f"""
+        <div style="margin-bottom: 20px;">
+            <h3>Информация о логической связи вопросов и ответов</h3>
+            <div style="display: flex; gap: 20px; margin-bottom: 20px;">
+                <div style="background: #f5f5f5; padding: 15px; border-radius: 8px; flex: 1; text-align: center;">
+                    <h4 style="margin: 0;">Всего вопросов</h4>
+                    <p style="font-size: 24px; font-weight: bold; margin: 10px 0 0;">{total}</p>
+                </div>
+                <div style="background: #f5f5f5; padding: 15px; border-radius: 8px; flex: 1; text-align: center;">
+                    <h4 style="margin: 0;">Логически корректных</h4>
+                    <p style="font-size: 24px; font-weight: bold; margin: 10px 0 0; color: {self._get_color_for_percent(percent)};">
+                        {valid_count} ({int(percent)}%)
+                    </p>
+                </div>
+            </div>
+            
+            <div style="margin-bottom: 20px;">
+                <h4>Состояние логической связи:</h4>
+        """
+        
+        if percent < 50:
+            html += """
+                <div style="border-left: 4px solid #dc3545; padding: 10px; background-color: #f8d7da;">
+                    <strong style="color: #721c24;">Критическое</strong> - Большинство вопросов не имеют логической связи с ответами. 
+                    Тест может быть некорректным для пользователей.
+                </div>
+            """
+        elif percent < 80:
+            html += """
+                <div style="border-left: 4px solid #ffc107; padding: 10px; background-color: #fff3cd;">
+                    <strong style="color: #856404;">Требует внимания</strong> - Часть вопросов не имеет логической связи с ответами. 
+                    Рекомендуется проверить некорректные вопросы.
+                </div>
+            """
+        else:
+            html += """
+                <div style="border-left: 4px solid #28a745; padding: 10px; background-color: #d4edda;">
+                    <strong style="color: #155724;">Хорошее</strong> - Большинство вопросов имеют правильную логическую связь с ответами.
+                </div>
+            """
+        
+        html += """
+            </div>
+            
+            <div>
+                <a href="{}" class="button" style="margin-right: 10px;">Проверить вопросы</a>
+            </div>
+        </div>
+        """.format(reverse('admin:question_validation') + f'?test_id={obj.id}')
+        
+        return mark_safe(html)
+    valid_questions_info.short_description = "Логическая связь вопросов и ответов"
+    
+    def _get_color_for_percent(self, percent):
+        if percent < 50:
+            return "#dc3545"  # красный
+        elif percent < 80:
+            return "#ffc107"  # желтый
+        else:
+            return "#28a745"  # зеленый
+    
+    def get_fieldsets(self, request, obj=None):
+        fieldsets = [
+            ('Основная информация', {
+                'fields': ('title', 'description', 'role')
+            }),
+            ('Настройки теста', {
+                'fields': ('time_limit', 'passing_score', 'is_active')
+            }),
+            ('Даты', {
+                'fields': ('created_at', 'updated_at'),
+                'classes': ('collapse',),
+            }),
+        ]
+        
+        # Добавляем поле информации о вопросах только если тест уже создан
+        if obj:
+            fieldsets.insert(1, ('Валидация логики', {
+                'fields': ('valid_questions_info',),
+            }))
+        
+        return fieldsets
+    
+    def get_urls(self):
+        urls = super().get_urls()
+        custom_urls = [
+            path('validate-questions/', validate_questions_view, name='question_validation'),
+        ]
+        return custom_urls + urls
+
 class UserAnswerInline(admin.TabularInline):
     model = UserAnswer
     extra = 0
