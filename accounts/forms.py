@@ -3,19 +3,27 @@ from .models import User
 from django import forms
 
 class SignUpForm(UserCreationForm):
-    first_name = forms.CharField(required=True)
-    last_name  = forms.CharField(required=True)
-    email      = forms.EmailField(required=True)
-    role       = forms.ChoiceField(choices=User.ROLE_CHOICES)
+    first_name = forms.CharField(required=True, label='Ismingiz')
+    last_name  = forms.CharField(required=True, label='Familiyangiz')
+    email      = forms.EmailField(required=True, label='Email manzilingiz')
+    role       = forms.ChoiceField(choices=User.ROLE_CHOICES, label='Rolni tanlang')
 
     class Meta:
         model  = User
         fields = ['username','first_name','last_name','email','role','password1','password2']
+        labels = {
+            'username': 'Foydalanuvchi nomi',
+            'password1': 'Parol',
+            'password2': 'Parolni tasdiqlang',
+        }
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         for field in self.fields:
             self.fields[field].widget.attrs['class'] = 'form-control'
+        # Переопределение названий полей для паролей
+        self.fields['password1'].label = 'Parol'
+        self.fields['password2'].label = 'Parolni tasdiqlang'
 
 
 class ProfileUpdateForm(forms.ModelForm):
