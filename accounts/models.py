@@ -6,6 +6,19 @@ class User(AbstractUser):
         ('бухгалтер', 'Buxgalter'),
         ('естокада', 'Estakada'),
         ('финансист', 'Finansist'),
+        ('Оператор', 'Operator'),
+        ('Диспетчер', 'Dispatcher'),
+        ('охраник', 'Qorovul'),
+        ('уборщик', 'tozalovchi'),
+        ('повар', 'Povar'),
+        ('технолог', 'Texnolog'),
+        ('сварщик', 'Svarshchi'),
+        ('электрик', 'Elektrik'),
+        ('механик', 'Mexanik'),
+        ('КИП и А', 'KIP i A'),
+        ('бензин отдела', 'Benzina otdeli'),
+        ('склад', 'Sklad'),
+        
     ]
     role = models.CharField(
         max_length=20,
