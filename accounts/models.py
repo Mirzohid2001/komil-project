@@ -3,27 +3,26 @@ from django.db import models
 
 class User(AbstractUser):
     ROLE_CHOICES = [
-        ('бухгалтер', 'Buxgalter'),
-        ('естокада', 'Estakada'),
-        ('финансист', 'Finansist'),
+        ('офисный-персонал', 'ofis-xodimlari'),
+        ('естокада', 'Ishlab-chiqarish'),
         ('Оператор', 'Operator'),
         ('Диспетчер', 'Dispatcher'),
         ('охраник', 'Qorovul'),
-        ('уборщик', 'tozalovchi'),
-        ('повар', 'Povar'),
-        ('технолог', 'Texnolog'),
-        ('сварщик', 'Svarshchi'),
-        ('электрик', 'Elektrik'),
+        ('уборщик', 'Tozalovchi'),
+        ('повар', 'Oshpaz'),
+        ('технолог', 'Muhandis'),
+        ('сварщик', 'Payvandlovchi'),
+        ('электрик', 'Elektromontyor'),
         ('механик', 'Mexanik'),
         ('КИП и А', 'KIP i A'),
-        ('бензин отдела', 'Benzina otdeli'),
         ('склад', 'Sklad'),
-        
+        ('слесарь', 'Chilangar'),
+        ('temiryo`lchi', 'Temiryo`lchi'),
     ]
     role = models.CharField(
         max_length=20,
         choices=ROLE_CHOICES,
-        default='бухгалтер',
+        default='офисный-персонал',
         verbose_name="Foydalanuvchi roli"
     )
     
