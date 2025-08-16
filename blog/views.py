@@ -1,5 +1,5 @@
 from django.shortcuts import render, get_object_or_404, redirect
-from .models import Category, Post, VideoView, Test, Question, Option, TestResult, UserAnswer
+from .models import Category, Post, VideoView, Test, Question, Option, TestResult, UserAnswer, DocumentCategory, Document, DocumentView, DocumentDownload
 from django.contrib.auth.decorators import login_required
 from accounts.models import UserActivity, LearningProgress, Certificate, UserAchievement, Achievement
 from accounts.views import check_category_completion_achievement, generate_certificate_file
@@ -1136,3 +1136,203 @@ def check_tests_passed_achievement(user):
             elif user_achievement.current_value < tests_passed:
                 user_achievement.current_value = tests_passed
                 user_achievement.save()
+
+# Document Management Views
+@login_required
+def document_list(request):
+    """List all documents user has access to"""
+    # Get user's accessible documents
+    documents = Document.objects.filter(
+        models.Q(is_public=True) | 
+        models.Q(allowed_roles__contains=[request.user.role])
+    ).select_related('category', 'uploaded_by').order_by('-uploaded_at')
+    
+    # Filter by category if specified
+    category_id = request.GET.get('category')
+    if category_id:
+        documents = documents.filter(category_id=category_id)
+    
+    # Get all categories for filter
+    categories = DocumentCategory.objects.all()
+    
+    context = {
+        'documents': documents,
+        'categories': categories,
+        'selected_category': category_id,
+        'is_admin': request.user.role == 'admin',
+    }
+    
+    return render(request, 'blog/document_list.html', context)
+
+@login_required
+def document_detail(request, document_id):
+    """View document details and track view"""
+    document = get_object_or_404(Document, id=document_id)
+    
+    # Check if user can access this document
+    if not document.can_user_access(request.user):
+        messages.error(request, "Sizga bu hujjatga ruxsat yo'q")
+        return redirect('blog:document_list')
+    
+    # Track view
+    document.increment_view_count()
+    DocumentView.objects.create(
+        document=document,
+        user=request.user,
+        ip_address=request.META.get('REMOTE_ADDR')
+    )
+    
+    context = {
+        'document': document,
+        'is_admin': request.user.role == 'admin',
+    }
+    
+    return render(request, 'blog/document_detail.html', context)
+
+@login_required
+def document_download(request, document_id):
+    """Download document and track download"""
+    document = get_object_or_404(Document, id=document_id)
+    
+    # Check if user can access this document
+    if not document.can_user_access(request.user):
+        messages.error(request, "Sizga bu hujjatga ruxsat yo'q")
+        return redirect('blog:document_list')
+    
+    # Track download
+    document.increment_download_count()
+    DocumentDownload.objects.create(
+        document=document,
+        user=request.user,
+        ip_address=request.META.get('REMOTE_ADDR')
+    )
+    
+    # Return file for download
+    from django.http import FileResponse
+    import os
+    
+    file_path = document.file.path
+    if os.path.exists(file_path):
+        response = FileResponse(open(file_path, 'rb'))
+        response['Content-Type'] = 'application/octet-stream'
+        response['Content-Disposition'] = f'attachment; filename="{os.path.basename(file_path)}"'
+        return response
+    else:
+        messages.error(request, "Fayl topilmadi")
+        return redirect('blog:document_detail', document_id=document_id)
+
+@login_required
+def document_upload(request):
+    """Admin view for uploading documents"""
+    # Check if user is admin
+    if request.user.role != 'admin':
+        messages.error(request, "Sizga bu sahifaga ruxsat yo'q")
+        return redirect('blog:home')
+    
+    if request.method == 'POST':
+        from django import forms
+        
+        class DocumentUploadForm(forms.ModelForm):
+            # Override allowed_roles field to use checkboxes
+            allowed_roles = forms.MultipleChoiceField(
+                choices=User.ROLE_CHOICES,
+                widget=forms.CheckboxSelectMultiple(),
+                required=False,
+                label="Ruxsat berilgan rollar",
+                help_text="Hujjatga ruxsat berilgan foydalanuvchi rollarini tanlang"
+            )
+            
+            class Meta:
+                model = Document
+                fields = ['title', 'description', 'file', 'category', 'is_public', 'allowed_roles']
+        
+        form = DocumentUploadForm(request.POST, request.FILES)
+        if form.is_valid():
+            document = form.save(commit=False)
+            document.uploaded_by = request.user
+            # Convert selected roles to list for JSON field
+            document.allowed_roles = form.cleaned_data['allowed_roles']
+            document.save()
+            
+            messages.success(request, f"Hujjat '{document.title}' muvaffaqiyatli yuklandi")
+            return redirect('blog:document_list')
+        else:
+            messages.error(request, "Xatolik yuz berdi. Iltimos, ma'lumotlarni tekshiring")
+    else:
+        from django import forms
+        
+        class DocumentUploadForm(forms.ModelForm):
+            # Override allowed_roles field to use checkboxes
+            allowed_roles = forms.MultipleChoiceField(
+                choices=User.ROLE_CHOICES,
+                widget=forms.CheckboxSelectMultiple(),
+                required=False,
+                label="Ruxsat berilgan rollar",
+                help_text="Hujjatga ruxsat berilgan foydalanuvchi rollarini tanlang"
+            )
+            
+            class Meta:
+                model = Document
+                fields = ['title', 'description', 'file', 'category', 'is_public', 'allowed_roles']
+        
+        form = DocumentUploadForm()
+    
+    context = {
+        'form': form,
+    }
+    
+    return render(request, 'blog/document_upload.html', context)
+
+@login_required
+def document_analytics(request):
+    """Admin view for document analytics"""
+    # Check if user is admin
+    if request.user.role != 'admin':
+        messages.error(request, "Sizga bu sahifaga ruxsat yo'q")
+        return redirect('blog:home')
+    
+    # Get analytics data
+    total_documents = Document.objects.count()
+    total_views = DocumentView.objects.count()
+    total_downloads = DocumentDownload.objects.count()
+    
+    # Views by category
+    views_by_category = (DocumentView.objects
+                        .values('document__category__name')
+                        .annotate(count=Count('id'))
+                        .order_by('-count'))
+    
+    # Downloads by category
+    downloads_by_category = (DocumentDownload.objects
+                            .values('document__category__name')
+                            .annotate(count=Count('id'))
+                            .order_by('-count'))
+    
+    # Most viewed documents
+    most_viewed = (Document.objects
+                  .annotate(view_count=Count('views'))
+                  .order_by('-view_count')[:10])
+    
+    # Most downloaded documents
+    most_downloaded = (Document.objects
+                      .annotate(download_count=Count('downloads'))
+                      .order_by('-download_count')[:10])
+    
+    # Views by user role
+    views_by_role = (DocumentView.objects
+                    .values('user__role')
+                    .annotate(count=Count('id'))
+                    .order_by('-count'))
+    
+    context = {
+        'total_documents': total_documents,
+        'total_views': total_views,
+        'total_downloads': total_downloads,
+        'views_by_category': views_by_category,
+        'downloads_by_category': downloads_by_category,
+        'most_viewed': most_viewed,
+        'most_downloaded': most_downloaded,
+        'views_by_role': views_by_role,
+    }
+    
+    return render(request, 'blog/document_analytics.html', context)

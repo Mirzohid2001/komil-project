@@ -30,6 +30,11 @@
             <i class="fas fa-graduation-cap me-1"></i> Kurslar
           </a>
         </li>
+        <li class="nav-item mx-2" data-aos="fade-down" data-aos-delay="275">
+          <a class="nav-link fw-medium nav-hover-effect" href="{% url 'blog:document_list' %}">
+            <i class="fas fa-file-alt me-1"></i> Hujjatlar
+          </a>
+        </li>
 
         {% if request.user.is_authenticated %}
           <li class="nav-item mx-2" data-aos="fade-down" data-aos-delay="300">
@@ -46,6 +51,11 @@
           <li class="nav-item mx-2" data-aos="fade-down" data-aos-delay="400">
             <a class="nav-link fw-medium nav-hover-effect" href="{% url 'blog:analytics' %}">
               <i class="fas fa-chart-bar me-1"></i> Analitika
+            </a>
+          </li>
+          <li class="nav-item mx-2" data-aos="fade-down" data-aos-delay="425">
+            <a class="nav-link fw-medium nav-hover-effect" href="{% url 'blog:document_upload' %}">
+              <i class="fas fa-upload me-1"></i> Hujjat yuklash
             </a>
           </li>
           {% endif %}

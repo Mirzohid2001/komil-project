@@ -10,7 +10,7 @@ from django.shortcuts import render, redirect
 from django.contrib.admin.views.decorators import staff_member_required
 from django.contrib import messages
 
-from .models import Category, Post, VideoView, Test, Question, Option, TestResult, UserAnswer
+from .models import Category, Post, VideoView, Test, Question, Option, TestResult, UserAnswer, DocumentCategory, Document, DocumentView, DocumentDownload
 from accounts.models import UserActivity, User
 
 # Добавляем форму проверки вопросов
@@ -761,3 +761,120 @@ class TestResultAdmin(admin.ModelAdmin):
 admin.site.register(Test, TestAdmin)
 admin.site.register(Question, QuestionAdmin)
 admin.site.register(TestResult, TestResultAdmin)
+
+# Document Management Admin
+class DocumentCategoryAdmin(admin.ModelAdmin):
+    list_display = ('name', 'documents_count', 'created_at', 'updated_at')
+    search_fields = ('name', 'description')
+    list_filter = ('created_at', 'updated_at')
+    ordering = ('name',)
+    
+    def documents_count(self, obj):
+        return obj.documents_count()
+    documents_count.short_description = 'Hujjatlar soni'
+
+class DocumentAdmin(admin.ModelAdmin):
+    list_display = ('title', 'category', 'file_type', 'file_size_display', 'uploaded_by', 'uploaded_at', 'download_count', 'view_count', 'is_public')
+    list_filter = ('category', 'file_type', 'is_public', 'uploaded_at', 'uploaded_by__role')
+    search_fields = ('title', 'description', 'uploaded_by__username')
+    readonly_fields = ('file_size', 'file_type', 'uploaded_at', 'updated_at', 'download_count', 'view_count')
+    date_hierarchy = 'uploaded_at'
+    ordering = ('-uploaded_at',)
+    
+    fieldsets = (
+        ('Asosiy ma\'lumotlar', {
+            'fields': ('title', 'description', 'file', 'category')
+        }),
+        ('Ruxsatlar', {
+            'fields': ('is_public', 'allowed_roles'),
+            'description': 'Hujjatga ruxsat berilgan foydalanuvchi rollarini tanlang'
+        }),
+        ('Meta ma\'lumotlar', {
+            'fields': ('file_size', 'file_type', 'uploaded_by', 'uploaded_at', 'updated_at'),
+            'classes': ('collapse',)
+        }),
+        ('Statistika', {
+            'fields': ('download_count', 'view_count'),
+            'classes': ('collapse',)
+        }),
+    )
+    
+    def get_form(self, request, obj=None, **kwargs):
+        """Get the form and customize the allowed_roles field"""
+        form = super().get_form(request, obj, **kwargs)
+        
+        # Customize the allowed_roles field to use checkboxes
+        from django import forms
+        from accounts.models import User
+        
+        form.base_fields['allowed_roles'] = forms.MultipleChoiceField(
+            choices=User.ROLE_CHOICES,
+            widget=forms.CheckboxSelectMultiple(),
+            required=False,
+            label="Ruxsat berilgan rollar",
+            help_text="Hujjatga ruxsat berilgan foydalanuvchi rollarini tanlang"
+        )
+        
+        # Set initial value if editing existing document
+        if obj and obj.allowed_roles:
+            form.base_fields['allowed_roles'].initial = obj.allowed_roles
+        
+        return form
+    
+    def save_model(self, request, obj, form, change):
+        """Save the model and handle the allowed_roles field"""
+        if not change:  # Only set uploaded_by on creation
+            obj.uploaded_by = request.user
+        
+        # Handle allowed_roles field - convert list to JSON
+        if 'allowed_roles' in form.cleaned_data:
+            obj.allowed_roles = form.cleaned_data['allowed_roles']
+        
+        super().save_model(request, obj, form, change)
+    
+    def file_size_display(self, obj):
+        return obj.get_file_size_display()
+    file_size_display.short_description = 'Fayl hajmi'
+    
+    def get_queryset(self, request):
+        return super().get_queryset(request).select_related('category', 'uploaded_by')
+
+class DocumentViewAdmin(admin.ModelAdmin):
+    list_display = ('document', 'user', 'user_role', 'viewed_at', 'ip_address')
+    list_filter = ('user__role', 'viewed_at', 'document__category')
+    search_fields = ('document__title', 'user__username', 'ip_address')
+    date_hierarchy = 'viewed_at'
+    readonly_fields = ('document', 'user', 'viewed_at', 'ip_address')
+    
+    def user_role(self, obj):
+        return obj.user.get_role_display()
+    user_role.short_description = 'Foydalanuvchi roli'
+    
+    def has_add_permission(self, request):
+        return False
+    
+    def has_change_permission(self, request, obj=None):
+        return False
+
+class DocumentDownloadAdmin(admin.ModelAdmin):
+    list_display = ('document', 'user', 'user_role', 'downloaded_at', 'ip_address')
+    list_filter = ('user__role', 'downloaded_at', 'document__category')
+    search_fields = ('document__title', 'user__username', 'ip_address')
+    date_hierarchy = 'downloaded_at'
+    readonly_fields = ('document', 'user', 'downloaded_at', 'ip_address')
+    
+    def user_role(self, obj):
+        return obj.user.get_role_display()
+    user_role.short_description = 'Foydalanuvchi roli'
+    
+    def has_add_permission(self, request):
+        return False
+    
+    def has_change_permission(self, request, obj=None):
+        return False
+
+# Register document models
+admin.site.register(DocumentCategory, DocumentCategoryAdmin)
+admin.site.register(Document, DocumentAdmin)
+admin.site.register(DocumentView, DocumentViewAdmin)
+admin.site.register(DocumentDownload, DocumentDownloadAdmin)

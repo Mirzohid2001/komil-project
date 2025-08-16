@@ -1,0 +1,271 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Hujjatlar{% endblock %}
+
+{% block extra_css %}
+<style>
+  .document-card {
+    transition: all 0.3s ease;
+    border: none;
+    border-radius: 16px;
+    overflow: hidden;
+  }
+  
+  .document-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+  }
+  
+  .document-icon {
+    width: 60px;
+    height: 60px;
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 24px;
+    color: white;
+  }
+  
+  .file-type-pdf { background: linear-gradient(135deg, #ff4757, #ff3742); }
+  .file-type-doc { background: linear-gradient(135deg, #2f3542, #3742fa); }
+  .file-type-xls { background: linear-gradient(135deg, #2ed573, #1e90ff); }
+  .file-type-ppt { background: linear-gradient(135deg, #ffa502, #ff6348); }
+  .file-type-img { background: linear-gradient(135deg, #5352ed, #3742fa); }
+  .file-type-video { background: linear-gradient(135deg, #ff6b6b, #ee5a24); }
+  .file-type-archive { background: linear-gradient(135deg, #747d8c, #57606f); }
+  .file-type-other { background: linear-gradient(135deg, #a4b0be, #747d8c); }
+  
+  .category-filter {
+    background: rgba(255, 255, 255, 0.9);
+    backdrop-filter: blur(10px);
+    border-radius: 12px;
+    padding: 20px;
+    margin-bottom: 30px;
+  }
+  
+  .stats-card {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    border-radius: 16px;
+    padding: 20px;
+    margin-bottom: 30px;
+  }
+  
+  .empty-state {
+    text-align: center;
+    padding: 60px 20px;
+    color: #6c757d;
+  }
+  
+  .empty-state i {
+    font-size: 64px;
+    margin-bottom: 20px;
+    opacity: 0.5;
+  }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container">
+  <!-- Header Section -->
+  <div class="row mb-4">
+    <div class="col-12">
+      <div class="d-flex justify-content-between align-items-center">
+        <div>
+          <h1 class="h2 mb-2">
+            <i class="fas fa-file-alt text-primary me-2"></i>
+            Hujjatlar
+          </h1>
+          <p class="text-muted mb-0">Sizga ruxsat berilgan hujjatlarni ko'ring va yuklab oling</p>
+        </div>
+        {% if is_admin %}
+        <div>
+          <a href="{% url 'blog:document_upload' %}" class="btn btn-primary">
+            <i class="fas fa-upload me-2"></i>
+            Hujjat yuklash
+          </a>
+          <a href="{% url 'blog:document_analytics' %}" class="btn btn-outline-primary ms-2">
+            <i class="fas fa-chart-bar me-2"></i>
+            Analitika
+          </a>
+        </div>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+
+  <!-- Category Filter -->
+  <div class="category-filter">
+    <div class="row align-items-center">
+      <div class="col-md-6">
+        <h5 class="mb-3 mb-md-0">
+          <i class="fas fa-filter me-2"></i>
+          Kategoriya bo'yicha filtrlash
+        </h5>
+      </div>
+      <div class="col-md-6">
+        <div class="d-flex gap-2">
+          <a href="{% url 'blog:document_list' %}" 
+             class="btn btn-sm {% if not selected_category %}btn-primary{% else %}btn-outline-primary{% endif %}">
+            Barchasi
+          </a>
+          {% for category in categories %}
+          <a href="{% url 'blog:document_list' %}?category={{ category.id }}" 
+             class="btn btn-sm {% if selected_category == category.id|stringformat:'s' %}btn-primary{% else %}btn-outline-primary{% endif %}">
+            <i class="{{ category.icon }} me-1"></i>
+            {{ category.name }}
+          </a>
+          {% endfor %}
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Statistics Cards -->
+  <div class="row mb-4">
+    <div class="col-md-3">
+      <div class="stats-card">
+        <div class="d-flex align-items-center">
+          <div class="me-3">
+            <i class="fas fa-file-alt fa-2x"></i>
+          </div>
+          <div>
+            <h4 class="mb-0">{{ documents.count }}</h4>
+            <small>Jami hujjatlar</small>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="col-md-3">
+      <div class="stats-card">
+        <div class="d-flex align-items-center">
+          <div class="me-3">
+            <i class="fas fa-eye fa-2x"></i>
+          </div>
+          <div>
+            <h4 class="mb-0">{{ documents|length }}</h4>
+            <small>Ko'rish mumkin</small>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="col-md-3">
+      <div class="stats-card">
+        <div class="d-flex align-items-center">
+          <div class="me-3">
+            <i class="fas fa-download fa-2x"></i>
+          </div>
+          <div>
+            <h4 class="mb-0">{{ categories.count }}</h4>
+            <small>Kategoriyalar</small>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="col-md-3">
+      <div class="stats-card">
+        <div class="d-flex align-items-center">
+          <div class="me-3">
+            <i class="fas fa-clock fa-2x"></i>
+          </div>
+          <div>
+            <h4 class="mb-0">{{ documents|length }}</h4>
+            <small>So'nggi yangilangan</small>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Documents Grid -->
+  {% if documents %}
+  <div class="row">
+    {% for document in documents %}
+    <div class="col-lg-4 col-md-6 mb-4">
+      <div class="card document-card h-100">
+        <div class="card-body p-4">
+          <div class="d-flex align-items-start mb-3">
+            <div class="document-icon file-type-{{ document.file_type }} me-3">
+              {% if document.file_type == 'pdf' %}
+                <i class="fas fa-file-pdf"></i>
+              {% elif document.file_type in 'doc,docx' %}
+                <i class="fas fa-file-word"></i>
+              {% elif document.file_type in 'xls,xlsx' %}
+                <i class="fas fa-file-excel"></i>
+              {% elif document.file_type in 'ppt,pptx' %}
+                <i class="fas fa-file-powerpoint"></i>
+              {% elif document.file_type in 'jpg,jpeg,png,gif' %}
+                <i class="fas fa-file-image"></i>
+              {% elif document.file_type in 'mp4,avi,mov' %}
+                <i class="fas fa-file-video"></i>
+              {% elif document.file_type in 'zip,rar' %}
+                <i class="fas fa-file-archive"></i>
+              {% else %}
+                <i class="fas fa-file"></i>
+              {% endif %}
+            </div>
+            <div class="flex-grow-1">
+              <h6 class="card-title mb-1">{{ document.title }}</h6>
+              <small class="text-muted">{{ document.get_file_type_display }} • {{ document.get_file_size_display }}</small>
+            </div>
+          </div>
+          
+          {% if document.description %}
+          <p class="card-text text-muted small mb-3">{{ document.description|truncatewords:15 }}</p>
+          {% endif %}
+          
+          <div class="d-flex justify-content-between align-items-center mb-3">
+            <div class="d-flex align-items-center">
+              <i class="fas fa-folder text-primary me-1"></i>
+              <small class="text-muted">{{ document.category.name }}</small>
+            </div>
+            <div class="d-flex align-items-center">
+              <i class="fas fa-eye text-info me-1"></i>
+              <small class="text-muted me-2">{{ document.view_count }}</small>
+              <i class="fas fa-download text-success me-1"></i>
+              <small class="text-muted">{{ document.download_count }}</small>
+            </div>
+          </div>
+          
+          <div class="d-flex gap-2">
+            <a href="{% url 'blog:document_detail' document.id %}" class="btn btn-outline-primary btn-sm flex-fill">
+              <i class="fas fa-eye me-1"></i>
+              Ko'rish
+            </a>
+            <a href="{% url 'blog:document_download' document.id %}" class="btn btn-success btn-sm">
+              <i class="fas fa-download"></i>
+            </a>
+          </div>
+          
+          <div class="mt-3 pt-3 border-top">
+            <small class="text-muted">
+              <i class="fas fa-user me-1"></i>
+              {{ document.uploaded_by.get_full_name|default:document.uploaded_by.username }}
+              <br>
+              <i class="fas fa-calendar me-1"></i>
+              {{ document.uploaded_at|date:"d.m.Y H:i" }}
+            </small>
+          </div>
+        </div>
+      </div>
+    </div>
+    {% endfor %}
+  </div>
+  {% else %}
+  <!-- Empty State -->
+  <div class="empty-state">
+    <i class="fas fa-file-alt"></i>
+    <h4>Hujjatlar topilmadi</h4>
+    <p class="mb-4">Sizga ruxsat berilgan hujjatlar hali mavjud emas.</p>
+    {% if is_admin %}
+    <a href="{% url 'blog:document_upload' %}" class="btn btn-primary">
+      <i class="fas fa-upload me-2"></i>
+      Birinchi hujjatni yuklang
+    </a>
+    {% endif %}
+  </div>
+  {% endif %}
+</div>
+{% endblock %} 

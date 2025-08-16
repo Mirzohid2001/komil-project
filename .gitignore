@@ -17,6 +17,7 @@ install*.cfg
 pip-log.txt
 pip-delete-this-directory.txt
 htmlcov/
+config/settings_dev.py
 .tox/
 .coverage
 .coverage.*

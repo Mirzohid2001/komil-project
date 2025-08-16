@@ -1,0 +1,339 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}{{ document.title }}{% endblock %}
+
+{% block extra_css %}
+<style>
+  .document-header {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    border-radius: 20px;
+    padding: 40px;
+    margin-bottom: 30px;
+  }
+  
+  .document-icon-large {
+    width: 80px;
+    height: 80px;
+    border-radius: 16px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 32px;
+    color: white;
+    margin-bottom: 20px;
+  }
+  
+  .file-type-pdf { background: linear-gradient(135deg, #ff4757, #ff3742); }
+  .file-type-doc { background: linear-gradient(135deg, #2f3542, #3742fa); }
+  .file-type-xls { background: linear-gradient(135deg, #2ed573, #1e90ff); }
+  .file-type-ppt { background: linear-gradient(135deg, #ffa502, #ff6348); }
+  .file-type-img { background: linear-gradient(135deg, #5352ed, #3742fa); }
+  .file-type-video { background: linear-gradient(135deg, #ff6b6b, #ee5a24); }
+  .file-type-archive { background: linear-gradient(135deg, #747d8c, #57606f); }
+  .file-type-other { background: linear-gradient(135deg, #a4b0be, #747d8c); }
+  
+  .info-card {
+    background: rgba(255, 255, 255, 0.95);
+    backdrop-filter: blur(10px);
+    border-radius: 16px;
+    padding: 25px;
+    margin-bottom: 20px;
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+  }
+  
+  .info-item {
+    display: flex;
+    align-items: center;
+    margin-bottom: 15px;
+  }
+  
+  .info-item:last-child {
+    margin-bottom: 0;
+  }
+  
+  .info-icon {
+    width: 40px;
+    height: 40px;
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-right: 15px;
+    color: white;
+    font-size: 16px;
+  }
+  
+  .icon-primary { background: linear-gradient(135deg, #667eea, #764ba2); }
+  .icon-success { background: linear-gradient(135deg, #2ed573, #1e90ff); }
+  .icon-info { background: linear-gradient(135deg, #5352ed, #3742fa); }
+  .icon-warning { background: linear-gradient(135deg, #ffa502, #ff6348); }
+  
+  .action-buttons {
+    display: flex;
+    gap: 15px;
+    margin-top: 30px;
+  }
+  
+  .btn-large {
+    padding: 15px 30px;
+    font-size: 16px;
+    border-radius: 12px;
+  }
+  
+  .preview-container {
+    background: #f8fafc;
+    border-radius: 16px;
+    padding: 30px;
+    margin-top: 30px;
+    text-align: center;
+  }
+  
+  .preview-placeholder {
+    font-size: 64px;
+    color: #cbd5e0;
+    margin-bottom: 20px;
+  }
+  
+  .access-badge {
+    display: inline-block;
+    padding: 8px 16px;
+    border-radius: 20px;
+    font-size: 14px;
+    font-weight: 600;
+    margin: 5px;
+  }
+  
+  .badge-public { background: #d4edda; color: #155724; }
+  .badge-role { background: #d1ecf1; color: #0c5460; }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container">
+  <!-- Document Header -->
+  <div class="document-header">
+    <div class="row align-items-center">
+      <div class="col-md-8">
+        <div class="d-flex align-items-center mb-3">
+          <div class="document-icon-large file-type-{{ document.file_type }} me-4">
+            {% if document.file_type == 'pdf' %}
+              <i class="fas fa-file-pdf"></i>
+            {% elif document.file_type in 'doc,docx' %}
+              <i class="fas fa-file-word"></i>
+            {% elif document.file_type in 'xls,xlsx' %}
+              <i class="fas fa-file-excel"></i>
+            {% elif document.file_type in 'ppt,pptx' %}
+              <i class="fas fa-file-powerpoint"></i>
+            {% elif document.file_type in 'jpg,jpeg,png,gif' %}
+              <i class="fas fa-file-image"></i>
+            {% elif document.file_type in 'mp4,avi,mov' %}
+              <i class="fas fa-file-video"></i>
+            {% elif document.file_type in 'zip,rar' %}
+              <i class="fas fa-file-archive"></i>
+            {% else %}
+              <i class="fas fa-file"></i>
+            {% endif %}
+          </div>
+          <div>
+            <h1 class="h2 mb-2">{{ document.title }}</h1>
+            <p class="mb-0 opacity-75">{{ document.get_file_type_display }} • {{ document.get_file_size_display }}</p>
+          </div>
+        </div>
+        
+        {% if document.description %}
+        <p class="mb-0 opacity-90">{{ document.description }}</p>
+        {% endif %}
+      </div>
+      <div class="col-md-4 text-md-end">
+        <div class="action-buttons">
+          <a href="{% url 'blog:document_download' document.id %}" class="btn btn-light btn-large">
+            <i class="fas fa-download me-2"></i>
+            Yuklab olish
+          </a>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="row">
+    <!-- Document Information -->
+    <div class="col-lg-8">
+      <div class="info-card">
+        <h4 class="mb-4">
+          <i class="fas fa-info-circle text-primary me-2"></i>
+          Hujjat ma'lumotlari
+        </h4>
+        
+        <div class="info-item">
+          <div class="info-icon icon-primary">
+            <i class="fas fa-folder"></i>
+          </div>
+          <div>
+            <strong>Kategoriya:</strong>
+            <span class="ms-2">{{ document.category.name }}</span>
+          </div>
+        </div>
+        
+        <div class="info-item">
+          <div class="info-icon icon-success">
+            <i class="fas fa-user"></i>
+          </div>
+          <div>
+            <strong>Yuklagan:</strong>
+            <span class="ms-2">{{ document.uploaded_by.get_full_name|default:document.uploaded_by.username }}</span>
+          </div>
+        </div>
+        
+        <div class="info-item">
+          <div class="info-icon icon-info">
+            <i class="fas fa-calendar"></i>
+          </div>
+          <div>
+            <strong>Yuklangan sana:</strong>
+            <span class="ms-2">{{ document.uploaded_at|date:"d.m.Y H:i" }}</span>
+          </div>
+        </div>
+        
+        <div class="info-item">
+          <div class="info-icon icon-warning">
+            <i class="fas fa-eye"></i>
+          </div>
+          <div>
+            <strong>Ko'rishlar:</strong>
+            <span class="ms-2">{{ document.view_count }} marta</span>
+          </div>
+        </div>
+        
+        <div class="info-item">
+          <div class="info-icon icon-success">
+            <i class="fas fa-download"></i>
+          </div>
+          <div>
+            <strong>Yuklab olishlar:</strong>
+            <span class="ms-2">{{ document.download_count }} marta</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Access Control Information -->
+      <div class="info-card">
+        <h4 class="mb-4">
+          <i class="fas fa-shield-alt text-primary me-2"></i>
+          Ruxsat ma'lumotlari
+        </h4>
+        
+        {% if document.is_public %}
+        <div class="access-badge badge-public">
+          <i class="fas fa-globe me-1"></i>
+          Barcha foydalanuvchilar uchun ochiq
+        </div>
+        {% else %}
+        <div class="mb-3">
+          <strong>Ruxsat berilgan rollar:</strong>
+        </div>
+        {% for role in document.allowed_roles %}
+        <div class="access-badge badge-role">
+          <i class="fas fa-user-tag me-1"></i>
+          {{ role }}
+        </div>
+        {% endfor %}
+        {% endif %}
+      </div>
+
+      <!-- File Preview -->
+      <div class="preview-container">
+        <div class="preview-placeholder">
+          <i class="fas fa-file-alt"></i>
+        </div>
+        <h5>Fayl ko'rinishi</h5>
+        <p class="text-muted mb-4">Bu fayl turi uchun ko'rinish mavjud emas</p>
+        <a href="{% url 'blog:document_download' document.id %}" class="btn btn-primary">
+          <i class="fas fa-download me-2"></i>
+          Faylni yuklab oling
+        </a>
+      </div>
+    </div>
+
+    <!-- Sidebar -->
+    <div class="col-lg-4">
+      <!-- Quick Actions -->
+      <div class="info-card">
+        <h5 class="mb-3">
+          <i class="fas fa-bolt text-primary me-2"></i>
+          Tezkor amallar
+        </h5>
+        
+        <div class="d-grid gap-2">
+          <a href="{% url 'blog:document_download' document.id %}" class="btn btn-success">
+            <i class="fas fa-download me-2"></i>
+            Yuklab olish
+          </a>
+          <a href="{% url 'blog:document_list' %}" class="btn btn-outline-primary">
+            <i class="fas fa-arrow-left me-2"></i>
+            Hujjatlar ro'yxatiga qaytish
+          </a>
+          {% if is_admin %}
+          <a href="/admin/blog/document/{{ document.id }}/change/" class="btn btn-outline-secondary" target="_blank">
+            <i class="fas fa-edit me-2"></i>
+            Tahrirlash
+          </a>
+          {% endif %}
+        </div>
+      </div>
+
+      <!-- Related Documents -->
+      <div class="info-card">
+        <h5 class="mb-3">
+          <i class="fas fa-folder text-primary me-2"></i>
+          {{ document.category.name }} kategoriyasidagi boshqa hujjatlar
+        </h5>
+        
+        {% with related_docs=document.category.documents.all|slice:":5" %}
+        {% if related_docs %}
+        <div class="list-group list-group-flush">
+          {% for doc in related_docs %}
+          {% if doc.id != document.id %}
+          <a href="{% url 'blog:document_detail' doc.id %}" class="list-group-item list-group-item-action border-0 px-0">
+            <div class="d-flex align-items-center">
+              <i class="fas fa-file-alt text-primary me-2"></i>
+              <div class="flex-grow-1">
+                <h6 class="mb-1">{{ doc.title }}</h6>
+                <small class="text-muted">{{ doc.get_file_type_display }} • {{ doc.get_file_size_display }}</small>
+              </div>
+            </div>
+          </a>
+          {% endif %}
+          {% endfor %}
+        </div>
+        {% else %}
+        <p class="text-muted mb-0">Bu kategoriyada boshqa hujjatlar yo'q</p>
+        {% endif %}
+        {% endwith %}
+      </div>
+
+      <!-- Statistics -->
+      <div class="info-card">
+        <h5 class="mb-3">
+          <i class="fas fa-chart-bar text-primary me-2"></i>
+          Statistikalar
+        </h5>
+        
+        <div class="row text-center">
+          <div class="col-6">
+            <div class="border-end">
+              <h4 class="text-primary mb-1">{{ document.view_count }}</h4>
+              <small class="text-muted">Ko'rishlar</small>
+            </div>
+          </div>
+          <div class="col-6">
+            <h4 class="text-success mb-1">{{ document.download_count }}</h4>
+            <small class="text-muted">Yuklab olishlar</small>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %} 

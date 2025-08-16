@@ -3,9 +3,9 @@ DEBUG = True
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.postgresql',
-        'NAME': 'isomer_edu',
+        'NAME': 'komil',
         'USER': 'postgres',
-        'PASSWORD': '20010508',
+        'PASSWORD': '41552145',
         'HOST': 'localhost',
         'PORT': 5432,
     }

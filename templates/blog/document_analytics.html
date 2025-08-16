@@ -1,0 +1,396 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Hujjatlar analitikasi{% endblock %}
+
+{% block extra_css %}
+<style>
+  .analytics-header {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    border-radius: 20px;
+    padding: 40px;
+    margin-bottom: 30px;
+  }
+  
+  .stats-card {
+    background: rgba(255, 255, 255, 0.95);
+    backdrop-filter: blur(10px);
+    border-radius: 16px;
+    padding: 25px;
+    margin-bottom: 20px;
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+    transition: transform 0.3s ease;
+  }
+  
+  .stats-card:hover {
+    transform: translateY(-5px);
+  }
+  
+  .stats-icon {
+    width: 60px;
+    height: 60px;
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 24px;
+    color: white;
+    margin-bottom: 15px;
+  }
+  
+  .icon-primary { background: linear-gradient(135deg, #667eea, #764ba2); }
+  .icon-success { background: linear-gradient(135deg, #2ed573, #1e90ff); }
+  .icon-info { background: linear-gradient(135deg, #5352ed, #3742fa); }
+  .icon-warning { background: linear-gradient(135deg, #ffa502, #ff6348); }
+  
+  .chart-container {
+    background: rgba(255, 255, 255, 0.95);
+    backdrop-filter: blur(10px);
+    border-radius: 16px;
+    padding: 25px;
+    margin-bottom: 20px;
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+  }
+  
+  .top-documents {
+    background: rgba(255, 255, 255, 0.95);
+    backdrop-filter: blur(10px);
+    border-radius: 16px;
+    padding: 25px;
+    margin-bottom: 20px;
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+  }
+  
+  .document-item {
+    display: flex;
+    align-items: center;
+    padding: 15px 0;
+    border-bottom: 1px solid #e2e8f0;
+  }
+  
+  .document-item:last-child {
+    border-bottom: none;
+  }
+  
+  .document-icon {
+    width: 40px;
+    height: 40px;
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-right: 15px;
+    color: white;
+    font-size: 16px;
+  }
+  
+  .file-type-pdf { background: linear-gradient(135deg, #ff4757, #ff3742); }
+  .file-type-doc { background: linear-gradient(135deg, #2f3542, #3742fa); }
+  .file-type-xls { background: linear-gradient(135deg, #2ed573, #1e90ff); }
+  .file-type-ppt { background: linear-gradient(135deg, #ffa502, #ff6348); }
+  .file-type-img { background: linear-gradient(135deg, #5352ed, #3742fa); }
+  .file-type-video { background: linear-gradient(135deg, #ff6b6b, #ee5a24); }
+  .file-type-archive { background: linear-gradient(135deg, #747d8c, #57606f); }
+  .file-type-other { background: linear-gradient(135deg, #a4b0be, #747d8c); }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container">
+  <!-- Analytics Header -->
+  <div class="analytics-header">
+    <div class="row align-items-center">
+      <div class="col-md-8">
+        <h1 class="h2 mb-3">
+          <i class="fas fa-chart-bar me-2"></i>
+          Hujjatlar analitikasi
+        </h1>
+        <p class="mb-0 opacity-75">Hujjatlar bo'yicha batafsil statistikalar va tahlillar</p>
+      </div>
+      <div class="col-md-4 text-md-end">
+        <a href="{% url 'blog:document_upload' %}" class="btn btn-light">
+          <i class="fas fa-upload me-2"></i>
+          Yangi hujjat
+        </a>
+      </div>
+    </div>
+  </div>
+
+  <!-- Statistics Cards -->
+  <div class="row mb-4">
+    <div class="col-lg-3 col-md-6">
+      <div class="stats-card text-center">
+        <div class="stats-icon icon-primary mx-auto">
+          <i class="fas fa-file-alt"></i>
+        </div>
+        <h3 class="mb-2">{{ total_documents }}</h3>
+        <p class="text-muted mb-0">Jami hujjatlar</p>
+      </div>
+    </div>
+    <div class="col-lg-3 col-md-6">
+      <div class="stats-card text-center">
+        <div class="stats-icon icon-info mx-auto">
+          <i class="fas fa-eye"></i>
+        </div>
+        <h3 class="mb-2">{{ total_views }}</h3>
+        <p class="text-muted mb-0">Jami ko'rishlar</p>
+      </div>
+    </div>
+    <div class="col-lg-3 col-md-6">
+      <div class="stats-card text-center">
+        <div class="stats-icon icon-success mx-auto">
+          <i class="fas fa-download"></i>
+        </div>
+        <h3 class="mb-2">{{ total_downloads }}</h3>
+        <p class="text-muted mb-0">Jami yuklab olishlar</p>
+      </div>
+    </div>
+    <div class="col-lg-3 col-md-6">
+      <div class="stats-card text-center">
+        <div class="stats-icon icon-warning mx-auto">
+          <i class="fas fa-users"></i>
+        </div>
+        <h3 class="mb-2">{{ views_by_role|length }}</h3>
+        <p class="text-muted mb-0">Faol foydalanuvchilar</p>
+      </div>
+    </div>
+  </div>
+
+  <div class="row">
+    <!-- Charts -->
+    <div class="col-lg-8">
+      <!-- Views by Category Chart -->
+      <div class="chart-container">
+        <h4 class="mb-4">
+          <i class="fas fa-chart-pie text-primary me-2"></i>
+          Kategoriyalar bo'yicha ko'rishlar
+        </h4>
+        <canvas id="viewsByCategoryChart" width="400" height="200"></canvas>
+      </div>
+
+      <!-- Downloads by Category Chart -->
+      <div class="chart-container">
+        <h4 class="mb-4">
+          <i class="fas fa-chart-bar text-primary me-2"></i>
+          Kategoriyalar bo'yicha yuklab olishlar
+        </h4>
+        <canvas id="downloadsByCategoryChart" width="400" height="200"></canvas>
+      </div>
+    </div>
+
+    <!-- Sidebar -->
+    <div class="col-lg-4">
+      <!-- Most Viewed Documents -->
+      <div class="top-documents">
+        <h5 class="mb-4">
+          <i class="fas fa-fire text-warning me-2"></i>
+          Eng ko'p ko'rilgan hujjatlar
+        </h5>
+        
+        {% if most_viewed %}
+        {% for document in most_viewed %}
+        <div class="document-item">
+          <div class="document-icon file-type-{{ document.file_type }}">
+            {% if document.file_type == 'pdf' %}
+              <i class="fas fa-file-pdf"></i>
+            {% elif document.file_type in 'doc,docx' %}
+              <i class="fas fa-file-word"></i>
+            {% elif document.file_type in 'xls,xlsx' %}
+              <i class="fas fa-file-excel"></i>
+            {% elif document.file_type in 'ppt,pptx' %}
+              <i class="fas fa-file-powerpoint"></i>
+            {% elif document.file_type in 'jpg,jpeg,png,gif' %}
+              <i class="fas fa-file-image"></i>
+            {% elif document.file_type in 'mp4,avi,mov' %}
+              <i class="fas fa-file-video"></i>
+            {% elif document.file_type in 'zip,rar' %}
+              <i class="fas fa-file-archive"></i>
+            {% else %}
+              <i class="fas fa-file"></i>
+            {% endif %}
+          </div>
+          <div class="flex-grow-1">
+            <h6 class="mb-1">{{ document.title }}</h6>
+            <small class="text-muted">{{ document.category.name }}</small>
+          </div>
+          <div class="text-end">
+            <div class="fw-bold text-primary">{{ document.view_count }}</div>
+            <small class="text-muted">ko'rish</small>
+          </div>
+        </div>
+        {% endfor %}
+        {% else %}
+        <p class="text-muted mb-0">Hali ko'rishlar yo'q</p>
+        {% endif %}
+      </div>
+
+      <!-- Most Downloaded Documents -->
+      <div class="top-documents">
+        <h5 class="mb-4">
+          <i class="fas fa-download text-success me-2"></i>
+          Eng ko'p yuklab olingan hujjatlar
+        </h5>
+        
+        {% if most_downloaded %}
+        {% for document in most_downloaded %}
+        <div class="document-item">
+          <div class="document-icon file-type-{{ document.file_type }}">
+            {% if document.file_type == 'pdf' %}
+              <i class="fas fa-file-pdf"></i>
+            {% elif document.file_type in 'doc,docx' %}
+              <i class="fas fa-file-word"></i>
+            {% elif document.file_type in 'xls,xlsx' %}
+              <i class="fas fa-file-excel"></i>
+            {% elif document.file_type in 'ppt,pptx' %}
+              <i class="fas fa-file-powerpoint"></i>
+            {% elif document.file_type in 'jpg,jpeg,png,gif' %}
+              <i class="fas fa-file-image"></i>
+            {% elif document.file_type in 'mp4,avi,mov' %}
+              <i class="fas fa-file-video"></i>
+            {% elif document.file_type in 'zip,rar' %}
+              <i class="fas fa-file-archive"></i>
+            {% else %}
+              <i class="fas fa-file"></i>
+            {% endif %}
+          </div>
+          <div class="flex-grow-1">
+            <h6 class="mb-1">{{ document.title }}</h6>
+            <small class="text-muted">{{ document.category.name }}</small>
+          </div>
+          <div class="text-end">
+            <div class="fw-bold text-success">{{ document.download_count }}</div>
+            <small class="text-muted">yuklab olish</small>
+          </div>
+        </div>
+        {% endfor %}
+        {% else %}
+        <p class="text-muted mb-0">Hali yuklab olishlar yo'q</p>
+        {% endif %}
+      </div>
+
+      <!-- Views by Role -->
+      <div class="top-documents">
+        <h5 class="mb-4">
+          <i class="fas fa-users text-info me-2"></i>
+          Foydalanuvchi rollari bo'yicha ko'rishlar
+        </h5>
+        
+        {% if views_by_role %}
+        {% for role_data in views_by_role %}
+        <div class="document-item">
+          <div class="document-icon icon-info">
+            <i class="fas fa-user-tag"></i>
+          </div>
+          <div class="flex-grow-1">
+            <h6 class="mb-1">{{ role_data.user__role }}</h6>
+            <small class="text-muted">{{ role_data.count }} ta ko'rish</small>
+          </div>
+        </div>
+        {% endfor %}
+        {% else %}
+        <p class="text-muted mb-0">Hali ko'rishlar yo'q</p>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Views by Category Chart
+    const viewsCtx = document.getElementById('viewsByCategoryChart').getContext('2d');
+    const viewsData = {
+        labels: [
+            {% for item in views_by_category %}
+                '{{ item.document__category__name }}',
+            {% endfor %}
+        ],
+        datasets: [{
+            label: 'Ko\'rishlar',
+            data: [
+                {% for item in views_by_category %}
+                    {{ item.count }},
+                {% endfor %}
+            ],
+            backgroundColor: [
+                '#667eea',
+                '#764ba2',
+                '#f093fb',
+                '#f5576c',
+                '#4facfe',
+                '#00f2fe',
+                '#43e97b',
+                '#38f9d7'
+            ],
+            borderWidth: 0
+        }]
+    };
+    
+    new Chart(viewsCtx, {
+        type: 'doughnut',
+        data: viewsData,
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: {
+                    position: 'bottom'
+                }
+            }
+        }
+    });
+
+    // Downloads by Category Chart
+    const downloadsCtx = document.getElementById('downloadsByCategoryChart').getContext('2d');
+    const downloadsData = {
+        labels: [
+            {% for item in downloads_by_category %}
+                '{{ item.document__category__name }}',
+            {% endfor %}
+        ],
+        datasets: [{
+            label: 'Yuklab olishlar',
+            data: [
+                {% for item in downloads_by_category %}
+                    {{ item.count }},
+                {% endfor %}
+            ],
+            backgroundColor: [
+                '#2ed573',
+                '#1e90ff',
+                '#ff6348',
+                '#ffa502',
+                '#5352ed',
+                '#3742fa',
+                '#ff4757',
+                '#ff3742'
+            ],
+            borderWidth: 0
+        }]
+    };
+    
+    new Chart(downloadsCtx, {
+        type: 'bar',
+        data: downloadsData,
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: {
+                    display: false
+                }
+            },
+            scales: {
+                y: {
+                    beginAtZero: true
+                }
+            }
+        }
+    });
+});
+</script>
+{% endblock %} 
