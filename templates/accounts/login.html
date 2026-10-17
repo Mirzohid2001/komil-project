@@ -40,7 +40,7 @@
     display: flex;
     flex-direction: column;
     justify-content: space-between;
-    min-height: 44vh;
+    min-height: 100vh;
   }
   .auth-visual::before {
     content: "";
@@ -74,7 +74,22 @@
     0%, 100% { transform: scale(1); opacity: 0.7; }
     50% { transform: scale(1.05); opacity: 1; }
   }
-  .auth-visual > * { position: relative; z-index: 1; }
+  /* Dekor absolute qolsin — relative qilsak matn pastga tushadi */
+  .auth-visual .zl-shimmer-line,
+  .auth-visual .zl-orb,
+  .auth-visual .auth-ring {
+    position: absolute;
+    z-index: 0;
+  }
+  .auth-visual-copy,
+  .auth-foot {
+    position: relative;
+    z-index: 1;
+  }
+  .auth-visual-copy {
+    max-width: 36rem;
+    margin-top: clamp(1rem, 8vh, 4rem);
+  }
 
   .auth-eyebrow {
     display: inline-flex;
@@ -207,11 +222,11 @@
 {% block content %}
 <div class="auth-stage">
   <aside class="auth-visual" data-zl-parallax>
-    <div class="zl-shimmer-line"></div>
-    <div class="zl-orb a"></div>
-    <div class="zl-orb b"></div>
-    <div class="auth-ring"></div>
-    <div>
+    <div class="zl-shimmer-line" aria-hidden="true"></div>
+    <div class="zl-orb a" aria-hidden="true"></div>
+    <div class="zl-orb b" aria-hidden="true"></div>
+    <div class="auth-ring" aria-hidden="true"></div>
+    <div class="auth-visual-copy">
       <div class="auth-eyebrow">
         <img src="{% static 'img/logo.png' %}" alt="" width="22" height="22" style="border-radius:50%;object-fit:cover;border:1px solid rgba(201,162,39,.5);">
         Premium · Ichki portal
