@@ -127,18 +127,24 @@
 {% for answer in answers %}
 <article class="answer-card {% if answer.is_correct %}answer-correct{% else %}answer-incorrect{% endif %}">
   <div class="p-3 p-md-4">
-    <h3 class="h6 mb-3">{{ forloop.counter }}. {{ answer.question.text }}</h3>
+    <h3 class="h6 mb-3">
+      {{ forloop.counter }}. {{ answer.question.text }}
+      <span class="badge bg-secondary-subtle text-secondary ms-1" style="font-size:.65rem;">{{ answer.question.get_question_type_display }}</span>
+    </h3>
     <p class="mb-2">
       Sizning javobingiz:
       <strong class="{% if answer.is_correct %}text-success{% else %}text-danger{% endif %}">
-        {{ answer.selected_option.text }}
+        {{ answer.display_selected }}
         {% if answer.is_correct %}<i class="fas fa-check-circle ms-1"></i>{% else %}<i class="fas fa-times-circle ms-1"></i>{% endif %}
       </strong>
     </p>
     {% if not answer.is_correct %}
     <p class="mb-2">
       To‘g‘ri javob:
-      <strong class="text-success">{{ answer.question.get_correct_option.text }} <i class="fas fa-check-circle ms-1"></i></strong>
+      <strong class="text-success">
+        {{ answer.display_correct }}
+        <i class="fas fa-check-circle ms-1"></i>
+      </strong>
     </p>
     {% endif %}
     {% if answer.question.explanation %}

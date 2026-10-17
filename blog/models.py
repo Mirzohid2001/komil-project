@@ -55,8 +55,28 @@ class VideoView(models.Model):
 
 class Test(models.Model):
     """Foydalanuvchi rollari uchun testlar"""
+    TYPE_KNOWLEDGE = 'knowledge'
+    TYPE_SAFETY = 'safety'
+    TYPE_EXAM = 'exam'
+    TYPE_PRACTICE = 'practice'
+    TYPE_DAILY = 'daily'
+    TYPE_CHOICES = [
+        (TYPE_KNOWLEDGE, 'Bilim testi'),
+        (TYPE_SAFETY, 'Xavfsizlik'),
+        (TYPE_EXAM, 'Imtihon'),
+        (TYPE_PRACTICE, 'Mashq / trening'),
+        (TYPE_DAILY, 'Kunlik test'),
+    ]
+
     title = models.CharField(max_length=200, verbose_name="Test nomi")
     description = models.TextField(verbose_name="Test tavsifi")
+    test_type = models.CharField(
+        max_length=20,
+        choices=TYPE_CHOICES,
+        default=TYPE_KNOWLEDGE,
+        verbose_name="Test turi",
+        help_text="Testning maqsadi / kategoriyasi",
+    )
     role = models.CharField(
         max_length=20,
         choices=User.ROLE_CHOICES,
@@ -64,6 +84,25 @@ class Test(models.Model):
     )
     time_limit = models.IntegerField(default=30, verbose_name="Vaqt chegarasi (daqiqa)")
     passing_score = models.IntegerField(default=70, verbose_name="O'tish bali (%)")
+    questions_per_attempt = models.PositiveIntegerField(
+        default=30,
+        verbose_name="Har urinishda savollar soni",
+        help_text="Savol bankidan tasodifiy shuncha ta savol olinadi (bank kattaroq bo‘lsa). Kamida 1.",
+    )
+    certificate_category = models.ForeignKey(
+        'blog.Category',
+        null=True,
+        blank=True,
+        on_delete=models.SET_NULL,
+        related_name='retest_tests',
+        verbose_name="Sertifikat kategoriyasi",
+        help_text="Test o‘tilsa shu kategoriya sertifikati beriladi/yangilanadi.",
+    )
+    certificate_validity_days = models.PositiveIntegerField(
+        default=365,
+        verbose_name="Sertifikat amal muddati (kun)",
+        help_text="Qayta testdan o‘tgach sertifikat shuncha kunga uzaytiriladi.",
+    )
     is_active = models.BooleanField(default=True, verbose_name="Faol")
     is_mandatory = models.BooleanField(default=False, verbose_name="Majburiy")
     deadline = models.DateField(
@@ -101,17 +140,33 @@ class Test(models.Model):
         """Testdagi savollar sonini qaytaradi"""
         return self.questions.count()
     
-    def get_random_questions(self, count=30):
-        """Tasodifiy savollar to'plamini qaytaradi"""
-        return self.questions.order_by('?')[:count]
+    def get_random_questions(self, count=None):
+        """Savol bankidan tasodifiy to‘plam."""
+        n = count if count is not None else self.questions_per_attempt
+        return self.questions.order_by('?')[:n]
+
+    def attempt_question_count(self):
+        """Urinish uchun olinadigan savollar soni (bankdan kichik bo‘lmasin)."""
+        total = self.get_total_questions()
+        n = max(1, self.questions_per_attempt or 30)
+        if total <= 0:
+            return 0
+        return min(n, total)
+
+    def clean(self):
+        from django.core.exceptions import ValidationError
+        if self.questions_per_attempt is not None and self.questions_per_attempt < 1:
+            raise ValidationError({'questions_per_attempt': 'Kamida 1 ta savol bo‘lishi kerak.'})
+        if self.certificate_validity_days is not None and self.certificate_validity_days < 1:
+            raise ValidationError({'certificate_validity_days': 'Kamida 1 kun bo‘lishi kerak.'})
     
     def get_valid_questions_count(self):
-        """Logik aloqaga ega bo'lgan savollar sonini qaytaradi"""
-        from blog.utils import check_question_options_consistency
+        """Ishlatishga yaroqli savollar soni (turiga qarab)."""
         valid_count = 0
         for question in self.questions.prefetch_related('options').all():
-            options = list(question.options.all())
-            if options and question.get_correct_option() and check_question_options_consistency(question.text, options):
+            if question.question_type == Question.Q_TRUE_FALSE:
+                question.ensure_true_false_options()
+            if question.is_answerable():
                 valid_count += 1
         return valid_count
     
@@ -121,8 +176,30 @@ class Test(models.Model):
 
 class Question(models.Model):
     """Testlar uchun savollar"""
+    Q_SINGLE = 'single'
+    Q_MULTI = 'multi'
+    Q_TRUE_FALSE = 'true_false'
+    Q_SHORT = 'short'
+    QUESTION_TYPE_CHOICES = [
+        (Q_SINGLE, 'Bitta to‘g‘ri javob'),
+        (Q_MULTI, 'Bir nechta to‘g‘ri javob'),
+        (Q_TRUE_FALSE, 'Ha / Yo‘q'),
+        (Q_SHORT, 'Qisqa yozma javob'),
+    ]
+
     test = models.ForeignKey(Test, on_delete=models.CASCADE, related_name='questions')
     text = models.TextField(verbose_name="Savol matni")
+    question_type = models.CharField(
+        max_length=20,
+        choices=QUESTION_TYPE_CHOICES,
+        default=Q_SINGLE,
+        verbose_name="Savol turi",
+    )
+    accepted_answers = models.TextField(
+        blank=True,
+        verbose_name="Qabul qilinadigan javoblar",
+        help_text="Faqat qisqa javob uchun: har qatorga bitta to‘g‘ri variant (registr farqi muhim emas).",
+    )
     explanation = models.TextField(blank=True, null=True, verbose_name="Javob izohi")
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
@@ -138,6 +215,39 @@ class Question(models.Model):
     def get_correct_option(self):
         """To'g'ri javob variantini qaytaradi"""
         return self.options.filter(is_correct=True).first()
+
+    def get_correct_options(self):
+        return list(self.options.filter(is_correct=True))
+
+    def accepted_answer_list(self):
+        lines = []
+        for line in (self.accepted_answers or '').splitlines():
+            s = line.strip()
+            if s:
+                lines.append(s)
+        return lines
+
+    def ensure_true_false_options(self):
+        """Ha/Yo‘q savol uchun 2 ta variant yaratadi (mavjud bo‘lsa tegmaydi)."""
+        if self.question_type != self.Q_TRUE_FALSE:
+            return
+        if self.options.count() >= 2:
+            return
+        if self.options.exists():
+            return
+        Option.objects.create(question=self, text='Ha', is_correct=True)
+        Option.objects.create(question=self, text='Yo‘q', is_correct=False)
+
+    def is_answerable(self):
+        """Savol to‘g‘ri sozlanganmi (testga chiqarish uchun)."""
+        if self.question_type == self.Q_SHORT:
+            return bool(self.accepted_answer_list())
+        if self.question_type == self.Q_TRUE_FALSE:
+            return self.options.count() >= 2 and self.options.filter(is_correct=True).exists()
+        if self.question_type == self.Q_MULTI:
+            return self.options.filter(is_correct=True).count() >= 1 and self.options.count() >= 2
+        # single
+        return self.options.filter(is_correct=True).exists() and self.options.count() >= 2
 
 class Option(models.Model):
     """Savollar uchun javob variantlari"""
@@ -179,7 +289,16 @@ class UserAnswer(models.Model):
     """Foydalanuvchining savollarga javoblari"""
     test_result = models.ForeignKey(TestResult, on_delete=models.CASCADE, related_name='answers')
     question = models.ForeignKey(Question, on_delete=models.CASCADE)
-    selected_option = models.ForeignKey(Option, on_delete=models.CASCADE)
+    selected_option = models.ForeignKey(
+        Option, on_delete=models.CASCADE, null=True, blank=True,
+        verbose_name="Tanlangan variant",
+    )
+    selected_option_ids = models.JSONField(
+        default=list, blank=True, verbose_name="Tanlangan variantlar (multi)"
+    )
+    text_answer = models.CharField(
+        max_length=500, blank=True, verbose_name="Yozma javob"
+    )
     is_correct = models.BooleanField(default=False)
     
     class Meta:
@@ -188,6 +307,30 @@ class UserAnswer(models.Model):
     
     def __str__(self):
         return f"{self.test_result.user.username} - {self.question.text[:30]}"
+
+    def display_selected(self):
+        q = self.question
+        if q.question_type == Question.Q_SHORT:
+            return self.text_answer or '—'
+        ids = set(self.selected_option_ids or [])
+        if q.question_type == Question.Q_MULTI and ids:
+            texts = [
+                o.text for o in q.options.all()
+                if o.id in ids or str(o.id) in {str(x) for x in ids}
+            ]
+            return ', '.join(texts) if texts else '—'
+        if self.selected_option_id:
+            return self.selected_option.text
+        return '—'
+
+    def display_correct(self):
+        q = self.question
+        if q.question_type == Question.Q_SHORT:
+            return ', '.join(q.accepted_answer_list()) or '—'
+        if q.question_type == Question.Q_MULTI:
+            return ', '.join(o.text for o in q.get_correct_options()) or '—'
+        correct = q.get_correct_option()
+        return correct.text if correct else '—'
 
 # Document Management Models
 class DocumentCategory(models.Model):

@@ -103,7 +103,12 @@
       <div class="zl-chips">
         <span class="zl-chip">{{ test.get_role_display }}</span>
         <span class="zl-chip">{{ test.time_limit }} daq</span>
+        <span class="zl-chip">{{ test.get_test_type_display }}</span>
         <span class="zl-chip">O‘tish: {{ test.passing_score }}%</span>
+        <span class="zl-chip">Bankdan: {{ test.questions_per_attempt }} savol</span>
+        {% if test.certificate_category %}
+        <span class="zl-chip warn">Sertifikat: {{ test.certificate_category.name }}</span>
+        {% endif %}
         {% if test.is_mandatory %}<span class="zl-chip danger">Majburiy</span>{% endif %}
         {% if test.deadline %}
           <span class="zl-chip {% if test.is_overdue %}danger{% else %}warn{% endif %}">

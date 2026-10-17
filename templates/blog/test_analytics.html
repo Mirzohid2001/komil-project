@@ -33,9 +33,12 @@
     <h1 class="zl-section-title mb-1">Test tahlili</h1>
     <p class="zl-section-lead mb-0">Urinishlar, rollar va testlar bo‘yicha umumiy ko‘rsatkichlar.</p>
   </div>
-  <a href="{% url 'blog:test_list' %}" class="btn btn-sm btn-outline-primary">
-    <i class="fas fa-arrow-left me-1"></i> Testlar ro‘yxati
-  </a>
+  <div class="d-flex gap-2">
+    <a href="{% url 'blog:weak_questions' %}" class="btn btn-sm btn-primary">Zaif savollar</a>
+    <a href="{% url 'blog:test_list' %}" class="btn btn-sm btn-outline-primary">
+      <i class="fas fa-arrow-left me-1"></i> Testlar
+    </a>
+  </div>
 </div>
 
 <div class="zl-stat-grid mb-4">

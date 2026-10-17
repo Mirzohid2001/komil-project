@@ -607,18 +607,40 @@ original_admin_site.get_urls = _admin_get_urls_with_analytics
 class OptionInline(admin.TabularInline):
     model = Option
     extra = 4
-    min_num = 2
+    min_num = 0
 
 class QuestionAdmin(admin.ModelAdmin):
-    list_display = ('text', 'test', 'get_correct_option', 'created_at')
-    list_filter = ('test', 'created_at', 'updated_at')
-    search_fields = ('text', 'explanation')
+    list_display = ('text', 'test', 'question_type', 'get_correct_option', 'created_at')
+    list_filter = ('question_type', 'test', 'created_at', 'updated_at')
+    search_fields = ('text', 'explanation', 'accepted_answers')
     inlines = [OptionInline]
-    
+    fieldsets = (
+        (None, {
+            'fields': ('test', 'text', 'question_type', 'explanation'),
+        }),
+        ('Qisqa javob', {
+            'fields': ('accepted_answers',),
+            'description': 'Faqat «Qisqa yozma javob» turi uchun. Har qator — bitta to‘g‘ri javob.',
+            'classes': ('collapse',),
+        }),
+    )
+
     def get_correct_option(self, obj):
+        if obj.question_type == obj.Q_SHORT:
+            answers = obj.accepted_answer_list()
+            return answers[0] if answers else "—"
+        if obj.question_type == obj.Q_MULTI:
+            texts = [o.text for o in obj.get_correct_options()]
+            return ', '.join(texts) if texts else "—"
         correct = obj.get_correct_option()
-        return correct.text if correct else "Нет правильного ответа"
-    get_correct_option.short_description = "Правильный ответ"
+        return correct.text if correct else "—"
+    get_correct_option.short_description = "To‘g‘ri javob"
+
+    def save_related(self, request, form, formsets, change):
+        super().save_related(request, form, formsets, change)
+        obj = form.instance
+        if obj.question_type == obj.Q_TRUE_FALSE:
+            obj.ensure_true_false_options()
     
     def save_model(self, request, obj, form, change):
         """Сохраняем вопрос и проверяем логическую связь с вариантами ответов"""
@@ -756,13 +778,18 @@ class QuestionInline(admin.TabularInline):
 
 class TestAdmin(admin.ModelAdmin):
     list_display = (
-        'title', 'role', 'get_question_count', 'get_valid_questions_count',
-        'passing_score', 'is_mandatory', 'deadline', 'is_active', 'updated_at',
+        'title', 'test_type', 'role', 'get_question_count', 'questions_per_attempt',
+        'get_valid_questions_count', 'passing_score', 'certificate_category',
+        'is_mandatory', 'deadline', 'is_active', 'updated_at',
     )
-    list_filter = ('role', 'is_active', 'is_mandatory', 'deadline', 'created_at', 'updated_at')
+    list_filter = (
+        'test_type', 'role', 'is_active', 'is_mandatory', 'deadline',
+        'certificate_category', 'created_at', 'updated_at',
+    )
     search_fields = ('title', 'description')
     readonly_fields = ('created_at', 'updated_at', 'valid_questions_info')
-    list_editable = ('is_mandatory', 'deadline', 'is_active')
+    list_editable = ('is_mandatory', 'deadline', 'is_active', 'questions_per_attempt')
+    autocomplete_fields = ('certificate_category',)
     inlines = [QuestionInline]
     change_list_template = 'admin/test_changelist.html'
     
@@ -863,13 +890,20 @@ class TestAdmin(admin.ModelAdmin):
     def get_fieldsets(self, request, obj=None):
         fieldsets = [
             ('Asosiy maʼlumot', {
-                'fields': ('title', 'description', 'role')
+                'fields': ('title', 'description', 'test_type', 'role')
             }),
             ('Test sozlamalari', {
                 'fields': (
-                    'time_limit', 'passing_score', 'is_active',
-                    'is_mandatory', 'deadline',
+                    'time_limit', 'passing_score', 'questions_per_attempt',
+                    'is_active', 'is_mandatory', 'deadline',
                 )
+            }),
+            ('Sertifikat / qayta test', {
+                'fields': ('certificate_category', 'certificate_validity_days'),
+                'description': (
+                    'Test o‘tilsa tanlangan kategoriya sertifikati beriladi yoki muddati uzaytiriladi. '
+                    'Muddati o‘tgach compliance shu testga yo‘naltiradi.'
+                ),
             }),
             ('Sanalar', {
                 'fields': ('created_at', 'updated_at'),

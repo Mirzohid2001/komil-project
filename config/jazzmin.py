@@ -36,6 +36,12 @@ JAZZMIN_SETTINGS = {
                 'permissions': ['blog.view_testresult'],
             },
             {
+                'name': 'Zaif savollar',
+                'url': 'blog:weak_questions',
+                'icon': 'fas fa-exclamation-triangle',
+                'permissions': ['blog.view_testresult'],
+            },
+            {
                 'name': 'HR hisobotlari',
                 'url': 'blog:hr_reports',
                 'icon': 'fas fa-file-excel',

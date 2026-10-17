@@ -52,8 +52,17 @@
   }
   .zl-quiz-card h2 {
     font-size: clamp(1.2rem, 2.4vw, 1.5rem);
-    margin: 0 0 1.25rem;
+    margin: 0 0 .5rem;
     color: var(--zl-forest-deep);
+  }
+  .zl-qtype {
+    display: inline-block;
+    font-size: .75rem;
+    font-weight: 700;
+    color: var(--zl-muted);
+    margin-bottom: 1rem;
+    text-transform: uppercase;
+    letter-spacing: .04em;
   }
   .zl-option {
     display: block;
@@ -83,6 +92,24 @@
     background: var(--zl-brass-soft);
     box-shadow: inset 0 0 0 1px var(--zl-brass);
   }
+  .zl-tf-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: .75rem;
+  }
+  .zl-short-input {
+    width: 100%;
+    border-radius: 12px;
+    border: 1.5px solid var(--zl-line);
+    padding: .95rem 1rem;
+    font-size: 1.05rem;
+    background: #fffcf6;
+  }
+  .zl-short-input:focus {
+    outline: none;
+    border-color: var(--zl-brass);
+    box-shadow: 0 0 0 3px rgba(201,162,39,.2);
+  }
   .zl-quiz-actions {
     display: flex;
     justify-content: space-between;
@@ -92,6 +119,7 @@
   }
   @media (max-width: 575.98px) {
     .zl-quiz-card { padding: 1.1rem; }
+    .zl-tf-grid { grid-template-columns: 1fr; }
     .zl-quiz-actions { flex-direction: column-reverse; }
     .zl-quiz-actions .btn { width: 100%; }
   }
@@ -114,15 +142,41 @@
 
 <div class="zl-quiz-card">
   <h2>{{ question.text }}</h2>
+  <span class="zl-qtype">{{ question.get_question_type_display }}</span>
+
   <form method="post" id="questionForm">
     {% csrf_token %}
-    {% for option in options %}
-      <input class="zl-option-input" type="radio" name="option" id="opt{{ option.id }}" value="{{ option.id }}" required>
-      <label class="zl-option" for="opt{{ option.id }}">{{ option.text }}</label>
-    {% endfor %}
+
+    {% if question.question_type == 'short' %}
+      <label class="form-label small fw-semibold" for="text_answer">Javobingiz</label>
+      <input class="zl-short-input" type="text" name="text_answer" id="text_answer"
+             required autocomplete="off" placeholder="Javobni yozing…">
+
+    {% elif question.question_type == 'multi' %}
+      <p class="small text-muted mb-3">Bir nechta variantni belgilashingiz mumkin.</p>
+      {% for option in options %}
+        <input class="zl-option-input" type="checkbox" name="options" id="opt{{ option.id }}" value="{{ option.id }}">
+        <label class="zl-option" for="opt{{ option.id }}">{{ option.text }}</label>
+      {% endfor %}
+
+    {% elif question.question_type == 'true_false' %}
+      <div class="zl-tf-grid">
+        {% for option in options %}
+          <input class="zl-option-input" type="radio" name="option" id="opt{{ option.id }}" value="{{ option.id }}" required>
+          <label class="zl-option text-center fw-bold" for="opt{{ option.id }}">{{ option.text }}</label>
+        {% endfor %}
+      </div>
+
+    {% else %}
+      {% for option in options %}
+        <input class="zl-option-input" type="radio" name="option" id="opt{{ option.id }}" value="{{ option.id }}" required>
+        <label class="zl-option" for="opt{{ option.id }}">{{ option.text }}</label>
+      {% endfor %}
+    {% endif %}
+
     <div class="zl-quiz-actions">
       <a href="{% url 'blog:test_list' %}" class="btn btn-outline-primary">Chiqish</a>
-      <button type="submit" class="btn btn-primary">
+      <button type="submit" class="btn btn-primary" id="submitBtn">
         {% if current == total %}Yakunlash{% else %}Keyingi{% endif %}
       </button>
     </div>
@@ -137,6 +191,16 @@
     const timerDisplay = document.getElementById('timer');
     const minutesDisplay = document.getElementById('minutes');
     const secondsDisplay = document.getElementById('seconds');
+    const form = document.getElementById('questionForm');
+
+    {% if question.question_type == 'multi' %}
+    form.addEventListener('submit', function (e) {
+      if (!form.querySelector('input[name="options"]:checked')) {
+        e.preventDefault();
+        alert('Kamida bitta variant tanlang.');
+      }
+    });
+    {% endif %}
 
     function updateTimer() {
       if (remainingTime <= 0) {

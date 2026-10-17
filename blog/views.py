@@ -468,17 +468,18 @@ def test_start(request, test_id):
         messages.error(request, "В этом тесте нет вопросов")
         return redirect('blog:test_list')
     
-    # Получаем вопросы для теста с проверкой на логическую связь
-    filtered_questions = get_valid_questions(test, max_count=30)
+    # Savol bankidan tasodifiy N ta (questions_per_attempt)
+    draw_count = test.attempt_question_count() or 30
+    filtered_questions = get_valid_questions(test, max_count=draw_count)
 
     # Если нет логически правильных вопросов, возвращаем ошибку
     if not filtered_questions:
         messages.error(request, "В тесте недостаточно корректных вопросов. Пожалуйста, обратитесь к администратору.")
         return redirect('blog:test_list')
 
-    # Har urinishda savollar tartibini aralashtiramiz (yodlab olishning oldini olish).
+    # Har urinishda to‘plamni qayta aralashtiramiz
     random.shuffle(filtered_questions)
-    max_questions = min(30, len(filtered_questions))
+    max_questions = min(draw_count, len(filtered_questions))
     questions = filtered_questions[:max_questions]
 
     # Har savol uchun variantlar tartibini ham shu urinish uchun belgilaymiz.
@@ -517,18 +518,9 @@ def test_start(request, test_id):
 
 def get_valid_questions(test, max_count=30):
     """
-    Получает вопросы теста с проверкой логической связи между 
-    вопросами и вариантами ответов.
-    
-    Аргументы:
-        test: объект Test, для которого нужно получить вопросы
-        max_count: максимальное количество вопросов для проверки
-    
-    Возвращает:
-        list: список объектов Question, прошедших проверку
+    Savol bankidan ishlatishga yaroqli savollarni tasodifiy tanlaydi.
+    single/multi: variant + consistency; short: accepted_answers; true_false: Ha/Yo‘q.
     """
-    # Barcha katalog savollarini olamiz, keyin aralashtiramiz —
-    # doim bir xil birinchi N ta savol chiqib qolmasin.
     all_questions = list(
         Question.objects.filter(test=test).prefetch_related('options')
     )
@@ -537,30 +529,30 @@ def get_valid_questions(test, max_count=30):
     if not all_questions:
         return []
 
-    # Список для хранения корректных вопросов
     valid_questions = []
-
-    # Проверка каждого вопроса на соответствие с его вариантами ответов
     for question in all_questions:
-        options = list(question.options.all())
-        
-        # Пропускаем вопросы без вариантов ответов
-        if not options:
+        if question.question_type == Question.Q_TRUE_FALSE:
+            question.ensure_true_false_options()
+
+        if not question.is_answerable():
             continue
-        
-        # Проверяем, есть ли у вопроса правильный вариант ответа
-        correct_option = question.get_correct_option()
-        if not correct_option:
-            continue
-        
-        # Запускаем проверку логической связи
-        if check_question_options_consistency(question.text, options):
+
+        # Qisqa javob — consistency tekshiruvi yo‘q
+        if question.question_type == Question.Q_SHORT:
             valid_questions.append(question)
-            
-            # Если у нас уже достаточно вопросов, завершаем поиск
-            if len(valid_questions) >= max_count:
-                break
-    
+        elif question.question_type == Question.Q_TRUE_FALSE:
+            valid_questions.append(question)
+        else:
+            options = list(question.options.all())
+            if check_question_options_consistency(question.text, options):
+                valid_questions.append(question)
+            # Consistency fail bo‘lsa ham admin yaratgan to‘g‘ri variantli savolni qoldiramiz
+            elif question.get_correct_option():
+                valid_questions.append(question)
+
+        if len(valid_questions) >= max_count:
+            break
+
     return valid_questions
 
 # Re-export for compatibility; implementation lives in blog.utils
@@ -605,49 +597,63 @@ def test_question(request):
     # Получаем текущий вопрос
     question_id = question_ids[current_idx]
     question = get_object_or_404(Question.objects.prefetch_related('options'), id=question_id)
+    if question.question_type == Question.Q_TRUE_FALSE:
+        question.ensure_true_false_options()
 
     # Variantlar tartibi — shu urinish uchun sessionda saqlangan (har kirishda yangi).
-    options_by_id = {opt.id: opt for opt in question.options.all()}
-    stored_order = (test_data.get('option_orders') or {}).get(str(question_id))
-    if stored_order:
-        options = [options_by_id[oid] for oid in stored_order if oid in options_by_id]
-        # Yangi qo'shilgan variantlar bo'lsa — oxiriga qo'shamiz
-        missing = [opt for oid, opt in options_by_id.items() if oid not in set(stored_order)]
-        if missing:
-            random.shuffle(missing)
-            options.extend(missing)
-    else:
-        options = list(options_by_id.values())
-        random.shuffle(options)
-        test_data.setdefault('option_orders', {})[str(question_id)] = [o.id for o in options]
-        request.session['current_test'] = test_data
+    options = []
+    if question.question_type != Question.Q_SHORT:
+        options_by_id = {opt.id: opt for opt in question.options.all()}
+        stored_order = (test_data.get('option_orders') or {}).get(str(question_id))
+        if stored_order:
+            options = [options_by_id[oid] for oid in stored_order if oid in options_by_id]
+            missing = [opt for oid, opt in options_by_id.items() if oid not in set(stored_order)]
+            if missing:
+                random.shuffle(missing)
+                options.extend(missing)
+        else:
+            options = list(options_by_id.values())
+            if question.question_type != Question.Q_TRUE_FALSE:
+                random.shuffle(options)
+            test_data.setdefault('option_orders', {})[str(question_id)] = [o.id for o in options]
+            request.session['current_test'] = test_data
 
     # Вычисляем прогресс
     progress = (current_idx + 1) / total_questions * 100
 
     # Проверяем, был ли отправлен ответ
     if request.method == 'POST':
-        selected_option_id = request.POST.get('option')
-
-        if not selected_option_id:
-            messages.error(request, "Пожалуйста, выберите вариант ответа")
+        qtype = question.question_type or Question.Q_SINGLE
+        raw = None
+        if qtype == Question.Q_SHORT:
+            raw = (request.POST.get('text_answer') or '').strip()
+            if not raw:
+                messages.error(request, "Javob yozing.")
+                raw = None
+        elif qtype == Question.Q_MULTI:
+            raw = request.POST.getlist('options')
+            if not raw:
+                messages.error(request, "Kamida bitta variant tanlang.")
+                raw = None
         else:
-            try:
-                # Сохраняем ответ в сессии
-                selected_id = int(selected_option_id)
-                test_data['answers'][str(question_id)] = selected_id
-                request.session['current_test'] = test_data
+            selected_option_id = request.POST.get('option')
+            if not selected_option_id:
+                messages.error(request, "Javob variantini tanlang.")
+            else:
+                try:
+                    raw = int(selected_option_id)
+                except (ValueError, TypeError):
+                    messages.error(request, "Noto‘g‘ri javob formati.")
+                    raw = None
 
-                # Переходим к следующему вопросу или завершаем тест
-                if current_idx + 1 < total_questions:
-                    test_data['current_question'] = current_idx + 1
-                    request.session['current_test'] = test_data
-                    return redirect('blog:test_question')
-                else:
-                    # Завершаем тест
-                    return redirect('blog:test_finish')
-            except (ValueError, TypeError):
-                messages.error(request, "Некорректный формат ответа")
+        if raw is not None:
+            test_data['answers'][str(question_id)] = raw
+            request.session['current_test'] = test_data
+            if current_idx + 1 < total_questions:
+                test_data['current_question'] = current_idx + 1
+                request.session['current_test'] = test_data
+                return redirect('blog:test_question')
+            return redirect('blog:test_finish')
 
     context = {
         'test': test,
@@ -677,69 +683,58 @@ def test_finish(request):
     # Server-side timer: vaqt tugagan bo‘lsa ham natija saqlanadi
     timed_out = _test_time_remaining_seconds(test_data, test) <= 0
     
-    # Получаем все вопросы теста и правильные ответы
+    from blog.grading import grade_question
+
     question_ids = test_data['question_ids']
     total_questions = len(question_ids)
-    
-    # Получаем все вопросы из базы данных одним запросом
+
     questions_db = Question.objects.filter(id__in=question_ids).prefetch_related('options')
     questions_dict = {q.id: q for q in questions_db}
-    
-    # Получаем все опции из базы одним запросом
-    options_ids = list(map(int, test_data['answers'].values()))
-    options_db = Option.objects.filter(id__in=options_ids)
-    options_dict = {o.id: o for o in options_db}
-    
-    # Создаем объект результата теста
+
     test_result = TestResult.objects.create(
         user=request.user,
         test=test,
-        score=0,  # Временное значение
-        percentage=0,  # Временное значение
-        is_passed=False,  # Временное значение
+        score=0,
+        percentage=0,
+        is_passed=False,
         started_at=datetime.fromisoformat(test_data['started_at']),
-        completed_at=timezone.now()
+        completed_at=timezone.now(),
     )
-    
-    # Проверяем ответы и создаем записи об ответах пользователя
+
     correct_answers = 0
     user_answers = []
-    
-    for question_id_str, answer_id_str in test_data['answers'].items():
-        question_id = int(question_id_str)
-        answer_id = int(answer_id_str)
-        
-        if question_id not in questions_dict:
-            continue  # Пропускаем, если вопрос не найден
-            
-        question = questions_dict[question_id]
-        selected_option = options_dict.get(answer_id)
+    session_answers = test_data.get('answers') or {}
+    # Barcha savollar — javobsizlar ham noto‘g‘ri hisoblanadi (vaqt tugashi)
+    options_by_id = {
+        o.id: o
+        for o in Option.objects.filter(question_id__in=question_ids)
+    }
 
-        if not selected_option or selected_option.question_id != question_id:
-            continue  # Noto‘g‘ri / o‘chirilgan variant — hisobga olinmaydi
-
-        # Получаем правильный вариант для вопроса
-        correct_option = question.get_correct_option()
-
-        if not correct_option:
-            continue  # Пропускаем, если нет правильного варианта
-
-        is_correct = (selected_option.id == correct_option.id)
-        
+    for question_id in question_ids:
+        question = questions_dict.get(question_id)
+        if not question:
+            continue
+        raw_answer = session_answers.get(str(question_id), session_answers.get(question_id))
+        is_correct, payload = grade_question(question, raw_answer)
         if is_correct:
             correct_answers += 1
-        
-        # Создаем запись об ответе (добавляем в список для массовой вставки)
+
+        selected = None
+        sid = payload.get('selected_option_id')
+        if sid:
+            selected = options_by_id.get(sid)
+
         user_answers.append(
             UserAnswer(
                 test_result=test_result,
                 question=question,
-                selected_option=selected_option,
-                is_correct=is_correct
+                selected_option=selected,
+                selected_option_ids=payload.get('selected_option_ids') or [],
+                text_answer=payload.get('text_answer') or '',
+                is_correct=is_correct,
             )
         )
-    
-    # Массовое создание записей ответов
+
     if user_answers:
         UserAnswer.objects.bulk_create(user_answers)
     
@@ -785,6 +780,28 @@ def test_finish(request):
     
     # Проверяем достижение "Прохождение тестов"
     check_tests_passed_achievement(request.user)
+
+    # Sertifikat: muddati o‘tgan / yangi — test o‘tilsa yangilanadi
+    if is_passed and test.certificate_category_id:
+        from blog.certificate_service import renew_or_issue_category_certificate
+
+        cert, created = renew_or_issue_category_certificate(
+            request.user,
+            test.certificate_category,
+            validity_days=test.certificate_validity_days,
+        )
+        if created:
+            messages.success(
+                request,
+                f"Sertifikat berildi: {test.certificate_category.name} "
+                f"(amal: {cert.valid_until:%d.%m.%Y}).",
+            )
+        else:
+            messages.success(
+                request,
+                f"Sertifikat yangilandi: {test.certificate_category.name} "
+                f"(amal: {cert.valid_until:%d.%m.%Y}).",
+            )
     
     # Очищаем данные о текущем тесте в сессии
     del request.session['current_test']
@@ -1012,6 +1029,65 @@ def test_analytics(request):
     }
     
     return render(request, 'blog/test_analytics.html', context)
+
+
+@login_required
+def weak_questions_report(request):
+    """Zaif savollar: qaysi savolda eng ko‘p xato qilinadi."""
+    if request.user.role != 'admin' and not request.user.is_staff:
+        messages.error(request, "Faqat admin ko‘ra oladi.")
+        return redirect('blog:home')
+
+    test_id = request.GET.get('test')
+    tests = Test.objects.filter(is_active=True).order_by('title')
+
+    answers = UserAnswer.objects.select_related(
+        'question', 'question__test', 'test_result__user'
+    )
+    if test_id and str(test_id).isdigit():
+        answers = answers.filter(question__test_id=int(test_id))
+
+    rows = list(
+        answers.values(
+            'question_id',
+            'question__text',
+            'question__test_id',
+            'question__test__title',
+        )
+        .annotate(
+            total=Count('id'),
+            wrong=Count('id', filter=Q(is_correct=False)),
+            correct=Count('id', filter=Q(is_correct=True)),
+        )
+        .filter(total__gte=1)
+    )
+    for row in rows:
+        row['fail_rate'] = round((row['wrong'] / row['total']) * 100, 1) if row['total'] else 0
+        row['text_short'] = (row['question__text'] or '')[:140]
+    # Avval xato foizi, keyin xato soni
+    rows.sort(key=lambda r: (r['fail_rate'], r['wrong'], r['total']), reverse=True)
+    rows = rows[:80]
+
+    # Eng ko‘p yanglishgan xodimlar (tanlangan test bo‘yicha)
+    weak_users = list(
+        answers.filter(is_correct=False)
+        .values(
+            'test_result__user_id',
+            'test_result__user__username',
+            'test_result__user__first_name',
+            'test_result__user__last_name',
+        )
+        .annotate(wrong=Count('id'))
+        .order_by('-wrong')[:30]
+    )
+
+    return render(request, 'blog/weak_questions.html', {
+        'rows': rows,
+        'weak_users': weak_users,
+        'tests': tests,
+        'selected_test': int(test_id) if test_id and str(test_id).isdigit() else None,
+    })
+
 
 # Вспомогательные функции для проверки достижений
 

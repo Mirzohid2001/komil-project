@@ -57,14 +57,26 @@ def expired_certificates_for_user(user):
 
     today = timezone.localdate()
     items = []
-    for cert in Certificate.objects.filter(user=user).exclude(valid_until=None).filter(
-        valid_until__lt=today
-    ).select_related('category'):
+    from blog.certificate_service import retest_url_for_category
+
+    # Har kategoriya uchun faqat eng so‘nggi sertifikat tekshiriladi
+    seen_categories = set()
+    for cert in (
+        Certificate.objects.filter(user=user)
+        .exclude(valid_until=None)
+        .select_related('category')
+        .order_by('category_id', '-issued_at', '-id')
+    ):
+        if cert.category_id in seen_categories:
+            continue
+        seen_categories.add(cert.category_id)
+        if cert.valid_until >= today:
+            continue
         items.append({
             'kind': 'category',
             'title': cert.category.name,
             'valid_until': cert.valid_until,
-            'url': reverse('blog:post_list', args=[cert.category_id]),
+            'url': retest_url_for_category(user, cert.category),
             'obj': cert,
         })
     for cert in CourseCertificate.objects.filter(
@@ -146,7 +158,10 @@ def get_compliance_status(user):
         items.append({
             'type': 'certificate',
             'title': c['title'],
-            'detail': f"Sertifikat muddati: {c['valid_until']:%d.%m.%Y}",
+            'detail': (
+                f"Sertifikat muddati o‘tgan: {c['valid_until']:%d.%m.%Y}. "
+                f"Qayta testdan o‘ting."
+            ),
             'url': c['url'],
         })
     for a in courses:

@@ -772,3 +772,289 @@ class DocumentAckTests(TestCase):
                 document=self.doc, user=self.user
             ).exists()
         )
+
+
+class QuestionTypeGradingTests(TestCase):
+    def setUp(self):
+        self.user = User.objects.create_user(
+            username='qtypeuser', password='pass12345', role='Оператор'
+        )
+        self.test = Test.objects.create(
+            title='Mixed Types',
+            description='d',
+            role='Оператор',
+            test_type=Test.TYPE_SAFETY,
+            is_active=True,
+            questions_per_attempt=10,
+            passing_score=50,
+        )
+        # single
+        self.q_single = Question.objects.create(
+            test=self.test, text='Single?', question_type=Question.Q_SINGLE
+        )
+        self.s_ok = Option.objects.create(question=self.q_single, text='A', is_correct=True)
+        Option.objects.create(question=self.q_single, text='B', is_correct=False)
+        # multi
+        self.q_multi = Question.objects.create(
+            test=self.test, text='Multi?', question_type=Question.Q_MULTI
+        )
+        self.m1 = Option.objects.create(question=self.q_multi, text='1', is_correct=True)
+        self.m2 = Option.objects.create(question=self.q_multi, text='2', is_correct=True)
+        Option.objects.create(question=self.q_multi, text='3', is_correct=False)
+        # true/false
+        self.q_tf = Question.objects.create(
+            test=self.test, text='TF?', question_type=Question.Q_TRUE_FALSE
+        )
+        self.q_tf.ensure_true_false_options()
+        self.tf_yes = self.q_tf.options.get(text='Ha')
+        # short
+        self.q_short = Question.objects.create(
+            test=self.test,
+            text='Short?',
+            question_type=Question.Q_SHORT,
+            accepted_answers='PPE\nHimoya vositalari',
+        )
+        self.client.login(username='qtypeuser', password='pass12345')
+
+    def test_grade_helpers(self):
+        from blog.grading import grade_question
+
+        ok, _ = grade_question(self.q_single, self.s_ok.id)
+        self.assertTrue(ok)
+        ok, _ = grade_question(self.q_multi, [self.m1.id, self.m2.id])
+        self.assertTrue(ok)
+        ok, _ = grade_question(self.q_multi, [self.m1.id])
+        self.assertFalse(ok)
+        ok, _ = grade_question(self.q_short, 'ppe')
+        self.assertTrue(ok)
+        ok, _ = grade_question(self.q_short, 'wrong')
+        self.assertFalse(ok)
+
+    def test_finish_mixed_types(self):
+        self.client.get(reverse('blog:test_start', args=[self.test.id]))
+        session = self.client.session
+        data = session['current_test']
+        answers = {}
+        for qid in data['question_ids']:
+            q = Question.objects.get(id=qid)
+            if q.question_type == Question.Q_SHORT:
+                answers[str(qid)] = 'PPE'
+            elif q.question_type == Question.Q_MULTI:
+                answers[str(qid)] = list(
+                    q.options.filter(is_correct=True).values_list('id', flat=True)
+                )
+            else:
+                answers[str(qid)] = q.get_correct_option().id
+        data['answers'] = answers
+        session['current_test'] = data
+        session.save()
+        response = self.client.get(reverse('blog:test_finish'))
+        self.assertEqual(response.status_code, 302)
+        result = TestResult.objects.get(user=self.user, test=self.test)
+        self.assertTrue(result.is_passed)
+        self.assertEqual(result.percentage, 100.0)
+
+    def test_multi_ignores_foreign_option_ids(self):
+        from blog.grading import grade_question
+        # Begona id filtrlanadi; faqat shu savol variantlari qoladi
+        ok, payload = grade_question(self.q_multi, [self.s_ok.id, self.m1.id, self.m2.id])
+        self.assertEqual(payload['selected_option_ids'], sorted([self.m1.id, self.m2.id]))
+        self.assertTrue(ok)  # filtrdan keyin to‘g‘ri to‘plam
+        # Faqat begona id — bo‘sh / noto‘g‘ri
+        ok_bad, payload_bad = grade_question(self.q_multi, [self.s_ok.id])
+        self.assertFalse(ok_bad)
+        self.assertEqual(payload_bad['selected_option_ids'], [])
+        # Bitta to‘g‘ri + begona — to‘liq emas
+        ok_partial, _ = grade_question(self.q_multi, [self.s_ok.id, self.m1.id])
+        self.assertFalse(ok_partial)
+
+    def test_unanswered_count_as_wrong(self):
+        """Vaqt tugaganda javobsiz savollar 0 ball."""
+        self.client.get(reverse('blog:test_start', args=[self.test.id]))
+        session = self.client.session
+        data = session['current_test']
+        # Faqat bitta savolga javob
+        qid = data['question_ids'][0]
+        q = Question.objects.get(id=qid)
+        if q.question_type == Question.Q_SHORT:
+            data['answers'] = {str(qid): 'PPE'}
+        elif q.question_type == Question.Q_MULTI:
+            data['answers'] = {
+                str(qid): list(q.options.filter(is_correct=True).values_list('id', flat=True))
+            }
+        else:
+            data['answers'] = {str(qid): q.get_correct_option().id}
+        session['current_test'] = data
+        session.save()
+        self.client.get(reverse('blog:test_finish'))
+        result = TestResult.objects.get(user=self.user, test=self.test)
+        self.assertEqual(result.answers.count(), len(data['question_ids']))
+        self.assertLess(result.percentage, 100)
+        self.assertEqual(result.score, 1)
+
+    def test_true_false_yoq_can_be_correct(self):
+        from blog.grading import grade_question
+        tf = Question.objects.create(
+            test=self.test, text='Yoq to‘g‘ri?', question_type=Question.Q_TRUE_FALSE
+        )
+        Option.objects.create(question=tf, text='Ha', is_correct=False)
+        no = Option.objects.create(question=tf, text='Yo‘q', is_correct=True)
+        ok, _ = grade_question(tf, no.id)
+        self.assertTrue(ok)
+
+
+class QuestionBankAndCertificateRetestTests(TestCase):
+    def setUp(self):
+        from datetime import timedelta
+        from django.utils import timezone
+        from accounts.models import Certificate
+
+        self.user = User.objects.create_user(
+            username='bankuser', password='pass12345', role='Оператор'
+        )
+        self.admin = User.objects.create_user(
+            username='bankadmin', password='pass12345', role='admin', is_staff=True
+        )
+        self.category = Category.objects.create(name='Safety Cat', description='d')
+        self.test = Test.objects.create(
+            title='Bank Test',
+            description='d',
+            role='Оператор',
+            is_active=True,
+            questions_per_attempt=5,
+            certificate_category=self.category,
+            certificate_validity_days=90,
+            passing_score=50,
+        )
+        self.questions = []
+        for i in range(12):
+            q = Question.objects.create(test=self.test, text=f'Bank savol {i}?')
+            correct = Option.objects.create(question=q, text=f'OK{i}', is_correct=True)
+            Option.objects.create(question=q, text=f'NO{i}', is_correct=False)
+            self.questions.append((q, correct))
+        self.expired = Certificate.objects.create(
+            user=self.user,
+            category=self.category,
+            certificate_id='BANK-CERT-EXP',
+            valid_until=timezone.localdate() - timedelta(days=3),
+        )
+        self.client.login(username='bankuser', password='pass12345')
+
+    def test_attempt_draws_questions_per_attempt(self):
+        response = self.client.get(reverse('blog:test_start', args=[self.test.id]))
+        self.assertEqual(response.status_code, 302)
+        ids = self.client.session['current_test']['question_ids']
+        self.assertEqual(len(ids), 5)
+        # Bank kattaroq — har safar to‘plam bankdan
+        self.assertTrue(set(ids).issubset({q.id for q, _ in self.questions}))
+
+    def test_pass_renews_expired_certificate(self):
+        from django.utils import timezone
+        from datetime import timedelta
+
+        self.client.get(reverse('blog:test_start', args=[self.test.id]))
+        session = self.client.session
+        data = session['current_test']
+        answers = {}
+        for qid in data['question_ids']:
+            q = Question.objects.get(id=qid)
+            answers[str(qid)] = str(q.get_correct_option().id)
+        data['answers'] = answers
+        session['current_test'] = data
+        session.save()
+
+        response = self.client.get(reverse('blog:test_finish'))
+        self.assertEqual(response.status_code, 302)
+        self.expired.refresh_from_db()
+        self.assertGreaterEqual(self.expired.valid_until, timezone.localdate())
+        # ~90 kun
+        self.assertLessEqual(
+            self.expired.valid_until,
+            timezone.localdate() + timedelta(days=91),
+        )
+
+    def test_expired_cert_compliance_links_to_retest(self):
+        from blog.compliance import get_compliance_status
+
+        status = get_compliance_status(self.user)
+        self.assertTrue(status['blocked'])
+        cert_items = [i for i in status['items'] if i['type'] == 'certificate']
+        self.assertTrue(cert_items)
+        self.assertIn(f'/tests/start/{self.test.id}/', cert_items[0]['url'])
+
+    def test_weak_questions_report(self):
+        from blog.models import UserAnswer
+        from django.utils import timezone
+
+        result = TestResult.objects.create(
+            user=self.user,
+            test=self.test,
+            score=0,
+            percentage=0,
+            is_passed=False,
+            started_at=timezone.now(),
+            completed_at=timezone.now(),
+        )
+        q, correct = self.questions[0]
+        wrong = q.options.filter(is_correct=False).first()
+        UserAnswer.objects.create(
+            test_result=result, question=q, selected_option=wrong, is_correct=False
+        )
+        self.client.login(username='bankadmin', password='pass12345')
+        response = self.client.get(reverse('blog:weak_questions'))
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, 'Zaif savollar')
+        self.assertContains(response, 'Bank savol 0')
+
+    def test_worker_cannot_open_weak_questions(self):
+        response = self.client.get(reverse('blog:weak_questions'))
+        self.assertEqual(response.status_code, 302)
+
+    def test_pass_unblocks_compliance_after_renew(self):
+        from blog.compliance import get_compliance_status
+
+        self.assertTrue(get_compliance_status(self.user)['blocked'])
+        self.client.get(reverse('blog:test_start', args=[self.test.id]))
+        session = self.client.session
+        data = session['current_test']
+        answers = {}
+        for qid in data['question_ids']:
+            q = Question.objects.get(id=qid)
+            answers[str(qid)] = str(q.get_correct_option().id)
+        data['answers'] = answers
+        session['current_test'] = data
+        session.save()
+        self.client.get(reverse('blog:test_finish'))
+        self.assertFalse(get_compliance_status(self.user)['blocked'])
+
+    def test_duplicate_certs_only_latest_blocks(self):
+        """Eski muddati o‘tgan + yangi amaldagi sertifikat — bloklanmasin."""
+        from datetime import timedelta
+        from django.utils import timezone
+        from accounts.models import Certificate
+        from blog.compliance import get_compliance_status
+
+        Certificate.objects.create(
+            user=self.user,
+            category=self.category,
+            certificate_id='BANK-CERT-NEW',
+            valid_until=timezone.localdate() + timedelta(days=30),
+        )
+        # self.expired hali ham DB da, lekin eng so‘nggisi yangi
+        status = get_compliance_status(self.user)
+        cert_items = [i for i in status['items'] if i['type'] == 'certificate']
+        self.assertEqual(cert_items, [])
+
+    def test_two_attempts_can_draw_different_question_sets(self):
+        import random
+
+        sets = []
+        for seed in (1, 2, 3, 4, 5, 6):
+            random.seed(seed)
+            session = self.client.session
+            if 'current_test' in session:
+                del session['current_test']
+                session.save()
+            self.client.get(reverse('blog:test_start', args=[self.test.id]))
+            sets.append(tuple(self.client.session['current_test']['question_ids']))
+        self.assertTrue(len(set(sets)) >= 2, 'Turli urinishlarda to‘plam farq qilishi kerak')

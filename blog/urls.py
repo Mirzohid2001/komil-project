@@ -19,6 +19,7 @@ urlpatterns = [
     path('tests/result/<int:result_id>/', views.test_result, name='test_result'),
     path('tests/history/', views.test_history, name='test_history'),
     path('tests/analytics/', views.test_analytics, name='test_analytics'),
+    path('tests/weak-questions/', views.weak_questions_report, name='weak_questions'),
     
     # Document Management URLs
     path('documents/', views.document_list, name='document_list'),
