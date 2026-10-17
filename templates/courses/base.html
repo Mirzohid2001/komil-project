@@ -1,177 +1,107 @@
 {% extends 'base.html' %}
-{% load static %}
 
 {% block title %}Kurslar{% endblock %}
 
 {% block extra_css %}
 <style>
-  /* Стили для курсов */
-  .course-card {
-    border-radius: 15px;
+  .course-cover-ph {
+    height: 160px;
+    background:
+      linear-gradient(135deg, rgba(15, 42, 28, 0.55), rgba(201, 162, 39, 0.25)),
+      var(--zl-forest);
+    display: grid;
+    place-items: center;
+    color: var(--zl-brass-light);
+  }
+  .zl-course-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(min(260px, 100%), 1fr));
+    gap: 1rem;
+  }
+  @media (max-width: 575.98px) {
+    .zl-course-grid { grid-template-columns: 1fr; }
+    .course-cover-ph, .zl-course-card img { height: 140px; }
+  }
+  .zl-course-card {
+    background: var(--zl-card);
+    border: 1px solid var(--zl-line);
+    border-radius: 14px;
     overflow: hidden;
-    transition: all 0.3s ease;
+    box-shadow: var(--zl-shadow);
+    transition: transform 0.3s var(--zl-ease-out), border-color 0.2s ease, box-shadow 0.3s ease;
     height: 100%;
+    display: flex;
+    flex-direction: column;
   }
-  
-  .course-card:hover {
-    transform: translateY(-5px);
-    box-shadow: 0 15px 30px rgba(0, 0, 0, 0.1);
+  .zl-course-card:hover {
+    transform: translateY(-4px);
+    border-color: rgba(201, 162, 39, 0.55);
+    box-shadow: var(--zl-shadow-lift);
   }
-  
-  .course-cover {
-    height: 180px;
-    background-size: cover;
-    background-position: center;
-    position: relative;
+  .zl-course-card img {
+    width: 100%;
+    height: 160px;
+    object-fit: cover;
   }
-  
-  .course-badge {
-    position: absolute;
-    top: 15px;
-    right: 15px;
+  .zl-course-card .body {
+    padding: 1rem 1.1rem 1.15rem;
+    display: flex;
+    flex-direction: column;
+    flex: 1;
   }
-  
-  .course-price {
-    position: absolute;
-    bottom: 15px;
-    left: 15px;
-    background: var(--primary);
-    color: white;
-    padding: 5px 15px;
-    border-radius: 20px;
+  .zl-course-card h3 {
+    font-size: 1.15rem;
+    margin: 0.5rem 0;
+    font-family: var(--zl-display);
     font-weight: 600;
-    font-size: 14px;
   }
-  
-  .course-free {
-    background: var(--success, #10b981);
-  }
-  
-  .course-stats {
-    font-size: 13px;
-    color: #6b7280;
-  }
-  
-  .course-progress {
-    height: 8px;
-    border-radius: 4px;
-    margin-top: 10px;
-  }
-  
-  .lessons-list {
-    max-height: 400px;
-    overflow-y: auto;
-  }
-  
+  .zl-course-card h3 a { color: var(--zl-forest-deep); }
+  .zl-course-card h3 a:hover { color: var(--zl-brass-dark); }
   .lesson-card {
     border-radius: 10px;
-    background: #f9fafb;
-    padding: 15px;
-    margin-bottom: 10px;
-    transition: all 0.3s ease;
-    cursor: pointer;
+    background: rgba(15, 42, 28, 0.04);
+    border: 1px solid transparent;
+    padding: 0.85rem 1rem;
+    margin-bottom: 0.5rem;
   }
-  
-  .lesson-card:hover {
-    background: #f3f4f6;
-  }
-  
-  .lesson-card.active {
-    background: rgba(79, 70, 229, 0.1);
-    border-left: 4px solid var(--primary);
-  }
-  
   .lesson-card.completed {
-    background: rgba(16, 185, 129, 0.1);
-    border-left: 4px solid #10b981;
+    background: var(--zl-brass-soft);
+    border-color: #e0cfa0;
   }
-  
-  .course-sidebar {
-    position: sticky;
-    top: 100px;
-  }
-  
-  .certificate-container {
-    background: #f9fafb;
-    border-radius: 15px;
-    overflow: hidden;
-    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
-    padding: 20px;
-    text-align: center;
-  }
-  
-  .certificate-image {
-    max-width: 100%;
-    border-radius: 8px;
-    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
-  }
-  
-  /* Фильтры курсов */
-  .filter-btn.active {
-    background-color: var(--primary);
-    color: white;
-  }
-  
-  .difficulty-beginner {
-    background-color: #10b981;
-  }
-  
-  .difficulty-intermediate {
-    background-color: #f59e0b;
-  }
-  
-  .difficulty-advanced {
-    background-color: #ef4444;
-  }
-  
-  /* Видео-плеер */
   .video-container {
     position: relative;
     width: 100%;
-    padding-bottom: 56.25%; /* соотношение сторон 16:9 */
+    padding-bottom: 56.25%;
     height: 0;
     overflow: hidden;
-    border-radius: 10px;
+    border-radius: 12px;
+    background: var(--zl-forest-deep);
+    border: 1px solid rgba(201, 162, 39, 0.25);
   }
-  
   .video-container iframe,
   .video-container video {
     position: absolute;
-    top: 0;
-    left: 0;
+    inset: 0;
     width: 100%;
     height: 100%;
     border: none;
   }
 </style>
+{% block courses_css %}{% endblock %}
 {% endblock %}
 
 {% block content %}
-  <div class="container py-4">
-    {% block breadcrumb %}
-    <nav aria-label="breadcrumb">
-      <ol class="breadcrumb">
-        <li class="breadcrumb-item"><a href="{% url 'courses:list' %}">Kurslar</a></li>
-        {% block breadcrumb_items %}{% endblock %}
-      </ol>
-    </nav>
-    {% endblock %}
-    
-    {% if messages %}
-      <div class="messages">
-        {% for message in messages %}
-          <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
-            {{ message }}
-            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-          </div>
-        {% endfor %}
-      </div>
-    {% endif %}
-    
-    {% block courses_content %}{% endblock %}
-  </div>
+  {% block breadcrumb %}
+  <nav aria-label="breadcrumb">
+    <ol class="breadcrumb">
+      <li class="breadcrumb-item"><a href="{% url 'courses:list' %}">Kurslar</a></li>
+      {% block breadcrumb_items %}{% endblock %}
+    </ol>
+  </nav>
+  {% endblock %}
+  {% block courses_content %}{% endblock %}
 {% endblock %}
 
 {% block extra_js %}
   {% block courses_js %}{% endblock %}
-{% endblock %} 
+{% endblock %}

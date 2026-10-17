@@ -31,8 +31,15 @@ class Course(models.Model):
     duration = models.PositiveIntegerField(help_text="Daqiqalardagi taxminiy davomiyligi", verbose_name="Davomiyligi")
     status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='draft', verbose_name="Holati")
     is_featured = models.BooleanField(default=False, verbose_name="Tavsiya etilgan")
-    price = models.DecimalField(max_digits=10, decimal_places=2, default=0, verbose_name="Narxi")
-    is_free = models.BooleanField(default=True, verbose_name="Bepul")
+    # Legacy fields: payments are not used in this internal factory LMS.
+    price = models.DecimalField(max_digits=10, decimal_places=2, default=0, verbose_name="Narxi (ishlatilmaydi)")
+    is_free = models.BooleanField(default=True, verbose_name="Bepul (ishlatilmaydi)")
+    allowed_roles = models.JSONField(
+        default=list,
+        blank=True,
+        verbose_name="Ruxsat berilgan rollar",
+        help_text="Bo‘sh ro‘yxat = barcha rollar. Admin har doim ko‘radi.",
+    )
     created_at = models.DateTimeField(auto_now_add=True, verbose_name="Yaratilgan vaqti")
     updated_at = models.DateTimeField(auto_now=True, verbose_name="Yangilangan vaqti")
     
@@ -51,6 +58,28 @@ class Course(models.Model):
     
     def get_absolute_url(self):
         return reverse('courses:detail', args=[self.slug])
+
+    def can_user_access(self, user):
+        roles = self.allowed_roles or []
+        if not roles:
+            return True  # Umumiy kurs — mehmon ham ko‘ra oladi
+        if not user or not getattr(user, 'is_authenticated', False):
+            return False
+        if getattr(user, 'role', None) == 'admin':
+            return True
+        return user.role in roles
+
+    @classmethod
+    def published_for_user(cls, user):
+        qs = cls.objects.filter(status='published')
+        if getattr(user, 'is_authenticated', False) and getattr(user, 'role', None) == 'admin':
+            return qs
+        # SQLite JSONField __contains ni qo‘llab-quvvatlamaydi — Python filtr
+        ids = [
+            c.id for c in qs.only('id', 'allowed_roles')
+            if c.can_user_access(user)
+        ]
+        return qs.filter(id__in=ids)
     
     def total_modules(self):
         return self.modules.count()
@@ -109,7 +138,7 @@ class Lesson(models.Model):
     video_file = models.FileField(upload_to='courses/videos/', blank=True, null=True, verbose_name="Video fayl")
     duration = models.PositiveIntegerField(default=0, help_text="Daqiqalardagi davomiyligi", verbose_name="Davomiyligi")
     order = models.PositiveIntegerField(default=0, verbose_name="Tartib raqami")
-    is_free_preview = models.BooleanField(default=False, verbose_name="Bepul ko'rish uchun")
+    is_free_preview = models.BooleanField(default=False, verbose_name="Yozilmasdan ko'rish mumkin")
     allow_comments = models.BooleanField(default=True, verbose_name="Izohlar ruxsat etilgan")
     created_at = models.DateTimeField(auto_now_add=True, verbose_name="Yaratilgan vaqti")
     updated_at = models.DateTimeField(auto_now=True, verbose_name="Yangilangan vaqti")
@@ -151,6 +180,87 @@ class LessonAttachment(models.Model):
         return f"{self.lesson.title} - {self.title}"
 
 
+class LessonQuizQuestion(models.Model):
+    """Dars ichidagi quiz savoli"""
+    lesson = models.ForeignKey(
+        Lesson, on_delete=models.CASCADE, related_name='quiz_questions', verbose_name="Dars"
+    )
+    text = models.TextField(verbose_name="Savol matni")
+    order = models.PositiveIntegerField(default=0, verbose_name="Tartib")
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ['order', 'id']
+        verbose_name = "Dars quiz savoli"
+        verbose_name_plural = "Dars quiz savollari"
+
+    def __str__(self):
+        return self.text[:60]
+
+
+class LessonQuizOption(models.Model):
+    """Dars quiz javob varianti"""
+    question = models.ForeignKey(
+        LessonQuizQuestion,
+        on_delete=models.CASCADE,
+        related_name='answers',
+        verbose_name="Savol",
+    )
+    text = models.CharField(max_length=255, verbose_name="Variant")
+    is_correct = models.BooleanField(default=False, verbose_name="To'g'ri")
+
+    class Meta:
+        verbose_name = "Dars quiz varianti"
+        verbose_name_plural = "Dars quiz variantlari"
+
+    def __str__(self):
+        return self.text[:60]
+
+
+class LessonQuizAttempt(models.Model):
+    """Foydalanuvchining dars quiz natijasi"""
+    lesson = models.ForeignKey(
+        Lesson, on_delete=models.CASCADE, related_name='quiz_attempts', verbose_name="Dars"
+    )
+    user = models.ForeignKey(
+        User, on_delete=models.CASCADE, related_name='lesson_quiz_attempts', verbose_name="Foydalanuvchi"
+    )
+    score = models.PositiveIntegerField(default=0, verbose_name="To'g'ri javoblar")
+    total = models.PositiveIntegerField(default=0, verbose_name="Jami savollar")
+    percentage = models.FloatField(default=0, verbose_name="Foiz")
+    is_passed = models.BooleanField(default=False, verbose_name="O'tdi")
+    completed_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ['-completed_at']
+        verbose_name = "Dars quiz natijasi"
+        verbose_name_plural = "Dars quiz natijalari"
+
+    def __str__(self):
+        return f"{self.user.username} — {self.lesson.title}: {self.percentage:.0f}%"
+
+
+class LessonComment(models.Model):
+    """Dars izohlari"""
+    lesson = models.ForeignKey(
+        Lesson, on_delete=models.CASCADE, related_name='comments', verbose_name="Dars"
+    )
+    user = models.ForeignKey(
+        User, on_delete=models.CASCADE, related_name='lesson_comments', verbose_name="Foydalanuvchi"
+    )
+    content = models.TextField(max_length=2000, verbose_name="Izoh matni")
+    created_at = models.DateTimeField(auto_now_add=True, verbose_name="Yaratilgan vaqt")
+    updated_at = models.DateTimeField(auto_now=True, verbose_name="Yangilangan vaqt")
+
+    class Meta:
+        verbose_name = "Dars izohi"
+        verbose_name_plural = "Dars izohlari"
+        ordering = ['-created_at']
+
+    def __str__(self):
+        return f"{self.user.username}: {self.content[:40]}"
+
+
 class Enrollment(models.Model):
     """Модель записи на курс"""
     user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='enrollments', verbose_name="Foydalanuvchi")
@@ -188,17 +298,31 @@ class Enrollment(models.Model):
             self.save()
             
             # Создаем сертификат о прохождении курса, если его еще нет
-            from courses.views import create_course_certificate
-            if not hasattr(self, 'certificate'):
+            from courses.services import create_course_certificate
+            if not CourseCertificate.objects.filter(enrollment=self).exists():
                 create_course_certificate(self)
+
+            self.sync_course_assignments()
         
         # Если прогресс < 100%, но курс отмечен как завершенный, исправляем
         elif progress_percent < 100 and self.is_completed:
             self.is_completed = False
             self.completed_at = None
             self.save()
+            self.sync_course_assignments()
         
         return progress_percent
+
+    def sync_course_assignments(self):
+        """Majburiy kurs topshirig‘ini enrollment holatiga bog‘lash."""
+        if self.is_completed:
+            CourseAssignment.objects.filter(
+                user=self.user, course=self.course, completed_at__isnull=True
+            ).update(completed_at=self.completed_at or timezone.now())
+        else:
+            CourseAssignment.objects.filter(
+                user=self.user, course=self.course
+            ).update(completed_at=None)
 
 
 class CompletedLesson(models.Model):
@@ -274,6 +398,12 @@ class CourseCertificate(models.Model):
     certificate_id = models.CharField(max_length=50, unique=True, default=uuid.uuid4, verbose_name="Sertifikat ID")
     title = models.CharField(max_length=200, verbose_name="Sertifikat nomi")
     issue_date = models.DateTimeField(auto_now_add=True, verbose_name="Berilgan sana")
+    valid_until = models.DateField(
+        null=True,
+        blank=True,
+        verbose_name="Amal qilish muddati",
+        help_text="Bo‘sh bo‘lsa — berilgan kundan 1 yil",
+    )
     pdf_file = models.FileField(upload_to='certificates/courses/', blank=True, null=True, verbose_name="PDF fayl")
     preview_image = models.ImageField(upload_to='certificates/preview/', blank=True, null=True, verbose_name="Ko'rish rasmi")
     certificate_type = models.CharField(max_length=20, default='course', verbose_name="Sertifikat turi")
@@ -285,3 +415,118 @@ class CourseCertificate(models.Model):
     
     def __str__(self):
         return f"{self.enrollment.user.username} - {self.enrollment.course.title} sertifikati"
+
+    def save(self, *args, **kwargs):
+        from datetime import timedelta
+        creating = self.pk is None
+        super().save(*args, **kwargs)
+        if creating and not self.valid_until:
+            base = self.issue_date.date() if self.issue_date else timezone.localdate()
+            self.valid_until = base + timedelta(days=365)
+            CourseCertificate.objects.filter(pk=self.pk).update(valid_until=self.valid_until)
+
+    @property
+    def is_expired(self):
+        if not self.valid_until:
+            return False
+        return timezone.localdate() > self.valid_until
+
+
+class CourseAssignment(models.Model):
+    """Admin xodimga majburiy kursni muddat bilan tayinlaydi."""
+    user = models.ForeignKey(
+        User, on_delete=models.CASCADE, related_name='course_assignments', verbose_name="Xodim"
+    )
+    course = models.ForeignKey(
+        Course, on_delete=models.CASCADE, related_name='assignments', verbose_name="Kurs"
+    )
+    assigned_by = models.ForeignKey(
+        User,
+        null=True,
+        blank=True,
+        on_delete=models.SET_NULL,
+        related_name='assigned_courses',
+        verbose_name="Tayinlagan",
+    )
+    deadline = models.DateField(verbose_name="Topshirish muddati")
+    is_mandatory = models.BooleanField(default=True, verbose_name="Majburiy")
+    notes = models.TextField(blank=True, verbose_name="Izoh")
+    assigned_at = models.DateTimeField(auto_now_add=True, verbose_name="Tayinlangan")
+    completed_at = models.DateTimeField(null=True, blank=True, verbose_name="Yakunlangan")
+
+    class Meta:
+        unique_together = ('user', 'course')
+        ordering = ['deadline', '-assigned_at']
+        verbose_name = "Kurs topshirig‘i"
+        verbose_name_plural = "Kurs topshiriqlari"
+
+    def __str__(self):
+        return f"{self.user.username} → {self.course.title} ({self.deadline})"
+
+    @property
+    def is_overdue(self):
+        if self.completed_at or not self.deadline:
+            return False
+        return timezone.localdate() > self.deadline
+
+    def ensure_enrollment(self):
+        Enrollment.objects.get_or_create(user=self.user, course=self.course)
+
+    def sync_completion(self):
+        enrollment = Enrollment.objects.filter(user=self.user, course=self.course).first()
+        if enrollment and enrollment.is_completed:
+            if not self.completed_at:
+                self.completed_at = enrollment.completed_at or timezone.now()
+                CourseAssignment.objects.filter(pk=self.pk).update(completed_at=self.completed_at)
+        elif self.completed_at and enrollment and not enrollment.is_completed:
+            CourseAssignment.objects.filter(pk=self.pk).update(completed_at=None)
+            self.completed_at = None
+
+    def save(self, *args, **kwargs):
+        creating = self.pk is None
+        super().save(*args, **kwargs)
+        if creating:
+            self.ensure_enrollment()
+
+
+class LessonAssignmentSubmission(models.Model):
+    """Amaliy vazifa — fayl yuklash va instruktur tasdiqi."""
+    STATUS_PENDING = 'pending'
+    STATUS_APPROVED = 'approved'
+    STATUS_REJECTED = 'rejected'
+    STATUS_CHOICES = [
+        (STATUS_PENDING, 'Kutilmoqda'),
+        (STATUS_APPROVED, 'Tasdiqlangan'),
+        (STATUS_REJECTED, 'Rad etilgan'),
+    ]
+
+    lesson = models.ForeignKey(
+        Lesson, on_delete=models.CASCADE, related_name='assignment_submissions', verbose_name="Dars"
+    )
+    user = models.ForeignKey(
+        User, on_delete=models.CASCADE, related_name='assignment_submissions', verbose_name="Xodim"
+    )
+    file = models.FileField(upload_to='courses/assignments/', verbose_name="Fayl")
+    comment = models.TextField(blank=True, verbose_name="Izoh")
+    status = models.CharField(
+        max_length=20, choices=STATUS_CHOICES, default=STATUS_PENDING, verbose_name="Holat"
+    )
+    submitted_at = models.DateTimeField(auto_now_add=True, verbose_name="Yuborilgan")
+    reviewed_by = models.ForeignKey(
+        User,
+        null=True,
+        blank=True,
+        on_delete=models.SET_NULL,
+        related_name='reviewed_assignments',
+        verbose_name="Tekshirgan",
+    )
+    reviewed_at = models.DateTimeField(null=True, blank=True, verbose_name="Tekshirilgan")
+    reviewer_note = models.TextField(blank=True, verbose_name="Tekshiruvchi izohi")
+
+    class Meta:
+        ordering = ['-submitted_at']
+        verbose_name = "Vazifa topshirig‘i"
+        verbose_name_plural = "Vazifa topshiriqlari"
+
+    def __str__(self):
+        return f"{self.user.username} — {self.lesson.title} ({self.get_status_display()})"

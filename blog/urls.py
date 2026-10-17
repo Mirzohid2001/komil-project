@@ -9,6 +9,7 @@ urlpatterns = [
     path('category/<int:cat_id>/', views.post_list, name='post_list'),
     path('post/<int:post_id>/', views.post_detail, name='post_detail'),
     path('analytics/', views.analytics_dashboard, name='analytics'),
+    path('hr-reports/', views.hr_reports, name='hr_reports'),
     
     # Маршруты для тестирования
     path('tests/', views.test_list, name='test_list'),
@@ -23,6 +24,9 @@ urlpatterns = [
     path('documents/', views.document_list, name='document_list'),
     path('documents/<int:document_id>/', views.document_detail, name='document_detail'),
     path('documents/<int:document_id>/download/', views.document_download, name='document_download'),
+    path('documents/<int:document_id>/acknowledge/', views.document_acknowledge, name='document_acknowledge'),
     path('documents/upload/', views.document_upload, name='document_upload'),
     path('documents/analytics/', views.document_analytics, name='document_analytics'),
+    path('hr-compliance/', views.hr_compliance, name='hr_compliance'),
+    path('compliance/', views.compliance_hub, name='compliance_hub'),
 ]

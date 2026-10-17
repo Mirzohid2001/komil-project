@@ -1,0 +1,130 @@
+{% extends "admin/base_site.html" %}
+{% load i18n static %}
+
+{% block extrastyle %}
+{{ block.super }}
+<link rel="stylesheet" type="text/css" href="{% static 'admin/css/forms.css' %}">
+<style>
+  .ai-gen-card {
+    max-width: 640px;
+    margin: 1.5rem auto;
+    padding: 1.5rem 1.75rem;
+    background: var(--zl-card);
+    border: 1px solid #e2e8f0;
+    border-radius: 12px;
+    box-shadow: 0 1px 2px rgba(15, 23, 42, 0.06);
+  }
+  .ai-gen-card h1 {
+    font-size: 1.35rem;
+    margin: 0 0 0.5rem;
+  }
+  .ai-gen-card .help {
+    color: #64748b;
+    font-size: 0.9rem;
+    margin-bottom: 1.25rem;
+    line-height: 1.45;
+  }
+  .ai-gen-card .form-row {
+    margin-bottom: 1rem;
+  }
+  .ai-gen-card label {
+    font-weight: 600;
+    display: block;
+    margin-bottom: 0.35rem;
+  }
+  .ai-gen-card input,
+  .ai-gen-card select {
+    width: 100%;
+    max-width: 100%;
+    padding: 0.45rem 0.6rem;
+    border: 1px solid #cbd5e1;
+    border-radius: 8px;
+  }
+  .ai-gen-card .helptext {
+    display: block;
+    color: #64748b;
+    font-size: 0.8rem;
+    margin-top: 0.25rem;
+  }
+  .ai-gen-actions {
+    display: flex;
+    gap: 0.75rem;
+    margin-top: 1.25rem;
+    flex-wrap: wrap;
+  }
+  .ai-gen-note {
+    margin-top: 1.25rem;
+    padding: 0.85rem 1rem;
+    background: #f0fdfa;
+    border-left: 4px solid #c9a227;
+    border-radius: 0 8px 8px 0;
+    font-size: 0.88rem;
+    color: #134e4a;
+  }
+</style>
+{% endblock %}
+
+{% block breadcrumbs %}
+<div class="breadcrumbs">
+  <a href="{% url 'admin:index' %}">{% trans 'Home' %}</a>
+  &rsaquo; <a href="{% url 'admin:app_list' app_label=app_label %}">{{ opts.app_config.verbose_name }}</a>
+  &rsaquo; <a href="{% url 'admin:blog_test_changelist' %}">Testlar</a>
+  &rsaquo; AI test yaratish
+</div>
+{% endblock %}
+
+{% block content %}
+<div class="ai-gen-card">
+  <h1><i class="fas fa-robot"></i> {{ title }}</h1>
+  <p class="help">
+    Rolni tanlang va nechta test kerakligini kiriting — tizim shuncha ta to‘liq test
+    (savollar + 4 ta variant) avtomatik yaratadi.
+    Qo‘lda test qo‘shish uchun oddiy <strong>«Test qo‘shish»</strong> tugmasidan foydalaning.
+  </p>
+
+  <div class="ai-gen-note" style="margin-bottom:1.25rem;">
+    {% if ai_status.configured %}
+      <strong>AI ulangan:</strong> {{ ai_status.label }}
+      {% if ai_status.model %} · model: <code>{{ ai_status.model }}</code>{% endif %}
+    {% else %}
+      <strong>AI kaliti yo‘q</strong> — hozir shablon generator ishlaydi (ham bepul).
+      Haqiqiy AI uchun bepul kalit oling:
+      <a href="https://console.groq.com/keys" target="_blank" rel="noopener">Groq</a>
+      yoki
+      <a href="https://aistudio.google.com/apikey" target="_blank" rel="noopener">Gemini</a>,
+      keyin muhit o‘zgaruvchisini qo‘ying:
+      <code>GROQ_API_KEY=...</code> yoki <code>GEMINI_API_KEY=...</code>
+      (<code>AI_PROVIDER=groq</code> yoki <code>gemini</code>).
+    {% endif %}
+  </div>
+
+  <form method="post" novalidate>
+    {% csrf_token %}
+    {% if form.non_field_errors %}
+      <div class="errornote">{{ form.non_field_errors }}</div>
+    {% endif %}
+
+    {% for field in form %}
+      <div class="form-row">
+        <label for="{{ field.id_for_label }}">{{ field.label }}</label>
+        {{ field }}
+        {% if field.help_text %}<span class="helptext">{{ field.help_text }}</span>{% endif %}
+        {% if field.errors %}<ul class="errorlist">{% for e in field.errors %}<li>{{ e }}</li>{% endfor %}</ul>{% endif %}
+      </div>
+    {% endfor %}
+
+    <div class="ai-gen-actions">
+      <button type="submit" class="default" style="padding: 0.55rem 1.1rem;">
+        AI testlarni yaratish
+      </button>
+      <a href="{% url 'admin:blog_test_changelist' %}" class="button cancel-link">Bekor qilish</a>
+    </div>
+  </form>
+
+  <div class="ai-gen-note">
+    <strong>Eslatma:</strong> foydalanuvchi testni har safar boshlaganda savollar va
+    javob variantlari tartibi qayta aralashtiriladi — shuning uchun javoblarni
+    yodlab olish / ulashish qiyinlashadi.
+  </div>
+</div>
+{% endblock %}

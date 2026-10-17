@@ -1,0 +1,511 @@
+{% extends "admin/base_site.html" %}
+{% load i18n static %}
+
+{% block title %}LMS Analitika{% endblock %}
+{% block content_title %}LMS Analitika{% endblock %}
+
+{% block breadcrumbs %}
+<ol class="breadcrumb">
+  <li class="breadcrumb-item"><a href="{% url 'admin:index' %}">Bosh sahifa</a></li>
+  <li class="breadcrumb-item active">LMS Analitika</li>
+</ol>
+{% endblock %}
+
+{% block extrastyle %}
+{{ block.super }}
+<style>
+  /* Jazzmin content = .row — hamma narsa bitta col-12 ichida */
+  .lms-dash { width: 100%; max-width: 100%; }
+  .lms-dash * { box-sizing: border-box; }
+
+  .lms-toolbar {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: .75rem;
+    margin-bottom: 1rem;
+    padding: .65rem .9rem;
+    background: #f7f4ec;
+    border: 1px solid #d4cbb8;
+    border-radius: 10px;
+  }
+  .lms-toolbar form { display: flex; align-items: center; gap: .5rem; margin: 0; }
+  .lms-toolbar select { min-width: 140px; }
+
+  .lms-kpis {
+    display: grid !important;
+    grid-template-columns: repeat(5, 1fr);
+    gap: .6rem;
+    margin-bottom: 1rem;
+    width: 100%;
+  }
+  @media (max-width: 1200px) {
+    .lms-kpis { grid-template-columns: repeat(3, 1fr); }
+  }
+  @media (max-width: 768px) {
+    .lms-kpis { grid-template-columns: repeat(2, 1fr); }
+  }
+  .lms-kpi {
+    background: #f7f4ec;
+    border: 1px solid #d4cbb8;
+    border-radius: 10px;
+    padding: .65rem .75rem;
+    min-width: 0;
+  }
+  .lms-kpi span {
+    display: block;
+    font-size: .68rem;
+    color: #5a6b60;
+    text-transform: uppercase;
+    letter-spacing: .03em;
+    margin-bottom: .15rem;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .lms-kpi strong {
+    font-size: 1.25rem;
+    line-height: 1.1;
+    color: #0f2a1c;
+    font-weight: 700;
+  }
+  .lms-kpi.ok strong { color: #1b5c3f; }
+  .lms-kpi.danger strong { color: #9b2c2c; }
+
+  .lms-grid {
+    display: grid !important;
+    grid-template-columns: 1.4fr 1fr;
+    gap: .75rem;
+    margin-bottom: .75rem;
+    width: 100%;
+  }
+  .lms-grid-2 {
+    display: grid !important;
+    grid-template-columns: 1fr 1fr;
+    gap: .75rem;
+    margin-bottom: .75rem;
+    width: 100%;
+  }
+  @media (max-width: 992px) {
+    .lms-grid, .lms-grid-2 { grid-template-columns: 1fr; }
+  }
+
+  .lms-panel {
+    background: #f7f4ec;
+    border: 1px solid #d4cbb8;
+    border-radius: 10px;
+    overflow: hidden;
+    margin: 0;
+  }
+  .lms-panel__h {
+    padding: .55rem .85rem;
+    border-bottom: 1px solid #d4cbb8;
+    font-size: .85rem;
+    font-weight: 700;
+    color: #0f2a1c;
+    background: rgba(15, 42, 28, 0.04);
+  }
+  .lms-panel__b { padding: .65rem .75rem; }
+
+  .lms-chart {
+    position: relative;
+    height: 200px;
+    width: 100%;
+  }
+  .lms-chart--sm { height: 180px; }
+
+  .lms-tabs {
+    display: flex;
+    gap: .35rem;
+    margin: 1rem 0 .65rem;
+    flex-wrap: wrap;
+  }
+  .lms-tabs a {
+    padding: .4rem .85rem;
+    border-radius: 8px;
+    border: 1px solid #d4cbb8;
+    background: #ebe6db;
+    color: #0f2a1c;
+    font-size: .82rem;
+    font-weight: 600;
+    text-decoration: none;
+  }
+  .lms-tabs a:hover { background: #e0d8c8; }
+  .lms-tabs a.is-active {
+    background: #1b5c3f;
+    border-color: #1b5c3f;
+    color: #fff;
+  }
+
+  .lms-pane { display: none; }
+  .lms-pane.is-active { display: block; }
+
+  .lms-table-wrap {
+    max-height: 280px;
+    overflow: auto;
+  }
+  .lms-table-wrap table {
+    margin: 0;
+    font-size: .82rem;
+  }
+  .lms-table-wrap th {
+    position: sticky;
+    top: 0;
+    background: #ebe6db;
+    z-index: 1;
+    white-space: nowrap;
+  }
+  .lms-badge-pass {
+    background: #d8ebe0; color: #0f2a1c;
+    padding: .12rem .4rem; border-radius: 5px;
+    font-size: .72rem; font-weight: 700;
+  }
+  .lms-badge-fail {
+    background: #f5d5d5; color: #7a1f1f;
+    padding: .12rem .4rem; border-radius: 5px;
+    font-size: .72rem; font-weight: 700;
+  }
+  .lms-empty {
+    color: #5a6b60;
+    font-size: .85rem;
+    padding: 1.25rem;
+    text-align: center;
+  }
+</style>
+{% endblock %}
+
+{% block content %}
+{# Jazzmin content ichida .row bor — to‘liq kenglik uchun col-12 #}
+<div class="col-12 lms-dash">
+
+  <div class="lms-toolbar">
+    <form method="get">
+      <label class="mb-0 small font-weight-bold">Yil</label>
+      <select name="year" class="form-control form-control-sm" onchange="this.form.submit()">
+        <option value="">Barcha yillar</option>
+        {% for y in available_years %}
+        <option value="{{ y }}" {% if selected_year == y %}selected{% endif %}>{{ y }}</option>
+        {% endfor %}
+      </select>
+      <a href="{% url 'admin:lms_analytics' %}" class="btn btn-sm btn-outline-secondary">Tozalash</a>
+    </form>
+    <span class="text-muted small">{{ generated_at|date:"d.m.Y H:i" }}</span>
+  </div>
+
+  <div class="lms-kpis">
+    <div class="lms-kpi"><span>Urinishlar</span><strong>{{ kpis.total_attempts }}</strong></div>
+    <div class="lms-kpi ok"><span>O‘tgan</span><strong>{{ kpis.passed }}</strong></div>
+    <div class="lms-kpi danger"><span>Yiqilgan</span><strong>{{ kpis.failed }}</strong></div>
+    <div class="lms-kpi"><span>O‘tish</span><strong>{{ kpis.pass_rate }}%</strong></div>
+    <div class="lms-kpi"><span>O‘rtacha</span><strong>{{ kpis.avg_score }}%</strong></div>
+    <div class="lms-kpi"><span>Video</span><strong>{{ kpis.video_views }}</strong></div>
+    <div class="lms-kpi"><span>Tomoshabin</span><strong>{{ kpis.unique_viewers }}</strong></div>
+    <div class="lms-kpi"><span>Dars yakun</span><strong>{{ kpis.lesson_done }}</strong></div>
+    <div class="lms-kpi"><span>Kurs yakun</span><strong>{{ kpis.course_done }}</strong></div>
+    <div class="lms-kpi"><span>Faol yil</span><strong>{% if selected_year %}{{ selected_year }}{% else %}Hammasi{% endif %}</strong></div>
+  </div>
+
+  <div class="lms-grid">
+    <div class="lms-panel">
+      <div class="lms-panel__h">Oylik — o‘tgan / yiqilgan</div>
+      <div class="lms-panel__b"><div class="lms-chart"><canvas id="chartMonthlyTests"></canvas></div></div>
+    </div>
+    <div class="lms-panel">
+      <div class="lms-panel__h">Rol bo‘yicha urinishlar</div>
+      <div class="lms-panel__b"><div class="lms-chart lms-chart--sm"><canvas id="chartByRole"></canvas></div></div>
+    </div>
+  </div>
+
+  <div class="lms-grid-2">
+    <div class="lms-panel">
+      <div class="lms-panel__h">Yillik natijalar</div>
+      <div class="lms-panel__b"><div class="lms-chart lms-chart--sm"><canvas id="chartYearlyTests"></canvas></div></div>
+    </div>
+    <div class="lms-panel">
+      <div class="lms-panel__h">Testlar — o‘rtacha ball</div>
+      <div class="lms-panel__b"><div class="lms-chart lms-chart--sm"><canvas id="chartByTest"></canvas></div></div>
+    </div>
+  </div>
+
+  <div class="lms-grid-2">
+    <div class="lms-panel">
+      <div class="lms-panel__h">Video — oylik ko‘rishlar</div>
+      <div class="lms-panel__b"><div class="lms-chart lms-chart--sm"><canvas id="chartMonthlyVideos"></canvas></div></div>
+    </div>
+    <div class="lms-panel">
+      <div class="lms-panel__h">Kurs darslari — oylik yakunlash</div>
+      <div class="lms-panel__b"><div class="lms-chart lms-chart--sm"><canvas id="chartMonthlyLessons"></canvas></div></div>
+    </div>
+  </div>
+
+  <nav class="lms-tabs" id="lmsTabs">
+    <a href="#pane-results" class="is-active" data-pane="pane-results">Natijalar</a>
+    <a href="#pane-failed" data-pane="pane-failed">Yiqilganlar</a>
+    <a href="#pane-tests" data-pane="pane-tests">Test jamlanma</a>
+    <a href="#pane-videos" data-pane="pane-videos">Videolar</a>
+    <a href="#pane-lessons" data-pane="pane-lessons">Kurs darslari</a>
+  </nav>
+
+  <div id="pane-results" class="lms-pane is-active">
+    <div class="lms-panel">
+      <div class="lms-panel__h">Kim qaysi testdan qancha ball oldi</div>
+      <div class="lms-table-wrap">
+        <table class="table table-sm table-hover mb-0">
+          <thead>
+            <tr><th>Xodim</th><th>Rol</th><th>Test</th><th>%</th><th>Holat</th><th>Sana</th></tr>
+          </thead>
+          <tbody>
+          {% for r in tables.recent_results %}
+            <tr>
+              <td>{{ r.user.get_full_name|default:r.user.username }}</td>
+              <td>{{ r.user.get_role_display }}</td>
+              <td>{{ r.test.title }}</td>
+              <td><strong>{{ r.percentage|floatformat:0 }}%</strong></td>
+              <td>{% if r.is_passed %}<span class="lms-badge-pass">O‘tdi</span>{% else %}<span class="lms-badge-fail">Yiqildi</span>{% endif %}</td>
+              <td>{{ r.completed_at|date:"d.m.Y H:i" }}</td>
+            </tr>
+          {% empty %}
+            <tr><td colspan="6" class="lms-empty">Natija yo‘q</td></tr>
+          {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <div id="pane-failed" class="lms-pane">
+    <div class="lms-panel">
+      <div class="lms-panel__h">Yiqilganlar</div>
+      <div class="lms-table-wrap">
+        <table class="table table-sm mb-0">
+          <thead><tr><th>Xodim</th><th>Test</th><th>%</th><th>Sana</th></tr></thead>
+          <tbody>
+          {% for r in tables.failed_results %}
+            <tr>
+              <td>{{ r.user.get_full_name|default:r.user.username }}</td>
+              <td>{{ r.test.title }}</td>
+              <td>{{ r.percentage|floatformat:0 }}%</td>
+              <td>{{ r.completed_at|date:"d.m.Y" }}</td>
+            </tr>
+          {% empty %}
+            <tr><td colspan="4" class="lms-empty">Yiqilish yo‘q</td></tr>
+          {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <div id="pane-tests" class="lms-pane">
+    <div class="lms-grid-2">
+      <div class="lms-panel">
+        <div class="lms-panel__h">Testlar jamlanma</div>
+        <div class="lms-table-wrap">
+          <table class="table table-sm mb-0">
+            <thead><tr><th>Test</th><th>Urinish</th><th>O‘tgan</th><th>O‘rtacha</th></tr></thead>
+            <tbody>
+            {% for t in tables.test_stats %}
+              <tr>
+                <td>{{ t.title }}</td>
+                <td>{{ t.attempts }}</td>
+                <td>{{ t.passed_n }}</td>
+                <td>{{ t.avg_score|floatformat:0 }}%</td>
+              </tr>
+            {% empty %}
+              <tr><td colspan="4" class="lms-empty">Ma’lumot yo‘q</td></tr>
+            {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      </div>
+      <div class="lms-panel">
+        <div class="lms-panel__h">Eng ko‘p ko‘rilgan videolar</div>
+        <div class="lms-table-wrap">
+          <table class="table table-sm mb-0">
+            <thead><tr><th>#</th><th>Video</th><th>Ko‘rish</th></tr></thead>
+            <tbody>
+            {% for v in tables.top_videos %}
+              <tr>
+                <td>{{ forloop.counter }}</td>
+                <td>{{ v.title }}</td>
+                <td><strong>{{ v.view_count }}</strong></td>
+              </tr>
+            {% empty %}
+              <tr><td colspan="3" class="lms-empty">Hali video ko‘rilmagan</td></tr>
+            {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div id="pane-videos" class="lms-pane">
+    <div class="lms-panel">
+      <div class="lms-panel__h">Kim qaysi video darsni ko‘rdi</div>
+      <div class="lms-table-wrap">
+        <table class="table table-sm mb-0">
+          <thead><tr><th>Xodim</th><th>Video</th><th>Sana</th></tr></thead>
+          <tbody>
+          {% for v in tables.recent_videos %}
+            <tr>
+              <td>{{ v.user.get_full_name|default:v.user.username }}</td>
+              <td>{{ v.post.title }}</td>
+              <td>{{ v.viewed_at|date:"d.m.Y H:i" }}</td>
+            </tr>
+          {% empty %}
+            <tr><td colspan="3" class="lms-empty">Ko‘rish yo‘q</td></tr>
+          {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <div id="pane-lessons" class="lms-pane">
+    <div class="lms-panel">
+      <div class="lms-panel__h">Kurs dars yakunlari</div>
+      <div class="lms-table-wrap">
+        <table class="table table-sm mb-0">
+          <thead><tr><th>Xodim</th><th>Kurs / Dars</th><th>Sana</th></tr></thead>
+          <tbody>
+          {% for c in tables.recent_lessons %}
+            <tr>
+              <td>{{ c.user.get_full_name|default:c.user.username }}</td>
+              <td>{{ c.lesson.module.course.title }} — {{ c.lesson.title }}</td>
+              <td>{{ c.completed_at|date:"d.m.Y H:i" }}</td>
+            </tr>
+          {% empty %}
+            <tr><td colspan="3" class="lms-empty">Yakunlash yo‘q</td></tr>
+          {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+</div>
+{% endblock %}
+
+{% block extrajs %}
+{{ block.super }}
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+<script>
+(function () {
+  const tabs = document.querySelectorAll('#lmsTabs a');
+  const panes = document.querySelectorAll('.lms-pane');
+  tabs.forEach(function (tab) {
+    tab.addEventListener('click', function (e) {
+      e.preventDefault();
+      tabs.forEach(function (t) { t.classList.remove('is-active'); });
+      panes.forEach(function (p) { p.classList.remove('is-active'); });
+      tab.classList.add('is-active');
+      var pane = document.getElementById(tab.getAttribute('data-pane'));
+      if (pane) pane.classList.add('is-active');
+    });
+  });
+
+  const C = {{ charts_json|safe }};
+  const teal = '#1b5c3f';
+  const brass = '#c9a227';
+  const fail = '#9b2c2c';
+  const mute = '#5a6b60';
+
+  Chart.defaults.font.family = 'Outfit, Segoe UI, sans-serif';
+  Chart.defaults.font.size = 11;
+  Chart.defaults.color = mute;
+
+  function emptyMsg(canvas, hasData) {
+    if (hasData) return;
+    var wrap = canvas.parentElement;
+    wrap.innerHTML = '<div class="lms-empty">Hali ma’lumot yo‘q</div>';
+  }
+
+  function bar(id, labels, datasets, stacked) {
+    var el = document.getElementById(id);
+    if (!el) return;
+    var has = labels && labels.length;
+    if (!has) { emptyMsg(el, false); return; }
+    new Chart(el, {
+      type: 'bar',
+      data: { labels: labels, datasets: datasets },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        scales: {
+          x: { stacked: !!stacked, grid: { display: false } },
+          y: { stacked: !!stacked, beginAtZero: true, ticks: { precision: 0 } }
+        },
+        plugins: { legend: { position: 'bottom', labels: { boxWidth: 10, padding: 10 } } }
+      }
+    });
+  }
+
+  bar('chartMonthlyTests', C.monthly_tests.labels, [
+    { label: "O'tgan", data: C.monthly_tests.passed, backgroundColor: teal, borderRadius: 4 },
+    { label: 'Yiqilgan', data: C.monthly_tests.failed, backgroundColor: fail, borderRadius: 4 }
+  ], true);
+
+  bar('chartYearlyTests', C.yearly_tests.labels, [
+    { label: "O'tgan", data: C.yearly_tests.passed, backgroundColor: teal, borderRadius: 4 },
+    { label: 'Yiqilgan', data: C.yearly_tests.failed, backgroundColor: fail, borderRadius: 4 },
+    { label: "O'rtacha %", data: C.yearly_tests.avg, type: 'line', borderColor: brass, backgroundColor: brass, tension: 0.3, pointRadius: 3 }
+  ], false);
+
+  var byTest = document.getElementById('chartByTest');
+  if (byTest) {
+    if (!C.by_test.labels.length) {
+      emptyMsg(byTest, false);
+    } else {
+      new Chart(byTest, {
+        type: 'bar',
+        data: {
+          labels: C.by_test.labels,
+          datasets: [{ label: '%', data: C.by_test.avg, backgroundColor: brass, borderRadius: 4 }]
+        },
+        options: {
+          indexAxis: 'y',
+          responsive: true,
+          maintainAspectRatio: false,
+          scales: { x: { beginAtZero: true, max: 100, grid: { color: 'rgba(0,0,0,.05)' } }, y: { grid: { display: false } } },
+          plugins: { legend: { display: false } }
+        }
+      });
+    }
+  }
+
+  var byRole = document.getElementById('chartByRole');
+  if (byRole) {
+    if (!C.by_role.labels.length) {
+      emptyMsg(byRole, false);
+    } else {
+      new Chart(byRole, {
+        type: 'doughnut',
+        data: {
+          labels: C.by_role.labels,
+          datasets: [{
+            data: C.by_role.total,
+            backgroundColor: [teal, brass, '#3d7a5c', '#8a7018', '#2a4a38', '#c4a35a', '#5a6b60'],
+            borderWidth: 0
+          }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          cutout: '58%',
+          plugins: { legend: { position: 'bottom', labels: { boxWidth: 10, padding: 8 } } }
+        }
+      });
+    }
+  }
+
+  bar('chartMonthlyVideos', C.monthly_videos.labels, [
+    { label: "Ko'rishlar", data: C.monthly_videos.total, backgroundColor: teal, borderRadius: 4 }
+  ]);
+  bar('chartMonthlyLessons', C.monthly_lessons.labels, [
+    { label: 'Yakunlashlar', data: C.monthly_lessons.total, backgroundColor: brass, borderRadius: 4 }
+  ]);
+})();
+</script>
+{% endblock %}

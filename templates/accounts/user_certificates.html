@@ -3,40 +3,37 @@
 {% block profile_title %}Sertifikatlar{% endblock %}
 
 {% block profile_content %}
-    {% if certificates %}
-    <div class="row g-4">
-        {% for certificate in certificates %}
-        <div class="col-md-6 col-lg-4">
-            <div class="card shadow-sm h-100">
-                <div class="card-body">
-                    <h5 class="card-title mb-3">{{ certificate.name }}</h5>
-                    <p class="card-text mb-1"><strong>Sana:</strong> {{ certificate.issue_date|date:"d.m.Y" }}</p>
-                    <p class="card-text mb-1"><strong>Tur:</strong> {{ certificate.type_display }}</p>
-                    <p class="card-text mb-3"><strong>Ball:</strong> {{ certificate.score }}%</p>
-                    
-                    <div class="d-flex justify-content-between align-items-center">
-                        <a href="{{ certificate.view_url }}" class="btn btn-sm btn-primary">
-                            <i class="fas fa-eye me-1"></i> Ko'rish
-                        </a>
-                        <a href="{{ certificate.download_url }}" class="btn btn-sm btn-outline-secondary">
-                            <i class="fas fa-download me-1"></i> Yuklab olish
-                        </a>
-                    </div>
-                </div>
-            </div>
-        </div>
-        {% endfor %}
-    </div>
-    {% else %}
-    <div class="text-center py-5">
-        <div class="mb-4">
-            <i class="fas fa-certificate fa-4x text-muted"></i>
-        </div>
-        <h5>Sertifikatlar mavjud emas</h5>
-        <p class="text-muted">Siz hali birorta kursni muvaffaqiyatli yakunlamagansiz.</p>
-        <a href="{% url 'blog:home' %}" class="btn btn-primary mt-3">
-            Kurslarni ko'rish
-        </a>
-    </div>
-    {% endif %}
-{% endblock %} 
+<p class="zl-section-lead mb-4">Muvaffaqiyatli yakunlangan kurslar sertifikatlari.</p>
+
+{% if certificates %}
+  <div class="row g-3">
+    {% for certificate in certificates %}
+      <div class="col-md-6 col-lg-4">
+        <article class="zl-panel h-100 d-flex flex-column">
+          <h3 class="h6 fw-bold mb-3">{{ certificate.name }}</h3>
+          <ul class="list-unstyled small mb-3 flex-grow-1">
+            <li class="mb-2"><span class="zl-meta">Sana:</span> <strong>{{ certificate.issue_date|date:"d.m.Y" }}</strong></li>
+            <li class="mb-2"><span class="zl-meta">Tur:</span> <strong>{{ certificate.type_display }}</strong></li>
+            <li><span class="zl-meta">Ball:</span> <span class="zl-chip ok">{{ certificate.score }}%</span></li>
+          </ul>
+          <div class="d-flex flex-wrap gap-2 pt-2 border-top">
+            <a href="{{ certificate.view_url }}" class="btn btn-sm btn-primary">
+              <i class="fas fa-eye me-1"></i> Ko‘rish
+            </a>
+            <a href="{{ certificate.download_url }}" class="btn btn-sm btn-outline-secondary">
+              <i class="fas fa-download me-1"></i> Yuklab olish
+            </a>
+          </div>
+        </article>
+      </div>
+    {% endfor %}
+  </div>
+{% else %}
+  <div class="zl-empty">
+    <i class="fas fa-certificate"></i>
+    <h4 class="h5 fw-bold mb-2">Sertifikatlar yo‘q</h4>
+    <p class="mb-4">Kursni muvaffaqiyatli yakunlaganingizdan keyin sertifikat paydo bo‘ladi</p>
+    <a href="{% url 'blog:home' %}" class="btn btn-primary">Kurslarni ko‘rish</a>
+  </div>
+{% endif %}
+{% endblock %}

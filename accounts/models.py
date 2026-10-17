@@ -1,7 +1,33 @@
 from django.contrib.auth.models import AbstractUser
 from django.db import models
+from django.utils import timezone
+from datetime import timedelta
+
+
+class Department(models.Model):
+    """Zavod bo‘limi / sex."""
+    name = models.CharField(max_length=120, unique=True, verbose_name="Bo‘lim nomi")
+    code = models.CharField(max_length=20, blank=True, verbose_name="Kod")
+
+    class Meta:
+        ordering = ['name']
+        verbose_name = "Bo‘lim"
+        verbose_name_plural = "Bo‘limlar"
+
+    def __str__(self):
+        return self.name
+
 
 class User(AbstractUser):
+    SHIFT_CHOICES = [
+        ('', '—'),
+        ('A', 'Smena A'),
+        ('B', 'Smena B'),
+        ('C', 'Smena C'),
+        ('day', 'Kunduzgi'),
+        ('night', 'Tungi'),
+    ]
+
     ROLE_CHOICES = [
         ('admin', 'Admin'),
         ('офисный-персонал', 'ofis-xodimlari'),
@@ -26,6 +52,20 @@ class User(AbstractUser):
         default='офисный-персонал',
         verbose_name="Foydalanuvchi roli"
     )
+    employee_id = models.CharField(
+        max_length=40, blank=True, db_index=True, verbose_name="Tabel raqami"
+    )
+    department = models.ForeignKey(
+        'Department',
+        null=True,
+        blank=True,
+        on_delete=models.SET_NULL,
+        related_name='employees',
+        verbose_name="Bo‘lim",
+    )
+    shift = models.CharField(
+        max_length=10, choices=SHIFT_CHOICES, blank=True, default='', verbose_name="Smena"
+    )
     
     profile_image = models.ImageField(upload_to='profile_images/', null=True, blank=True, verbose_name="Profil rasmi")
     bio = models.TextField(max_length=500, blank=True, verbose_name="Qisqacha ma'lumot")
@@ -33,7 +73,11 @@ class User(AbstractUser):
     
     experience_points = models.IntegerField(default=0, verbose_name="Tajriba ballari")
     level = models.IntegerField(default=1, verbose_name="Daraja")
-    
+
+    class Meta:
+        verbose_name = 'Foydalanuvchi'
+        verbose_name_plural = 'Foydalanuvchilar'
+
     def __str__(self):
         return f"{self.username} ({self.get_role_display()})"
     
@@ -70,6 +114,8 @@ class UserActivity(models.Model):
         ('logout', 'Tizimdan chiqish'),
         ('view_post', 'Postni ko‘rish'),
         ('view_video', 'Videoni ko‘rish'),
+        ('view_course', 'Kursni ko‘rish'),
+        ('course_enrollment', 'Kursga yozilish'),
         ('profile_update', 'Profilni yangilash'),
         ('favorite_add', 'Sevimlilarga qo‘shish'),
         ('favorite_remove', 'Sevimlilardan o‘chirish'),
@@ -161,6 +207,12 @@ class Certificate(models.Model):
     user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='certificates', verbose_name="Foydalanuvchi")
     category = models.ForeignKey('blog.Category', on_delete=models.CASCADE, verbose_name="Kategoriya")
     issued_at = models.DateTimeField(auto_now_add=True, verbose_name="Berilgan sana")
+    valid_until = models.DateField(
+        null=True,
+        blank=True,
+        verbose_name="Amal qilish muddati",
+        help_text="Bo‘sh bo‘lsa — berilgan kundan 1 yil",
+    )
     certificate_id = models.CharField(max_length=50, unique=True, verbose_name="Sertifikat raqami")
     certificate_file = models.FileField(upload_to='certificates/', null=True, blank=True, verbose_name="Sertifikat fayli")
     
@@ -171,6 +223,60 @@ class Certificate(models.Model):
     
     def __str__(self):
         return f"Sertifikat #{self.certificate_id} - {self.user.username} - {self.category.name}"
+
+    def save(self, *args, **kwargs):
+        creating = self.pk is None
+        super().save(*args, **kwargs)
+        if creating and not self.valid_until:
+            base = self.issued_at.date() if self.issued_at else timezone.localdate()
+            self.valid_until = base + timedelta(days=365)
+            Certificate.objects.filter(pk=self.pk).update(valid_until=self.valid_until)
+
+    @property
+    def is_expired(self):
+        if not self.valid_until:
+            return False
+        return timezone.localdate() > self.valid_until
+
+    @property
+    def days_until_expiry(self):
+        if not self.valid_until:
+            return None
+        return (self.valid_until - timezone.localdate()).days
+
+
+class Notification(models.Model):
+    """In-app bildirishnoma (muddat, majburiy test, tizim)."""
+    TYPE_CHOICES = [
+        ('deadline', 'Muddat eslatmasi'),
+        ('overdue', 'Muddati o‘tgan'),
+        ('certificate', 'Sertifikat'),
+        ('system', 'Tizim'),
+        ('document', 'Hujjat'),
+    ]
+
+    user = models.ForeignKey(
+        User, on_delete=models.CASCADE, related_name='notifications', verbose_name="Foydalanuvchi"
+    )
+    title = models.CharField(max_length=200, verbose_name="Sarlavha")
+    message = models.TextField(verbose_name="Matn")
+    notification_type = models.CharField(
+        max_length=20, choices=TYPE_CHOICES, default='system', verbose_name="Turi"
+    )
+    link = models.CharField(max_length=255, blank=True, verbose_name="Havola")
+    is_read = models.BooleanField(default=False, verbose_name="O‘qilgan")
+    created_at = models.DateTimeField(auto_now_add=True, verbose_name="Yaratilgan")
+
+    class Meta:
+        ordering = ['-created_at']
+        verbose_name = "Bildirishnoma"
+        verbose_name_plural = "Bildirishnomalar"
+        indexes = [
+            models.Index(fields=['user', 'is_read', '-created_at']),
+        ]
+
+    def __str__(self):
+        return f"{self.user.username}: {self.title}"
 
 
 class LevelUpEvent(models.Model):

@@ -1,213 +1,177 @@
 {% extends 'accounts/profile_base.html' %}
 
-{% block profile_title %}Mening ta'limim{% endblock %}
+{% block profile_title %}O‘quv jarayoni{% endblock %}
 
 {% block profile_content %}
-<div class="row g-4">
-    <!-- Статистика обучения -->
-    <div class="col-12">
-        <div class="card shadow-sm">
-            <div class="card-body">
-                <h5 class="card-title mb-4">Ta'lim statistikasi</h5>
-                
-                <div class="row g-3">
-                    <div class="col-md-3 col-sm-6">
-                        <div class="bg-light rounded p-3 text-center">
-                            <h4 class="fw-bold text-primary mb-1">{{ enrolled_courses_count }}</h4>
-                            <p class="text-muted small mb-0">Ro'yxatdan o'tgan kurslar</p>
+<p class="zl-section-lead mb-4">Kurslar bo‘yicha progress va tavsiyalar.</p>
+
+<div class="row g-3">
+  <div class="col-12">
+    <section class="zl-panel">
+      <h3 class="zl-section-title h5 mb-3">Ta’lim statistikasi</h3>
+      <div class="zl-stats">
+        <div class="zl-stat"><span>Ro‘yxatdan o‘tgan</span><strong>{{ enrolled_courses_count }}</strong></div>
+        <div class="zl-stat"><span>Yakunlangan</span><strong class="text-success">{{ completed_courses_count }}</strong></div>
+        <div class="zl-stat"><span>Faol</span><strong>{{ active_courses_count }}</strong></div>
+        <div class="zl-stat"><span>O‘rtacha ball</span><strong>{{ average_score }}%</strong></div>
+      </div>
+    </section>
+  </div>
+
+  <div class="col-12">
+    <section class="zl-card overflow-hidden">
+      <div class="p-3 border-bottom">
+        <h3 class="zl-section-title h5 mb-0">Joriy kurslar</h3>
+      </div>
+      <div class="p-3 p-md-4">
+        {% if active_courses %}
+          <div class="table-responsive">
+            <table class="table table-hover align-middle mb-0">
+              <thead>
+                <tr>
+                  <th>Kurs</th>
+                  <th>Boshlangan sana</th>
+                  <th>Progress</th>
+                  <th>Harakat</th>
+                </tr>
+              </thead>
+              <tbody>
+                {% for course in active_courses %}
+                  <tr>
+                    <td>
+                      <div class="d-flex align-items-center gap-3">
+                        {% if course.image %}
+                          <img src="{{ course.image.url }}" alt="{{ course.title }}"
+                               class="rounded border" style="width: 48px; height: 48px; object-fit: cover;">
+                        {% else %}
+                          <div class="rounded border bg-light" style="width: 48px; height: 48px;"></div>
+                        {% endif %}
+                        <div>
+                          <h6 class="mb-0">{{ course.title }}</h6>
+                          <small class="zl-meta">{{ course.teacher }}</small>
                         </div>
-                    </div>
-                    <div class="col-md-3 col-sm-6">
-                        <div class="bg-light rounded p-3 text-center">
-                            <h4 class="fw-bold text-success mb-1">{{ completed_courses_count }}</h4>
-                            <p class="text-muted small mb-0">Yakunlangan kurslar</p>
+                      </div>
+                    </td>
+                    <td class="zl-meta">{{ course.enrollment_date|date:"d.m.Y" }}</td>
+                    <td style="width: 25%;">
+                      <div class="progress" style="height: 8px;">
+                        <div class="progress-bar" style="width: {{ course.progress }}%"></div>
+                      </div>
+                      <div class="d-flex justify-content-between mt-1">
+                        <small class="zl-meta">{{ course.progress }}%</small>
+                        <small class="zl-meta">{{ course.completed_lessons }}/{{ course.total_lessons }}</small>
+                      </div>
+                    </td>
+                    <td>
+                      <a href="{{ course.url }}" class="btn btn-sm btn-outline-primary">Davom ettirish</a>
+                    </td>
+                  </tr>
+                {% endfor %}
+              </tbody>
+            </table>
+          </div>
+        {% else %}
+          <div class="zl-empty border-0">
+            <i class="fas fa-graduation-cap"></i>
+            <p class="mb-3">Hozirda faol kurslar yo‘q</p>
+            <a href="{% url 'blog:home' %}" class="btn btn-primary">Kurslarni ko‘rish</a>
+          </div>
+        {% endif %}
+      </div>
+    </section>
+  </div>
+
+  <div class="col-12">
+    <section class="zl-card overflow-hidden">
+      <div class="p-3 border-bottom">
+        <h3 class="zl-section-title h5 mb-0">Yakunlangan kurslar</h3>
+      </div>
+      <div class="p-3 p-md-4">
+        {% if completed_courses %}
+          <div class="table-responsive">
+            <table class="table table-hover align-middle mb-0">
+              <thead>
+                <tr>
+                  <th>Kurs</th>
+                  <th>Yakunlangan sana</th>
+                  <th>Ball</th>
+                  <th>Harakat</th>
+                </tr>
+              </thead>
+              <tbody>
+                {% for course in completed_courses %}
+                  <tr>
+                    <td>
+                      <div class="d-flex align-items-center gap-3">
+                        {% if course.image %}
+                          <img src="{{ course.image.url }}" alt="{{ course.title }}"
+                               class="rounded border" style="width: 48px; height: 48px; object-fit: cover;">
+                        {% else %}
+                          <div class="rounded border bg-light" style="width: 48px; height: 48px;"></div>
+                        {% endif %}
+                        <div>
+                          <h6 class="mb-0">{{ course.title }}</h6>
+                          <small class="zl-meta">{{ course.teacher }}</small>
                         </div>
-                    </div>
-                    <div class="col-md-3 col-sm-6">
-                        <div class="bg-light rounded p-3 text-center">
-                            <h4 class="fw-bold text-info mb-1">{{ active_courses_count }}</h4>
-                            <p class="text-muted small mb-0">Faol kurslar</p>
-                        </div>
-                    </div>
-                    <div class="col-md-3 col-sm-6">
-                        <div class="bg-light rounded p-3 text-center">
-                            <h4 class="fw-bold text-warning mb-1">{{ average_score }}%</h4>
-                            <p class="text-muted small mb-0">O'rtacha ball</p>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-    
-    <!-- Текущие курсы -->
-    <div class="col-12">
-        <div class="card shadow-sm">
-            <div class="card-header bg-white">
-                <h5 class="card-title mb-0">Joriy kurslar</h5>
-            </div>
-            <div class="card-body">
-                {% if active_courses %}
-                <div class="table-responsive">
-                    <table class="table table-hover align-middle">
-                        <thead>
-                            <tr>
-                                <th>Kurs</th>
-                                <th>Boshlangan sana</th>
-                                <th>Progress</th>
-                                <th>Harakat</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            {% for course in active_courses %}
-                            <tr>
-                                <td>
-                                    <div class="d-flex align-items-center">
-                                        {% if course.image %}
-                                        <img src="{{ course.image.url }}" alt="{{ course.title }}" 
-                                             class="img-thumbnail me-3" style="width: 48px; height: 48px; object-fit: cover;">
-                                        {% else %}
-                                        <div class="bg-light rounded me-3" style="width: 48px; height: 48px;"></div>
-                                        {% endif %}
-                                        <div>
-                                            <h6 class="mb-0">{{ course.title }}</h6>
-                                            <small class="text-muted">{{ course.teacher }}</small>
-                                        </div>
-                                    </div>
-                                </td>
-                                <td>{{ course.enrollment_date|date:"d.m.Y" }}</td>
-                                <td style="width: 25%;">
-                                    <div class="progress" style="height: 8px;">
-                                        <div class="progress-bar bg-primary" style="width: {{ course.progress }}%"></div>
-                                    </div>
-                                    <div class="d-flex justify-content-between mt-1">
-                                        <small class="text-muted">{{ course.progress }}%</small>
-                                        <small class="text-muted">{{ course.completed_lessons }}/{{ course.total_lessons }}</small>
-                                    </div>
-                                </td>
-                                <td>
-                                    <a href="{{ course.url }}" class="btn btn-sm btn-outline-primary">
-                                        Davom ettirish
-                                    </a>
-                                </td>
-                            </tr>
-                            {% endfor %}
-                        </tbody>
-                    </table>
-                </div>
+                      </div>
+                    </td>
+                    <td class="zl-meta">{{ course.completion_date|date:"d.m.Y" }}</td>
+                    <td><span class="zl-chip ok">{{ course.score }}%</span></td>
+                    <td>
+                      <div class="btn-group">
+                        <a href="{{ course.url }}" class="btn btn-sm btn-outline-secondary">Ko‘rish</a>
+                        {% if course.has_certificate %}
+                          <a href="{% url 'courses:view_certificate' course.certificate_id %}" class="btn btn-sm btn-outline-primary">Sertifikat</a>
+                        {% endif %}
+                      </div>
+                    </td>
+                  </tr>
+                {% endfor %}
+              </tbody>
+            </table>
+          </div>
+        {% else %}
+          <div class="zl-empty border-0">
+            <p class="mb-0">Hali birorta kurs yakunlanmagan</p>
+          </div>
+        {% endif %}
+      </div>
+    </section>
+  </div>
+
+  {% if recommended_courses %}
+  <div class="col-12">
+    <section class="zl-card overflow-hidden">
+      <div class="p-3 border-bottom">
+        <h3 class="zl-section-title h5 mb-0">Tavsiya etilgan kurslar</h3>
+      </div>
+      <div class="p-3 p-md-4">
+        <div class="row g-3">
+          {% for course in recommended_courses %}
+            <div class="col-md-6 col-lg-4">
+              <article class="zl-card overflow-hidden h-100 p-0">
+                {% if course.image %}
+                  <img src="{{ course.image.url }}" class="w-100" alt="{{ course.title }}"
+                       style="height: 160px; object-fit: cover;">
                 {% else %}
-                <div class="text-center py-4">
-                    <p class="text-muted">Hozirda sizda faol kurslar yo'q</p>
-                    <a href="{% url 'blog:home' %}" class="btn btn-primary mt-2">
-                        Kurslarni ko'rish
-                    </a>
-                </div>
+                  <div class="bg-light" style="height: 160px;"></div>
                 {% endif %}
-            </div>
-        </div>
-    </div>
-    
-    <!-- Завершенные курсы -->
-    <div class="col-12">
-        <div class="card shadow-sm">
-            <div class="card-header bg-white">
-                <h5 class="card-title mb-0">Yakunlangan kurslar</h5>
-            </div>
-            <div class="card-body">
-                {% if completed_courses %}
-                <div class="table-responsive">
-                    <table class="table table-hover align-middle">
-                        <thead>
-                            <tr>
-                                <th>Kurs</th>
-                                <th>Yakunlangan sana</th>
-                                <th>Ball</th>
-                                <th>Harakat</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            {% for course in completed_courses %}
-                            <tr>
-                                <td>
-                                    <div class="d-flex align-items-center">
-                                        {% if course.image %}
-                                        <img src="{{ course.image.url }}" alt="{{ course.title }}" 
-                                             class="img-thumbnail me-3" style="width: 48px; height: 48px; object-fit: cover;">
-                                        {% else %}
-                                        <div class="bg-light rounded me-3" style="width: 48px; height: 48px;"></div>
-                                        {% endif %}
-                                        <div>
-                                            <h6 class="mb-0">{{ course.title }}</h6>
-                                            <small class="text-muted">{{ course.teacher }}</small>
-                                        </div>
-                                    </div>
-                                </td>
-                                <td>{{ course.completion_date|date:"d.m.Y" }}</td>
-                                <td>
-                                    <span class="badge bg-success">{{ course.score }}%</span>
-                                </td>
-                                <td>
-                                    <div class="btn-group">
-                                        <a href="{{ course.url }}" class="btn btn-sm btn-outline-secondary">
-                                            Ko'rish
-                                        </a>
-                                        {% if course.has_certificate %}
-                                        <a href="{% url 'courses:view_certificate' course.certificate_id %}" class="btn btn-sm btn-outline-primary">
-                                            Sertifikat
-                                        </a>
-                                        {% endif %}
-                                    </div>
-                                </td>
-                            </tr>
-                            {% endfor %}
-                        </tbody>
-                    </table>
+                <div class="p-3">
+                  <h4 class="h6 fw-bold mb-2">{{ course.title }}</h4>
+                  <p class="small zl-meta mb-3">{{ course.short_description|truncatechars:80 }}</p>
+                  <div class="d-flex justify-content-between align-items-center mb-3">
+                    <span class="zl-chip">{{ course.category }}</span>
+                    <span class="zl-meta small">{{ course.duration }}</span>
+                  </div>
+                  <a href="{{ course.url }}" class="btn btn-primary w-100 btn-sm">Kursga yozilish</a>
                 </div>
-                {% else %}
-                <div class="text-center py-4">
-                    <p class="text-muted">Siz hali birorta kursni yakunlamagansiz</p>
-                </div>
-                {% endif %}
+              </article>
             </div>
+          {% endfor %}
         </div>
-    </div>
-    
-    <!-- Рекомендуемые курсы -->
-    {% if recommended_courses %}
-    <div class="col-12">
-        <div class="card shadow-sm">
-            <div class="card-header bg-white">
-                <h5 class="card-title mb-0">Tavsiya etilgan kurslar</h5>
-            </div>
-            <div class="card-body">
-                <div class="row g-3">
-                    {% for course in recommended_courses %}
-                    <div class="col-md-6 col-lg-4">
-                        <div class="card h-100">
-                            {% if course.image %}
-                            <img src="{{ course.image.url }}" class="card-img-top" alt="{{ course.title }}"
-                                 style="height: 160px; object-fit: cover;">
-                            {% else %}
-                            <div class="bg-light" style="height: 160px;"></div>
-                            {% endif %}
-                            <div class="card-body">
-                                <h5 class="card-title">{{ course.title }}</h5>
-                                <p class="card-text small text-muted">{{ course.short_description|truncatechars:80 }}</p>
-                                <div class="d-flex justify-content-between align-items-center">
-                                    <span class="badge bg-light text-dark">{{ course.category }}</span>
-                                    <span class="text-muted small">{{ course.duration }}</span>
-                                </div>
-                            </div>
-                            <div class="card-footer bg-white">
-                                <a href="{{ course.url }}" class="btn btn-primary w-100">Kursga yozilish</a>
-                            </div>
-                        </div>
-                    </div>
-                    {% endfor %}
-                </div>
-            </div>
-        </div>
-    </div>
-    {% endif %}
+      </div>
+    </section>
+  </div>
+  {% endif %}
 </div>
-{% endblock %} 
+{% endblock %}

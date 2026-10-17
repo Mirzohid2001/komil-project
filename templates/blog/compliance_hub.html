@@ -1,0 +1,49 @@
+{% extends 'base.html' %}
+
+{% block title %}Compliance{% endblock %}
+
+{% block content %}
+<div class="zl-page-head">
+  <div>
+    <h1 class="zl-section-title mb-1">Compliance</h1>
+    <p class="zl-section-lead mb-0">Majburiy talablar bajarilmaguncha LMS ning qolgan qismi yopiq.</p>
+  </div>
+</div>
+
+{% if not compliance.blocked %}
+<div class="zl-card p-4 text-center">
+  <i class="fas fa-check-circle fa-2x mb-2" style="color:var(--zl-brass-dark);"></i>
+  <h2 class="h5 mb-1">Hammasi joyida</h2>
+  <p class="zl-meta mb-3">Hozircha ochiq majburiy talab yo‘q.</p>
+  <a href="{% url 'blog:home' %}" class="btn btn-primary">Bosh sahifa</a>
+</div>
+{% else %}
+<div class="zl-stats mb-3">
+  <div class="zl-stat"><span>Jami</span><strong>{{ compliance.items|length }}</strong></div>
+  <div class="zl-stat"><span>Testlar</span><strong>{{ compliance.tests|length }}</strong></div>
+  <div class="zl-stat"><span>Hujjatlar</span><strong>{{ compliance.documents|length }}</strong></div>
+  <div class="zl-stat"><span>Sertifikat</span><strong>{{ compliance.certificates|length }}</strong></div>
+  <div class="zl-stat"><span>Kurs</span><strong>{{ compliance.courses|length }}</strong></div>
+</div>
+
+<div class="zl-test-list">
+  {% for item in compliance.items %}
+  <article class="zl-test zl-card">
+    <div>
+      <h2>{{ item.title }}</h2>
+      <p class="mb-0">{{ item.detail }}</p>
+      <div class="zl-chips mt-2">
+        {% if item.type == 'test' %}<span class="zl-chip danger">Majburiy test</span>
+        {% elif item.type == 'document' %}<span class="zl-chip warn">Hujjat tasdiqi</span>
+        {% elif item.type == 'certificate' %}<span class="zl-chip danger">Sertifikat muddati</span>
+        {% else %}<span class="zl-chip danger">Kurs topshirig‘i</span>{% endif %}
+      </div>
+    </div>
+    <div class="zl-test-side">
+      <a href="{{ item.url }}" class="btn btn-primary">Bajarish</a>
+    </div>
+  </article>
+  {% endfor %}
+</div>
+{% endif %}
+{% endblock %}

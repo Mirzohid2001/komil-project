@@ -23,7 +23,7 @@ class Post(models.Model):
     role        = models.CharField(
                     max_length=20,
                     choices=ROLE_CHOICES,
-                    default=ROLE_CHOICES[0][0]
+                    default='офисный-персонал',
                   )
     created_at  = models.DateTimeField(auto_now_add=True)
     updated_at  = models.DateTimeField(auto_now=True)
@@ -65,8 +65,29 @@ class Test(models.Model):
     time_limit = models.IntegerField(default=30, verbose_name="Vaqt chegarasi (daqiqa)")
     passing_score = models.IntegerField(default=70, verbose_name="O'tish bali (%)")
     is_active = models.BooleanField(default=True, verbose_name="Faol")
+    is_mandatory = models.BooleanField(default=False, verbose_name="Majburiy")
+    deadline = models.DateField(
+        null=True,
+        blank=True,
+        verbose_name="Topshirish muddati",
+        help_text="Shu sanagacha topshirish kerak (ixtiyoriy)",
+    )
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
+
+    @property
+    def is_overdue(self):
+        if not self.deadline:
+            return False
+        from django.utils import timezone
+        return timezone.localdate() > self.deadline
+
+    @property
+    def days_until_deadline(self):
+        if not self.deadline:
+            return None
+        from django.utils import timezone
+        return (self.deadline - timezone.localdate()).days
     
     class Meta:
         ordering = ['-updated_at']
@@ -86,7 +107,7 @@ class Test(models.Model):
     
     def get_valid_questions_count(self):
         """Logik aloqaga ega bo'lgan savollar sonini qaytaradi"""
-        from blog.views import check_question_options_consistency
+        from blog.utils import check_question_options_consistency
         valid_count = 0
         for question in self.questions.prefetch_related('options').all():
             options = list(question.options.all())
@@ -231,6 +252,11 @@ class Document(models.Model):
     # Statistics
     download_count = models.PositiveIntegerField(default=0, verbose_name="Yuklab olishlar soni")
     view_count = models.PositiveIntegerField(default=0, verbose_name="Ko'rishlar soni")
+    requires_acknowledgment = models.BooleanField(
+        default=False,
+        verbose_name="Tasdiqlash talab qilinadi",
+        help_text="Xodim hujjatni o‘qib, tanishganini tasdiqlashi kerak",
+    )
     
     class Meta:
         verbose_name = "Hujjat"
@@ -264,18 +290,23 @@ class Document(models.Model):
         """Return human-readable file size"""
         if not self.file_size:
             return "Noma'lum"
-        
+
+        size = float(self.file_size)
         for unit in ['B', 'KB', 'MB', 'GB']:
-            if self.file_size < 1024.0:
-                return f"{self.file_size:.1f} {unit}"
-            self.file_size /= 1024.0
-        return f"{self.file_size:.1f} TB"
+            if size < 1024.0:
+                return f"{size:.1f} {unit}"
+            size /= 1024.0
+        return f"{size:.1f} TB"
     
     def can_user_access(self, user):
         """Check if user can access this document"""
+        if not user or not getattr(user, 'is_authenticated', False):
+            return self.is_public
         if self.is_public:
             return True
-        if user.role in self.allowed_roles:
+        if getattr(user, 'role', None) == 'admin' or getattr(user, 'is_staff', False):
+            return True
+        if user.role in (self.allowed_roles or []):
             return True
         return False
     
@@ -318,3 +349,89 @@ class DocumentDownload(models.Model):
     
     def __str__(self):
         return f"{self.user.username} - {self.document.title} - {self.downloaded_at}"
+
+
+class DocumentAcknowledgment(models.Model):
+    """Xodim hujjat bilan tanishganini tasdiqlashi."""
+    document = models.ForeignKey(
+        Document, on_delete=models.CASCADE, related_name='acknowledgments', verbose_name="Hujjat"
+    )
+    user = models.ForeignKey(
+        User, on_delete=models.CASCADE, related_name='document_acknowledgments', verbose_name="Foydalanuvchi"
+    )
+    acknowledged_at = models.DateTimeField(auto_now_add=True, verbose_name="Tasdiqlangan vaqt")
+    ip_address = models.GenericIPAddressField(null=True, blank=True, verbose_name="IP manzil")
+
+    class Meta:
+        unique_together = ('document', 'user')
+        ordering = ['-acknowledged_at']
+        verbose_name = "Hujjat tasdiqi"
+        verbose_name_plural = "Hujjat tasdiqlari"
+
+    def __str__(self):
+        return f"{self.user.username} · {self.document.title}"
+
+
+class SystemJobLog(models.Model):
+    """Avtomatik yangilanish / cron ishlarining jurnali."""
+
+    STATUS_RUNNING = 'running'
+    STATUS_SUCCESS = 'success'
+    STATUS_FAILED = 'failed'
+    STATUS_PARTIAL = 'partial'
+    STATUS_CHOICES = [
+        (STATUS_RUNNING, 'Ishlamoqda'),
+        (STATUS_SUCCESS, 'Muvaffaqiyatli'),
+        (STATUS_FAILED, 'Xato'),
+        (STATUS_PARTIAL, 'Qisman'),
+    ]
+
+    TRIGGER_CRON = 'cron'
+    TRIGGER_MANUAL = 'manual'
+    TRIGGER_CLI = 'cli'
+    TRIGGER_CHOICES = [
+        (TRIGGER_CRON, 'Cron'),
+        (TRIGGER_MANUAL, 'Admin qo‘lda'),
+        (TRIGGER_CLI, 'CLI'),
+    ]
+
+    job_name = models.CharField(max_length=80, verbose_name='Ish nomi', db_index=True)
+    status = models.CharField(
+        max_length=20,
+        choices=STATUS_CHOICES,
+        default=STATUS_RUNNING,
+        verbose_name='Holat',
+    )
+    trigger = models.CharField(
+        max_length=20,
+        choices=TRIGGER_CHOICES,
+        default=TRIGGER_CRON,
+        verbose_name='Ishga tushirish',
+    )
+    started_at = models.DateTimeField(auto_now_add=True, verbose_name='Boshlangan')
+    finished_at = models.DateTimeField(null=True, blank=True, verbose_name='Tugagan')
+    message = models.TextField(blank=True, verbose_name='Xabar')
+    details = models.JSONField(default=dict, blank=True, verbose_name='Tafsilotlar')
+    triggered_by = models.ForeignKey(
+        User,
+        null=True,
+        blank=True,
+        on_delete=models.SET_NULL,
+        related_name='system_jobs',
+        verbose_name='Ishga tushirgan',
+    )
+
+    class Meta:
+        ordering = ['-started_at']
+        verbose_name = 'Tizim ishi (avto-yangilanish)'
+        verbose_name_plural = 'Tizim ishlari (avto-yangilanish)'
+
+    def __str__(self):
+        return f'{self.job_name} · {self.get_status_display()} · {self.started_at}'
+
+    @property
+    def duration_seconds(self):
+        if not self.finished_at:
+            return None
+        return max(0, (self.finished_at - self.started_at).total_seconds())
+

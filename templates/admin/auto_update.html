@@ -1,0 +1,117 @@
+{% extends "admin/base_site.html" %}
+{% load i18n %}
+
+{% block content_title %}Avto-yangilanish{% endblock %}
+
+{% block breadcrumbs %}
+<ol class="breadcrumb">
+  <li class="breadcrumb-item"><a href="{% url 'admin:index' %}">Bosh sahifa</a></li>
+  <li class="breadcrumb-item active">Avto-yangilanish</li>
+</ol>
+{% endblock %}
+
+{% block content %}
+<div class="row">
+  <div class="col-lg-8">
+    <div class="card mb-3">
+      <div class="card-header">
+        <strong>To‘liq avtomatik yangilanish</strong>
+      </div>
+      <div class="card-body">
+        <p class="text-muted mb-3">
+          Pipeline: <strong>kunlik testlar</strong> → <strong>yetishmayotgan rol testlari</strong> →
+          <strong>health check</strong>. Cron: har kuni 01:00 (to‘liq) va 13:00 (ta’minlash).
+        </p>
+
+        {% if summary.latest %}
+        <div class="mb-3">
+          <div><strong>Oxirgi ish:</strong> {{ summary.latest.get_status_display }}</div>
+          <div class="text-muted small">
+            {{ summary.latest.started_at|date:"d.m.Y H:i" }}
+            · {{ summary.latest.get_trigger_display }}
+            {% if summary.latest.duration_seconds != None %}
+              · {{ summary.latest.duration_seconds|floatformat:1 }} s
+            {% endif %}
+          </div>
+          <div class="mt-2">{{ summary.latest.message }}</div>
+        </div>
+        {% else %}
+        <div class="alert alert-info">Hali avto-yangilanish ishga tushmagan.</div>
+        {% endif %}
+
+        <form method="post" class="d-flex flex-wrap gap-2 align-items-center">
+          {% csrf_token %}
+          <button type="submit" class="btn btn-success" {% if summary.running %}disabled{% endif %}>
+            <i class="fas fa-sync-alt"></i>
+            {% if summary.running %}Ishlamoqda…{% else %}Hozir yangilash{% endif %}
+          </button>
+          <label class="mb-0 ms-2">
+            <input type="checkbox" name="force" value="1"> Kunlik testlarni majburiy qayta yaratish
+          </label>
+        </form>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-header"><strong>So‘nggi ishlar</strong></div>
+      <div class="card-body p-0">
+        <div class="table-responsive">
+          <table class="table table-sm table-striped mb-0">
+            <thead>
+              <tr>
+                <th>Vaqt</th>
+                <th>Ish</th>
+                <th>Holat</th>
+                <th>Trigger</th>
+                <th>Xabar</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for job in summary.recent %}
+              <tr>
+                <td>{{ job.started_at|date:"d.m.Y H:i" }}</td>
+                <td>{{ job.job_name }}</td>
+                <td>
+                  {% if job.status == 'success' %}
+                    <span class="badge badge-success">{{ job.get_status_display }}</span>
+                  {% elif job.status == 'failed' %}
+                    <span class="badge badge-danger">{{ job.get_status_display }}</span>
+                  {% elif job.status == 'partial' %}
+                    <span class="badge badge-warning">{{ job.get_status_display }}</span>
+                  {% else %}
+                    <span class="badge badge-info">{{ job.get_status_display }}</span>
+                  {% endif %}
+                </td>
+                <td>{{ job.get_trigger_display }}</td>
+                <td>{{ job.message|truncatechars:90 }}</td>
+              </tr>
+              {% empty %}
+              <tr><td colspan="5" class="text-muted p-3">Jurnal bo‘sh</td></tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="col-lg-4">
+    <div class="card mb-3">
+      <div class="card-header"><strong>7 kunlik statistika</strong></div>
+      <div class="card-body">
+        <p class="mb-2">Muvaffaqiyatli: <strong>{{ summary.success_7d }}</strong></p>
+        <p class="mb-0">Xato / qisman: <strong>{{ summary.failed_7d }}</strong></p>
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-header"><strong>Cron sozlash</strong></div>
+      <div class="card-body small">
+        <pre class="mb-2" style="white-space:pre-wrap;">python manage.py crontab add
+python manage.py crontab show
+python manage.py auto_update</pre>
+        <p class="text-muted mb-0">Serverda crontab qo‘shilgach, tizim o‘zi yangilanadi.</p>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

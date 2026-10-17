@@ -16,7 +16,7 @@ class Command(BaseCommand):
         parser.add_argument('--credentials', type=str, help='Path to credentials.json file')
         parser.add_argument('--test_title', type=str, help='Custom title for the test')
         parser.add_argument('--test_description', type=str, help='Custom description for the test')
-        parser.add_argument('--test_role', type=str, default='оператор', help='Role for the test')
+        parser.add_argument('--test_role', type=str, default='Оператор', help='Role for the test')
         parser.add_argument('--passing_score', type=float, default=70, help='Passing score percentage')
         parser.add_argument('--time_limit', type=int, default=30, help='Time limit in minutes')
 
@@ -82,7 +82,6 @@ class Command(BaseCommand):
                     question = Question.objects.create(
                         test=test,
                         text=question_text,
-                        points=1  # Default points value
                     )
                     
                     # Process question options

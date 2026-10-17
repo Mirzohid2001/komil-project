@@ -10,7 +10,22 @@ from django.shortcuts import render, redirect
 from django.contrib.admin.views.decorators import staff_member_required
 from django.contrib import messages
 
-from .models import Category, Post, VideoView, Test, Question, Option, TestResult, UserAnswer, DocumentCategory, Document, DocumentView, DocumentDownload
+from .models import (
+    Category,
+    Post,
+    VideoView,
+    Test,
+    Question,
+    Option,
+    TestResult,
+    UserAnswer,
+    DocumentCategory,
+    Document,
+    DocumentView,
+    DocumentDownload,
+    DocumentAcknowledgment,
+    SystemJobLog,
+)
 from accounts.models import UserActivity, User
 
 # Добавляем форму проверки вопросов
@@ -98,6 +113,112 @@ def validate_questions_view(request):
     
     return render(request, 'admin/question_validation_form.html', context)
 
+
+@staff_member_required
+def auto_update_dashboard_view(request):
+    """Admin: avto-yangilanish holati va qo‘lda ishga tushirish."""
+    from blog.auto_update import latest_job_summary, run_full_auto_update
+
+    can_run = (
+        request.user.is_superuser
+        or getattr(request.user, 'role', None) == 'admin'
+    )
+    if not can_run:
+        messages.error(request, "Faqat admin avto-yangilanishni boshqaradi.")
+        return redirect('admin:index')
+
+    if request.method == 'POST':
+        if latest_job_summary()['running']:
+            messages.warning(request, "Avto-yangilanish hozir ishlamoqda. Kuting.")
+        else:
+            force = request.POST.get('force') == '1'
+            log = run_full_auto_update(
+                trigger=SystemJobLog.TRIGGER_MANUAL,
+                force=force,
+                user=request.user,
+            )
+            if log.status == SystemJobLog.STATUS_SUCCESS:
+                messages.success(request, log.message)
+            elif log.status == SystemJobLog.STATUS_PARTIAL:
+                messages.warning(request, log.message)
+            else:
+                messages.error(request, log.message)
+        return redirect('admin:auto_update_dashboard')
+
+    summary = latest_job_summary(limit=15)
+    context = {
+        'title': 'Avto-yangilanish',
+        'summary': summary,
+        'app_label': 'blog',
+        'has_permission': True,
+        'site_header': admin.site.site_header,
+        'site_title': admin.site.site_title,
+        'index_title': admin.site.index_title,
+    }
+    return render(request, 'admin/auto_update.html', context)
+
+
+@staff_member_required
+def ai_generate_tests_view(request):
+    """Admin: rol bo‘yicha N ta avtomatik (AI) test yaratish."""
+    from blog.forms import AITestGenerateForm
+    from blog.test_generator import generate_tests_for_role
+
+    can_generate = (
+        request.user.is_superuser
+        or (
+            getattr(request.user, 'role', None) == 'admin'
+            and request.user.has_perm('blog.add_test')
+        )
+    )
+    if not can_generate:
+        messages.error(request, "Faqat admin AI test yarata oladi.")
+        return redirect('admin:blog_test_changelist')
+
+    from blog.ai_client import ai_status
+    from blog.test_generator import build_question_payloads
+
+    form = AITestGenerateForm(request.POST or None)
+    status = ai_status()
+
+    if request.method == 'POST' and form.is_valid():
+        role = form.cleaned_data['role']
+        count = form.cleaned_data['count']
+        questions_per_test = form.cleaned_data['questions_per_test']
+        use_ai = form.cleaned_data.get('use_ai', True)
+        try:
+            created_tests = generate_tests_for_role(
+                role,
+                count,
+                questions_per_test=questions_per_test,
+                use_ai=use_ai,
+            )
+            source = getattr(build_question_payloads, 'last_source', 'template')
+            messages.success(
+                request,
+                f"{len(created_tests)} ta test yaratildi "
+                f"({dict(User.ROLE_CHOICES).get(role, role)}, "
+                f"har birida {questions_per_test} ta savol). "
+                f"Manba: {source}.",
+            )
+            return redirect('admin:blog_test_changelist')
+        except ValueError as exc:
+            messages.error(request, str(exc))
+
+    context = {
+        'title': 'AI orqali test yaratish',
+        'form': form,
+        'ai_status': status,
+        'app_label': 'blog',
+        'opts': Test._meta,
+        'has_permission': True,
+        'site_header': admin.site.site_header,
+        'site_title': admin.site.site_title,
+        'index_title': admin.site.index_title,
+    }
+    return render(request, 'admin/ai_generate_tests.html', context)
+
+
 class VideoViewInline(admin.TabularInline):
     model = VideoView
     extra = 0
@@ -121,17 +242,17 @@ class PostAdmin(admin.ModelAdmin):
     search_fields = ('title', 'content')
     readonly_fields = ('created_at', 'updated_at', 'video_preview', 'analytics_data')
     fieldsets = (
-        ('Основная информация', {
+        ('Asosiy maʼlumot', {
             'fields': ('title', 'content', 'category', 'role')
         }),
-        ('Медиа', {
+        ('Media', {
             'fields': ('video', 'video_preview'),
         }),
-        ('Аналитика просмотров', {
+        ('Ko‘rishlar analitikasi', {
             'fields': ('analytics_data',),
             'classes': ('collapse',),
         }),
-        ('Даты', {
+        ('Sanalar', {
             'fields': ('created_at', 'updated_at'),
             'classes': ('collapse',),
         }),
@@ -141,17 +262,17 @@ class PostAdmin(admin.ModelAdmin):
     def has_video(self, obj):
         return bool(obj.video)
     has_video.boolean = True
-    has_video.short_description = 'Видео'
-    
+    has_video.short_description = 'Video'
+
     def view_count_display(self, obj):
         count = obj.view_count()
-        return format_html('<span style="color: #0066cc; font-weight: bold;">{}</span>', count)
-    view_count_display.short_description = 'Просмотры'
-    
+        return format_html('<span class="zlms-badge zlms-badge-ok">{}</span>', count)
+    view_count_display.short_description = 'Ko‘rishlar'
+
     def unique_viewers_display(self, obj):
         count = obj.unique_viewers_count()
-        return format_html('<span style="color: #009933; font-weight: bold;">{}</span>', count)
-    unique_viewers_display.short_description = 'Уникальные зрители'
+        return format_html('<span class="zlms-badge zlms-badge-muted">{}</span>', count)
+    unique_viewers_display.short_description = 'Noyob tomoshabin'
     
     def video_preview(self, obj):
         if obj.video:
@@ -355,6 +476,10 @@ admin.site.register(Category, CategoryAdmin)
 admin.site.register(Post, PostAdmin)
 admin.site.register(VideoView, VideoViewAdmin)
 
+admin.site.site_header = 'Zavod LMS'
+admin.site.site_title = 'Zavod LMS'
+admin.site.index_title = 'Boshqaruv paneli'
+
 # Функция представления для страницы аналитики
 @staff_member_required
 def analytics_view(request):
@@ -449,18 +574,35 @@ class BlogAdminSite(admin.AdminSite):
     
     def each_context(self, request):
         context = super().each_context(request)
-        context['has_permission'] = request.user.is_active and request.user.is_staff and request.user.role == 'админ'
+        context['has_permission'] = request.user.is_active and request.user.is_staff and request.user.role == 'admin'
         return context
 
 # Получаем оригинальный объект AdminSite
 original_admin_site = admin.site
 
-# Добавляем URL для аналитики
-original_admin_site.get_urls = (lambda original_get_urls: 
-    lambda: original_get_urls() + [
-        path('blog/analytics/', analytics_view, name='blog_analytics'),
+# Custom admin URLs — catch-all dan OLDIN (append qilsa 404 bo‘ladi)
+from blog.admin_analytics import lms_analytics_view
+
+_original_admin_get_urls = original_admin_site.get_urls
+
+
+def _admin_get_urls_with_analytics():
+    custom = [
+        path(
+            'lms-analytics/',
+            original_admin_site.admin_view(lms_analytics_view),
+            name='lms_analytics',
+        ),
+        path(
+            'blog/analytics/',
+            original_admin_site.admin_view(analytics_view),
+            name='blog_analytics',
+        ),
     ]
-)(original_admin_site.get_urls)
+    return custom + _original_admin_get_urls()
+
+
+original_admin_site.get_urls = _admin_get_urls_with_analytics
 
 class OptionInline(admin.TabularInline):
     model = Option
@@ -613,32 +755,40 @@ class QuestionInline(admin.TabularInline):
     max_num = 0
 
 class TestAdmin(admin.ModelAdmin):
-    list_display = ('title', 'role', 'get_question_count', 'get_valid_questions_count', 'passing_score', 'is_active', 'updated_at')
-    list_filter = ('role', 'is_active', 'created_at', 'updated_at')
+    list_display = (
+        'title', 'role', 'get_question_count', 'get_valid_questions_count',
+        'passing_score', 'is_mandatory', 'deadline', 'is_active', 'updated_at',
+    )
+    list_filter = ('role', 'is_active', 'is_mandatory', 'deadline', 'created_at', 'updated_at')
     search_fields = ('title', 'description')
     readonly_fields = ('created_at', 'updated_at', 'valid_questions_info')
+    list_editable = ('is_mandatory', 'deadline', 'is_active')
     inlines = [QuestionInline]
     change_list_template = 'admin/test_changelist.html'
     
     def get_question_count(self, obj):
         return obj.get_total_questions()
-    get_question_count.short_description = "Количество вопросов"
-    
+    get_question_count.short_description = "Savollar"
+
     def get_valid_questions_count(self, obj):
         valid_count = obj.get_valid_questions_count()
         total = obj.get_total_questions()
-        
+
         if total == 0:
-            return "0"
-        
+            return format_html('<span class="zlms-badge zlms-badge-muted">0</span>')
+
         percent = (valid_count / total) * 100
         if percent < 50:
-            return format_html('<span style="color: #dc3545; font-weight: bold;">{} ({}%)</span>', valid_count, int(percent))
+            css = 'zlms-badge zlms-badge-bad'
         elif percent < 80:
-            return format_html('<span style="color: #ffc107; font-weight: bold;">{} ({}%)</span>', valid_count, int(percent))
+            css = 'zlms-badge zlms-badge-warn'
         else:
-            return format_html('<span style="color: #28a745; font-weight: bold;">{} ({}%)</span>', valid_count, int(percent))
-    get_valid_questions_count.short_description = "Логичных вопросов"
+            css = 'zlms-badge zlms-badge-ok'
+        return format_html(
+            '<span class="{}">{} ({}%)</span>',
+            css, valid_count, int(percent),
+        )
+    get_valid_questions_count.short_description = "To‘g‘ri savollar"
     
     def valid_questions_info(self, obj):
         valid_count = obj.get_valid_questions_count()
@@ -712,32 +862,74 @@ class TestAdmin(admin.ModelAdmin):
     
     def get_fieldsets(self, request, obj=None):
         fieldsets = [
-            ('Основная информация', {
+            ('Asosiy maʼlumot', {
                 'fields': ('title', 'description', 'role')
             }),
-            ('Настройки теста', {
-                'fields': ('time_limit', 'passing_score', 'is_active')
+            ('Test sozlamalari', {
+                'fields': (
+                    'time_limit', 'passing_score', 'is_active',
+                    'is_mandatory', 'deadline',
+                )
             }),
-            ('Даты', {
+            ('Sanalar', {
                 'fields': ('created_at', 'updated_at'),
                 'classes': ('collapse',),
             }),
         ]
-        
-        # Добавляем поле информации о вопросах только если тест уже создан
+
         if obj:
-            fieldsets.insert(1, ('Валидация логики', {
+            fieldsets.insert(1, ('Savollar tekshiruvi', {
                 'fields': ('valid_questions_info',),
             }))
-        
+
         return fieldsets
     
     def get_urls(self):
         urls = super().get_urls()
         custom_urls = [
             path('validate-questions/', validate_questions_view, name='question_validation'),
+            path('ai-generate/', ai_generate_tests_view, name='ai_generate_tests'),
+            path('auto-update/', auto_update_dashboard_view, name='auto_update_dashboard'),
         ]
         return custom_urls + urls
+
+
+@admin.register(SystemJobLog)
+class SystemJobLogAdmin(admin.ModelAdmin):
+    list_display = (
+        'job_name',
+        'status',
+        'trigger',
+        'started_at',
+        'finished_at',
+        'triggered_by',
+        'short_message',
+    )
+    list_filter = ('status', 'trigger', 'job_name', 'started_at')
+    search_fields = ('job_name', 'message')
+    readonly_fields = (
+        'job_name',
+        'status',
+        'trigger',
+        'started_at',
+        'finished_at',
+        'message',
+        'details',
+        'triggered_by',
+    )
+    ordering = ('-started_at',)
+
+    def short_message(self, obj):
+        return (obj.message or '')[:80]
+
+    short_message.short_description = 'Xabar'
+
+    def has_add_permission(self, request):
+        return False
+
+    def has_change_permission(self, request, obj=None):
+        return False
+
 
 class UserAnswerInline(admin.TabularInline):
     model = UserAnswer
@@ -754,8 +946,8 @@ class TestResultAdmin(admin.ModelAdmin):
     inlines = [UserAnswerInline]
     
     def get_duration(self, obj):
-        return f"{obj.get_duration()} мин."
-    get_duration.short_description = "Продолжительность"
+        return f"{obj.get_duration()} daq."
+    get_duration.short_description = "Davomiylik"
 
 # Register test-related models
 admin.site.register(Test, TestAdmin)
@@ -774,8 +966,14 @@ class DocumentCategoryAdmin(admin.ModelAdmin):
     documents_count.short_description = 'Hujjatlar soni'
 
 class DocumentAdmin(admin.ModelAdmin):
-    list_display = ('title', 'category', 'file_type', 'file_size_display', 'uploaded_by', 'uploaded_at', 'download_count', 'view_count', 'is_public')
-    list_filter = ('category', 'file_type', 'is_public', 'uploaded_at', 'uploaded_by__role')
+    list_display = (
+        'title', 'category', 'file_type', 'file_size_display', 'uploaded_by',
+        'uploaded_at', 'download_count', 'view_count', 'is_public', 'requires_acknowledgment',
+    )
+    list_filter = (
+        'category', 'file_type', 'is_public', 'requires_acknowledgment',
+        'uploaded_at', 'uploaded_by__role',
+    )
     search_fields = ('title', 'description', 'uploaded_by__username')
     readonly_fields = ('file_size', 'file_type', 'uploaded_at', 'updated_at', 'download_count', 'view_count')
     date_hierarchy = 'uploaded_at'
@@ -786,7 +984,7 @@ class DocumentAdmin(admin.ModelAdmin):
             'fields': ('title', 'description', 'file', 'category')
         }),
         ('Ruxsatlar', {
-            'fields': ('is_public', 'allowed_roles'),
+            'fields': ('is_public', 'allowed_roles', 'requires_acknowledgment'),
             'description': 'Hujjatga ruxsat berilgan foydalanuvchi rollarini tanlang'
         }),
         ('Meta ma\'lumotlar', {
@@ -872,6 +1070,15 @@ class DocumentDownloadAdmin(admin.ModelAdmin):
     
     def has_change_permission(self, request, obj=None):
         return False
+
+@admin.register(DocumentAcknowledgment)
+class DocumentAcknowledgmentAdmin(admin.ModelAdmin):
+    list_display = ('document', 'user', 'acknowledged_at', 'ip_address')
+    list_filter = ('acknowledged_at', 'document__category')
+    search_fields = ('document__title', 'user__username')
+    date_hierarchy = 'acknowledged_at'
+    readonly_fields = ('document', 'user', 'acknowledged_at', 'ip_address')
+
 
 # Register document models
 admin.site.register(DocumentCategory, DocumentCategoryAdmin)

@@ -14,7 +14,7 @@ class Command(BaseCommand):
     def add_arguments(self, parser):
         parser.add_argument('--sheet_id', type=str, help='Google Sheet ID')
         parser.add_argument('--credentials', type=str, help='Path to credentials.json file')
-        parser.add_argument('--test_role', type=str, default='оператор', help='Role for the test')
+        parser.add_argument('--test_role', type=str, default='Оператор', help='Role for the test')
 
     def handle(self, *args, **options):
         sheet_id = options['sheet_id']
@@ -77,7 +77,6 @@ class Command(BaseCommand):
                     question = Question.objects.create(
                         test=test,
                         text=question_text,
-                        points=int(q_data.get('points', 1))
                     )
                     
                     # Add options

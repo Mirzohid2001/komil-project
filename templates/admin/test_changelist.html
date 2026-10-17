@@ -3,9 +3,16 @@
 
 {% block object-tools-items %}
   {{ block.super }}
+  {% if user.is_superuser or user.role == 'admin' %}
   <li>
-    <a href="{% url 'admin:question_validation' %}" class="btn btn-high">
-      Проверить логику тестов
+    <a href="{% url 'admin:ai_generate_tests' %}" class="btn btn-high btn-success" style="background:#c9a227;border-color:#c9a227;">
+      AI test yaratish
     </a>
   </li>
-{% endblock %} 
+  {% endif %}
+  <li>
+    <a href="{% url 'admin:question_validation' %}" class="btn btn-high btn-info">
+      Savollarni tekshirish
+    </a>
+  </li>
+{% endblock %}

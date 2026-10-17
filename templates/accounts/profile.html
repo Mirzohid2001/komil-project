@@ -4,168 +4,126 @@
 {% block profile_title %}Mening profilim{% endblock %}
 
 {% block profile_content %}
-<div class="row">
-  <!-- Shaxsiy ma'lumotlar -->
-  <div class="col-md-6 mb-4">
-    <div class="card h-100 border-0 shadow-sm">
-      <div class="card-header bg-white py-3">
-        <h5 class="mb-0"><i class="fas fa-info-circle me-2 text-primary"></i> Shaxsiy ma'lumotlar</h5>
-      </div>
-      <div class="card-body">
-        <div class="d-flex mb-3">
-          <div class="text-muted" style="width: 40%;">Foydalanuvchi nomi:</div>
-          <div class="fw-medium">{{ user.username }}</div>
-        </div>
+<p class="zl-section-lead mb-4">Shaxsiy ma’lumotlar, faollik va testlar bo‘yicha qisqa ko‘rinish.</p>
+
+<div class="row g-3">
+  <div class="col-md-6">
+    <section class="zl-panel h-100">
+      <h3 class="zl-section-title h5 mb-3"><i class="fas fa-info-circle me-2 text-gradient"></i> Shaxsiy ma’lumotlar</h3>
+      <dl class="row mb-0 small">
+        <dt class="col-5 zl-meta">Foydalanuvchi nomi</dt>
+        <dd class="col-7 fw-semibold mb-2">{{ user.username }}</dd>
         {% if user.first_name %}
-        <div class="d-flex mb-3">
-          <div class="text-muted" style="width: 40%;">To'liq ism:</div>
-          <div class="fw-medium">{{ user.get_full_name }}</div>
-        </div>
+        <dt class="col-5 zl-meta">To‘liq ism</dt>
+        <dd class="col-7 fw-semibold mb-2">{{ user.get_full_name }}</dd>
         {% endif %}
         {% if user.email %}
-        <div class="d-flex mb-3">
-          <div class="text-muted" style="width: 40%;">Email:</div>
-          <div class="fw-medium">{{ user.email }}</div>
-        </div>
+        <dt class="col-5 zl-meta">Email</dt>
+        <dd class="col-7 fw-semibold mb-2">{{ user.email }}</dd>
         {% endif %}
-        <div class="d-flex mb-3">
-          <div class="text-muted" style="width: 40%;">Roli:</div>
-          <div class="fw-medium">{{ user.get_role_display }}</div>
-        </div>
+        <dt class="col-5 zl-meta">Roli</dt>
+        <dd class="col-7 mb-2"><span class="zl-chip ok">{{ user.get_role_display }}</span></dd>
         {% if user.phone_number %}
-        <div class="d-flex mb-3">
-          <div class="text-muted" style="width: 40%;">Telefon:</div>
-          <div class="fw-medium">{{ user.phone_number }}</div>
-        </div>
+        <dt class="col-5 zl-meta">Telefon</dt>
+        <dd class="col-7 fw-semibold mb-2">{{ user.phone_number }}</dd>
         {% endif %}
-        <div class="d-flex mb-3">
-          <div class="text-muted" style="width: 40%;">Ro'yxatdan o'tgan sana:</div>
-          <div class="fw-medium">{{ user.date_joined|date:"d.m.Y" }}</div>
-        </div>
-        {% if user.bio %}
-        <div class="mt-4">
-          <div class="text-muted mb-2">O'zim haqimda:</div>
-          <p>{{ user.bio }}</p>
-        </div>
-        {% endif %}
-        <div class="mt-4">
-          <a href="{% url 'accounts:profile_edit' %}" class="btn btn-sm btn-primary px-4">
-            <i class="fas fa-edit me-2"></i> Profilni tahrirlash
-          </a>
-        </div>
+        <dt class="col-5 zl-meta">Ro‘yxatdan o‘tgan</dt>
+        <dd class="col-7 fw-semibold mb-2">{{ user.date_joined|date:"d.m.Y" }}</dd>
+      </dl>
+      {% if user.bio %}
+      <div class="mt-3 pt-3 border-top">
+        <div class="zl-meta mb-2">O‘zim haqimda</div>
+        <p class="mb-0">{{ user.bio }}</p>
       </div>
-    </div>
+      {% endif %}
+      <div class="mt-3 pt-3 border-top">
+        <a href="{% url 'accounts:profile_edit' %}" class="btn btn-sm btn-primary">
+          <i class="fas fa-edit me-1"></i> Profilni tahrirlash
+        </a>
+      </div>
+    </section>
   </div>
-  
-  <!-- Faollik -->
-  <div class="col-md-6 mb-4">
-    <div class="card h-100 border-0 shadow-sm">
-      <div class="card-header bg-white py-3 d-flex justify-content-between align-items-center">
-        <h5 class="mb-0"><i class="fas fa-history me-2 text-primary"></i> So'nggi faollik</h5>
+
+  <div class="col-md-6">
+    <section class="zl-card overflow-hidden h-100">
+      <div class="zl-page-head p-3 pb-0 mb-0 border-bottom">
+        <h3 class="zl-section-title h5 mb-0"><i class="fas fa-history me-2 text-gradient"></i> So‘nggi faollik</h3>
         <a href="{% url 'accounts:activity_history' %}" class="btn btn-sm btn-outline-primary">Barcha tarix</a>
       </div>
-      <div class="card-body p-0">
+      <div class="p-0">
         {% if activities %}
-          <div class="list-group list-group-flush">
-            {% for activity in activities %}
-              <div class="list-group-item border-0 py-3">
-                <div class="d-flex">
-                  <div class="activity-icon 
-                    {% if 'login' in activity.activity_type %}activity-login
-                    {% elif 'logout' in activity.activity_type %}activity-logout
-                    {% elif 'view' in activity.activity_type %}activity-view
-                    {% elif 'profile' in activity.activity_type %}activity-update
-                    {% elif 'favorite' in activity.activity_type %}activity-favorite
-                    {% endif %}">
-                    <i class="fas 
-                      {% if 'login' in activity.activity_type %}fa-sign-in-alt
-                      {% elif 'logout' in activity.activity_type %}fa-sign-out-alt
-                      {% elif 'view_post' == activity.activity_type %}fa-file-alt
-                      {% elif 'view_video' == activity.activity_type %}fa-video
-                      {% elif 'profile' in activity.activity_type %}fa-user-edit
-                      {% elif 'favorite_add' == activity.activity_type %}fa-bookmark
-                      {% elif 'favorite_remove' == activity.activity_type %}fa-bookmark
-                      {% endif %}"></i>
-                  </div>
-                  <div>
-                    <p class="mb-1">{{ activity.get_activity_type_display }}</p>
-                    {% if activity.post %}
-                      <p class="mb-1 small">
-                        <a href="{% url 'blog:post_detail' activity.post.id %}" class="text-decoration-none">
-                          {{ activity.post.title }}
-                        </a>
-                      </p>
-                    {% endif %}
-                    <p class="small text-muted mb-0">{{ activity.timestamp|date:"d.m.Y H:i" }}</p>
-                  </div>
+          {% for activity in activities %}
+            <div class="activity-item px-3">
+              <div class="d-flex">
+                <div class="activity-icon
+                  {% if 'login' in activity.activity_type %}activity-login
+                  {% elif 'logout' in activity.activity_type %}activity-logout
+                  {% elif 'view' in activity.activity_type %}activity-view
+                  {% elif 'profile' in activity.activity_type %}activity-update
+                  {% elif 'favorite' in activity.activity_type %}activity-favorite
+                  {% endif %}">
+                  <i class="fas
+                    {% if 'login' in activity.activity_type %}fa-sign-in-alt
+                    {% elif 'logout' in activity.activity_type %}fa-sign-out-alt
+                    {% elif 'view_post' == activity.activity_type %}fa-file-alt
+                    {% elif 'view_video' == activity.activity_type %}fa-video
+                    {% elif 'profile' in activity.activity_type %}fa-user-edit
+                    {% elif 'favorite_add' == activity.activity_type %}fa-bookmark
+                    {% elif 'favorite_remove' == activity.activity_type %}fa-bookmark
+                    {% endif %}"></i>
+                </div>
+                <div>
+                  <p class="mb-1 fw-semibold">{{ activity.get_activity_type_display }}</p>
+                  {% if activity.post %}
+                    <p class="mb-1 small">
+                      <a href="{% url 'blog:post_detail' activity.post.id %}" class="text-decoration-none">{{ activity.post.title }}</a>
+                    </p>
+                  {% endif %}
+                  <p class="zl-meta mb-0">{{ activity.timestamp|date:"d.m.Y H:i" }}</p>
                 </div>
               </div>
-            {% endfor %}
-          </div>
+            </div>
+          {% endfor %}
         {% else %}
-          <div class="empty-state">
-            <i class="fas fa-history opacity-25"></i>
-            <h4 class="fw-bold mb-3">Faollik yo'q</h4>
-            <p class="text-muted mb-0">Sizning faoliyatingiz bu yerda ko'rsatiladi</p>
+          <div class="zl-empty border-0 m-3">
+            <i class="fas fa-history"></i>
+            <h4 class="h5 fw-bold mb-2">Faollik yo‘q</h4>
+            <p class="mb-0">Harakatlaringiz shu yerda ko‘rinadi</p>
           </div>
         {% endif %}
       </div>
-    </div>
+    </section>
   </div>
-  
-  <!-- Test statistikasi -->
-  <div class="col-12 mb-4">
-    <div class="card border-0 shadow-sm">
-      <div class="card-header bg-white py-3 d-flex justify-content-between align-items-center">
-        <h5 class="mb-0"><i class="fas fa-tasks me-2 text-primary"></i> Test statistikasi</h5>
-        <div>
-          <a href="{% url 'blog:test_list' %}" class="btn btn-sm btn-outline-primary me-2">
-            <i class="fas fa-list me-1"></i> Testlar ro'yxati
+
+  <div class="col-12">
+    <section class="zl-card overflow-hidden">
+      <div class="zl-page-head p-3 pb-0 mb-0 border-bottom">
+        <h3 class="zl-section-title h5 mb-0"><i class="fas fa-tasks me-2 text-gradient"></i> Test statistikasi</h3>
+        <div class="d-flex flex-wrap gap-2">
+          <a href="{% url 'blog:test_list' %}" class="btn btn-sm btn-outline-primary">
+            <i class="fas fa-list me-1"></i> Testlar ro‘yxati
           </a>
           <a href="{% url 'blog:test_history' %}" class="btn btn-sm btn-primary">
             <i class="fas fa-history me-1"></i> Testlar tarixi
           </a>
         </div>
       </div>
-      <div class="card-body">
+      <div class="p-3 p-md-4">
         {% if user.test_results.exists %}
-          <div class="row">
-            <!-- Asosiy statistika -->
-            <div class="col-lg-6 mb-4">
-              <h6 class="fw-bold mb-3">Umumiy statistika</h6>
-              <div class="row g-3">
-                <div class="col-6 col-md-3">
-                  <div class="p-3 rounded-3" style="background-color: #f8f9fa;">
-                    <div class="small text-muted mb-1">Jami testlar</div>
-                    <div class="fs-4 fw-bold">{{ user.test_results.count }}</div>
-                  </div>
-                </div>
-                <div class="col-6 col-md-3">
-                  <div class="p-3 rounded-3" style="background-color: #f8f9fa;">
-                    <div class="small text-muted mb-1">O'tilgan</div>
-                    <div class="fs-4 fw-bold text-success">{{ passed_tests_count }}</div>
-                  </div>
-                </div>
-                <div class="col-6 col-md-3">
-                  <div class="p-3 rounded-3" style="background-color: #f8f9fa;">
-                    <div class="small text-muted mb-1">O'tilmagan</div>
-                    <div class="fs-4 fw-bold text-danger">{{ failed_tests_count }}</div>
-                  </div>
-                </div>
-                <div class="col-6 col-md-3">
-                  <div class="p-3 rounded-3" style="background-color: #f8f9fa;">
-                    <div class="small text-muted mb-1">O'rtacha ball</div>
-                    <div class="fs-4 fw-bold">{{ avg_score|default:"0" }}%</div>
-                  </div>
-                </div>
+          <div class="row g-4">
+            <div class="col-lg-6">
+              <h4 class="h6 fw-bold mb-3">Umumiy statistika</h4>
+              <div class="zl-stats">
+                <div class="zl-stat"><span>Jami testlar</span><strong>{{ user.test_results.count }}</strong></div>
+                <div class="zl-stat"><span>O‘tgan</span><strong class="text-success">{{ passed_tests_count }}</strong></div>
+                <div class="zl-stat"><span>O‘tmagan</span><strong class="text-danger">{{ failed_tests_count }}</strong></div>
+                <div class="zl-stat"><span>O‘rtacha ball</span><strong>{{ avg_score|default:"0" }}%</strong></div>
               </div>
             </div>
-            
-            <!-- So'nggi natijalar -->
             <div class="col-lg-6">
-              <h6 class="fw-bold mb-3">So'nggi natijalar</h6>
+              <h4 class="h6 fw-bold mb-3">So‘nggi natijalar</h4>
               <div class="table-responsive">
-                <table class="table table-sm">
+                <table class="table table-sm align-middle mb-0">
                   <thead>
                     <tr>
                       <th>Test</th>
@@ -178,14 +136,14 @@
                     {% for result in user.test_results.all|slice:":5" %}
                       <tr>
                         <td>{{ result.test.title }}</td>
-                        <td>{{ result.completed_at|date:"d.m.Y" }}</td>
+                        <td class="zl-meta">{{ result.completed_at|date:"d.m.Y" }}</td>
                         <td>
-                          <span class="badge {% if result.is_passed %}bg-success{% else %}bg-danger{% endif %}">
+                          <span class="zl-chip {% if result.is_passed %}ok{% else %}danger{% endif %}">
                             {{ result.percentage|floatformat:1 }}%
                           </span>
                         </td>
                         <td>
-                          <a href="{% url 'blog:test_result' result.id %}" class="btn btn-sm btn-outline-primary">
+                          <a href="{% url 'blog:test_result' result.id %}" class="btn btn-sm btn-outline-primary" title="Ko‘rish">
                             <i class="fas fa-eye"></i>
                           </a>
                         </td>
@@ -197,29 +155,28 @@
             </div>
           </div>
         {% else %}
-          <div class="text-center py-5">
-            <i class="fas fa-tasks fa-3x text-muted opacity-25 mb-3"></i>
-            <h4>Siz hali testlarni topshirmadingiz</h4>
-            <p class="text-muted">Statistika va progressni ko'rish uchun testlarni topshiring</p>
-            <a href="{% url 'blog:test_list' %}" class="btn btn-primary mt-3">
-              <i class="fas fa-play me-2"></i> Testlarga o'tish
+          <div class="zl-empty">
+            <i class="fas fa-tasks"></i>
+            <h4 class="h5 fw-bold mb-2">Hali test topshirilmagan</h4>
+            <p class="mb-3">Statistika uchun testlarni boshlang</p>
+            <a href="{% url 'blog:test_list' %}" class="btn btn-primary">
+              <i class="fas fa-play me-2"></i> Testlarga o‘tish
             </a>
           </div>
         {% endif %}
       </div>
-    </div>
+    </section>
   </div>
-  
-  <!-- Saqlanganlar -->
+
   <div class="col-12">
-    <div class="card border-0 shadow-sm">
-      <div class="card-header bg-white py-3 d-flex justify-content-between align-items-center">
-        <h5 class="mb-0"><i class="fas fa-bookmark me-2 text-primary"></i> Saqlangan materiallar</h5>
-        <a href="{% url 'accounts:favorites' %}" class="btn btn-sm btn-outline-primary">Barcha saqlanganlar</a>
+    <section class="zl-card overflow-hidden">
+      <div class="zl-page-head p-3 pb-0 mb-0 border-bottom">
+        <h3 class="zl-section-title h5 mb-0"><i class="fas fa-bookmark me-2 text-gradient"></i> Saqlangan materiallar</h3>
+        <a href="{% url 'accounts:favorites' %}" class="btn btn-sm btn-outline-primary">Barchasi</a>
       </div>
-      <div class="card-body">
+      <div class="p-3 p-md-4">
         {% if favorites %}
-          <div class="row g-4">
+          <div class="row g-3">
             {% for favorite in favorites|slice:":3" %}
               <div class="col-md-4">
                 <div class="favorite-card">
@@ -228,19 +185,19 @@
                       <video src="{{ favorite.post.video.url }}" muted></video>
                     {% else %}
                       <div class="w-100 h-100 d-flex align-items-center justify-content-center bg-light">
-                        <i class="fas fa-file-alt fa-2x text-muted opacity-25"></i>
+                        <i class="fas fa-file-alt fa-2x zl-meta opacity-50"></i>
                       </div>
                     {% endif %}
                   </div>
                   <div class="content">
-                    <h6 class="fw-bold">{{ favorite.post.title }}</h6>
+                    <h6 class="fw-bold mb-2">{{ favorite.post.title }}</h6>
                     <div class="favorite-meta">
                       <span><i class="far fa-calendar"></i> {{ favorite.post.created_at|date:"d.m.Y" }}</span>
                       <span><i class="far fa-folder"></i> {{ favorite.post.category.name }}</span>
                     </div>
-                    <div class="mt-3">
-                      <a href="{% url 'blog:post_detail' favorite.post.id %}" class="btn btn-sm btn-primary px-3">Ochish</a>
-                      <a href="{% url 'accounts:toggle_favorite' favorite.post.id %}" class="btn btn-sm btn-outline-danger ms-2">
+                    <div class="mt-3 d-flex gap-2">
+                      <a href="{% url 'blog:post_detail' favorite.post.id %}" class="btn btn-sm btn-primary">Ochish</a>
+                      <a href="{% url 'accounts:toggle_favorite' favorite.post.id %}" class="btn btn-sm btn-outline-danger" title="Saqlanganlardan olib tashlash">
                         <i class="fas fa-heart-broken"></i>
                       </a>
                     </div>
@@ -250,14 +207,14 @@
             {% endfor %}
           </div>
         {% else %}
-          <div class="empty-state">
-            <i class="fas fa-bookmark opacity-25"></i>
-            <h4 class="fw-bold mb-3">Нет избранных материалов</h4>
-            <p class="text-muted mb-0">Добавляйте интересные посты в избранное, чтобы быстро к ним вернуться</p>
+          <div class="zl-empty">
+            <i class="fas fa-bookmark"></i>
+            <h4 class="h5 fw-bold mb-2">Saqlanganlar yo‘q</h4>
+            <p class="mb-0">Postlarni saqlab, tezda qaytishingiz mumkin</p>
           </div>
         {% endif %}
       </div>
-    </div>
+    </section>
   </div>
 </div>
-{% endblock %} 
+{% endblock %}

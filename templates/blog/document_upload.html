@@ -5,258 +5,146 @@
 
 {% block extra_css %}
 <style>
-  .upload-form {
-    background: rgba(255, 255, 255, 0.95);
-    backdrop-filter: blur(10px);
-    border-radius: 20px;
-    padding: 40px;
-    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
-  }
-  
-  .form-group {
-    margin-bottom: 25px;
-  }
-  
-  .form-label {
-    font-weight: 600;
-    color: #2d3748;
-    margin-bottom: 8px;
-  }
-  
-  .form-control, .form-select {
-    border: 2px solid #e2e8f0;
-    border-radius: 12px;
-    padding: 12px 16px;
-    transition: all 0.3s ease;
-  }
-  
-  .form-control:focus, .form-select:focus {
-    border-color: var(--primary);
-    box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.1);
-  }
-  
-  .file-upload-area {
-    border: 3px dashed #cbd5e0;
-    border-radius: 16px;
-    padding: 40px;
+  .zl-upload-zone {
+    border: 2px dashed var(--zl-line);
+    border-radius: var(--zl-radius-sm);
+    padding: 2rem 1.25rem;
     text-align: center;
-    transition: all 0.3s ease;
     cursor: pointer;
+    transition: border-color 0.18s ease, background 0.18s ease;
+    background: var(--zl-surface);
   }
-  
-  .file-upload-area:hover {
-    border-color: var(--primary);
-    background: rgba(79, 70, 229, 0.05);
+  .zl-upload-zone:hover,
+  .zl-upload-zone.dragover {
+    border-color: var(--zl-brass);
+    background: var(--zl-brass-soft);
   }
-  
-  .file-upload-area.dragover {
-    border-color: var(--primary);
-    background: rgba(79, 70, 229, 0.1);
+  .zl-upload-zone input[type="file"] {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    opacity: 0;
+    pointer-events: none;
   }
-  
-  .role-checkboxes {
+  .zl-role-box {
     max-height: 200px;
     overflow-y: auto;
-    border: 1px solid #e2e8f0;
-    border-radius: 12px;
-    padding: 15px;
+    border: 1px solid var(--zl-line);
+    border-radius: var(--zl-radius-sm);
+    padding: 0.75rem 1rem;
+    background: var(--zl-card);
   }
-  
-  .form-check {
-    margin-bottom: 10px;
-  }
-  
-  .form-check-input:checked {
-    background-color: var(--primary);
-    border-color: var(--primary);
-  }
-  
-  .role-checkboxes ul {
-    list-style: none;
-    padding: 0;
-    margin: 0;
-  }
-  
-  .role-checkboxes li {
-    margin-bottom: 8px;
-  }
-  
-  .role-checkboxes label {
+  .zl-role-box ul { list-style: none; padding: 0; margin: 0; }
+  .zl-role-box li { margin-bottom: 0.35rem; }
+  .zl-role-box label {
     display: flex;
     align-items: center;
+    gap: 0.5rem;
     cursor: pointer;
-    padding: 8px 12px;
+    padding: 0.35rem 0.5rem;
     border-radius: 8px;
-    transition: background-color 0.2s ease;
+    margin: 0;
   }
-  
-  .role-checkboxes label:hover {
-    background-color: rgba(79, 70, 229, 0.05);
-  }
-  
-  .role-checkboxes input[type="checkbox"] {
-    margin-right: 10px;
-  }
-  
-  .preview-card {
-    background: #f8fafc;
-    border-radius: 12px;
-    padding: 20px;
-    margin-top: 20px;
-  }
-  
-  .upload-icon {
-    font-size: 48px;
-    color: var(--primary);
-    margin-bottom: 15px;
+  .zl-role-box label:hover { background: var(--zl-brass-soft); }
+  .zl-file-preview {
+    background: var(--zl-surface);
+    border: 1px solid var(--zl-line);
+    border-radius: var(--zl-radius-sm);
+    padding: 1rem;
+    margin-top: 1rem;
   }
 </style>
 {% endblock %}
 
 {% block content %}
-<div class="container">
-  <div class="row justify-content-center">
-    <div class="col-lg-8">
-      <!-- Header -->
-      <div class="text-center mb-5">
-        <h1 class="h2 mb-3">
-          <i class="fas fa-upload text-primary me-2"></i>
-          Hujjat yuklash
-        </h1>
-        <p class="text-muted">Yangi hujjatni yuklang va ruxsat berilgan foydalanuvchi rollarini belgilang</p>
+<div class="row justify-content-center">
+  <div class="col-lg-8">
+    <div class="zl-page-head">
+      <div>
+        <h1 class="zl-section-title mb-1">Hujjat yuklash</h1>
+        <p class="zl-section-lead mb-0">Fayl yuklang va ruxsat berilgan rollarni belgilang.</p>
       </div>
+      <a href="{% url 'blog:document_list' %}" class="btn btn-sm btn-outline-primary">Ro‘yxatga</a>
+    </div>
 
-      <!-- Upload Form -->
-      <div class="upload-form">
-        <form method="post" enctype="multipart/form-data" id="documentUploadForm">
-          {% csrf_token %}
-          
-          <!-- Title -->
-          <div class="form-group">
-            <label for="{{ form.title.id_for_label }}" class="form-label">
-              <i class="fas fa-heading me-2"></i>
-              Hujjat nomi *
-            </label>
-            {{ form.title }}
-            {% if form.title.errors %}
-            <div class="text-danger small mt-1">
-              {% for error in form.title.errors %}
-                {{ error }}
-              {% endfor %}
-            </div>
-            {% endif %}
-          </div>
+    <div class="zl-card p-3 p-md-4">
+      <form method="post" enctype="multipart/form-data" id="documentUploadForm">
+        {% csrf_token %}
 
-          <!-- Description -->
-          <div class="form-group">
-            <label for="{{ form.description.id_for_label }}" class="form-label">
-              <i class="fas fa-align-left me-2"></i>
-              Tavsif
-            </label>
-            {{ form.description }}
-            {% if form.description.errors %}
-            <div class="text-danger small mt-1">
-              {% for error in form.description.errors %}
-                {{ error }}
-              {% endfor %}
-            </div>
-            {% endif %}
-          </div>
+        <div class="mb-3">
+          <label for="{{ form.title.id_for_label }}" class="form-label fw-semibold small">Hujjat nomi *</label>
+          {{ form.title }}
+          {% if form.title.errors %}
+          <div class="text-danger small mt-1">{% for error in form.title.errors %}{{ error }}{% endfor %}</div>
+          {% endif %}
+        </div>
 
-          <!-- Category -->
-          <div class="form-group">
-            <label for="{{ form.category.id_for_label }}" class="form-label">
-              <i class="fas fa-folder me-2"></i>
-              Kategoriya *
-            </label>
-            {{ form.category }}
-            {% if form.category.errors %}
-            <div class="text-danger small mt-1">
-              {% for error in form.category.errors %}
-                {{ error }}
-              {% endfor %}
-            </div>
-            {% endif %}
-          </div>
+        <div class="mb-3">
+          <label for="{{ form.description.id_for_label }}" class="form-label fw-semibold small">Tavsif</label>
+          {{ form.description }}
+          {% if form.description.errors %}
+          <div class="text-danger small mt-1">{% for error in form.description.errors %}{{ error }}{% endfor %}</div>
+          {% endif %}
+        </div>
 
-          <!-- File Upload -->
-          <div class="form-group">
-            <label class="form-label">
-              <i class="fas fa-file me-2"></i>
-              Fayl *
-            </label>
-            <div class="file-upload-area" id="fileUploadArea">
-              <div class="upload-icon">
-                <i class="fas fa-cloud-upload-alt"></i>
-              </div>
-              <h5>Faylni bu yerga tashlang yoki tanlang</h5>
-              <p class="text-muted mb-3">PDF, Word, Excel, PowerPoint, rasm va boshqa fayl turlari qo'llab-quvvatlanadi</p>
-              {{ form.file }}
-              <div id="filePreview" class="preview-card" style="display: none;">
-                <div class="d-flex align-items-center">
-                  <i class="fas fa-file-alt fa-2x text-primary me-3"></i>
-                  <div>
-                    <h6 id="fileName" class="mb-1"></h6>
-                    <small id="fileSize" class="text-muted"></small>
-                  </div>
+        <div class="mb-3">
+          <label for="{{ form.category.id_for_label }}" class="form-label fw-semibold small">Kategoriya *</label>
+          {{ form.category }}
+          {% if form.category.errors %}
+          <div class="text-danger small mt-1">{% for error in form.category.errors %}{{ error }}{% endfor %}</div>
+          {% endif %}
+        </div>
+
+        <div class="mb-3">
+          <label class="form-label fw-semibold small">Fayl *</label>
+          <div class="zl-upload-zone position-relative" id="fileUploadArea">
+            <i class="fas fa-cloud-upload-alt fa-2x mb-2" style="color: var(--zl-brass-dark);"></i>
+            <p class="fw-semibold mb-1">Faylni bu yerga tashlang yoki tanlang</p>
+            <p class="zl-meta mb-0">PDF, Word, Excel, PowerPoint, rasm va boshqa formatlar</p>
+            {{ form.file }}
+            <div id="filePreview" class="zl-file-preview text-start" style="display: none;">
+              <div class="d-flex align-items-center gap-3">
+                <span class="zl-brand-mark" style="width:2.25rem;height:2.25rem;font-size:.85rem;"><i class="fas fa-file-alt"></i></span>
+                <div>
+                  <div id="fileName" class="fw-semibold"></div>
+                  <small id="fileSize" class="zl-meta"></small>
                 </div>
               </div>
             </div>
-            {% if form.file.errors %}
-            <div class="text-danger small mt-1">
-              {% for error in form.file.errors %}
-                {{ error }}
-              {% endfor %}
-            </div>
-            {% endif %}
           </div>
+          {% if form.file.errors %}
+          <div class="text-danger small mt-1">{% for error in form.file.errors %}{{ error }}{% endfor %}</div>
+          {% endif %}
+        </div>
 
-          <!-- Public Access -->
-          <div class="form-group">
-            <div class="form-check">
-              {{ form.is_public }}
-              <label class="form-check-label" for="{{ form.is_public.id_for_label }}">
-                <i class="fas fa-globe me-2"></i>
-                Barcha foydalanuvchilar uchun ochiq
-              </label>
-            </div>
-            <small class="text-muted">Agar belgilansa, barcha foydalanuvchilar bu hujjatni ko'ra oladi</small>
-          </div>
-
-          <!-- Role-based Access -->
-          <div class="form-group" id="roleAccessSection">
-            <label class="form-label">
-              <i class="fas fa-users me-2"></i>
-              {{ form.allowed_roles.label }}
+        <div class="mb-3">
+          <div class="form-check">
+            {{ form.is_public }}
+            <label class="form-check-label" for="{{ form.is_public.id_for_label }}">
+              Barcha foydalanuvchilar uchun ochiq
             </label>
-            <div class="role-checkboxes">
-              {{ form.allowed_roles }}
-            </div>
-            {% if form.allowed_roles.help_text %}
-            <small class="text-muted">{{ form.allowed_roles.help_text }}</small>
-            {% endif %}
-            {% if form.allowed_roles.errors %}
-            <div class="text-danger small mt-1">
-              {% for error in form.allowed_roles.errors %}
-                {{ error }}
-              {% endfor %}
-            </div>
-            {% endif %}
           </div>
+          <small class="zl-meta">Belgilansa, barcha foydalanuvchilar hujjatni ko‘ra oladi.</small>
+        </div>
 
-          <!-- Submit Buttons -->
-          <div class="d-flex gap-3 mt-4">
-            <button type="submit" class="btn btn-primary flex-fill">
-              <i class="fas fa-upload me-2"></i>
-              Hujjatni yuklash
-            </button>
-            <a href="{% url 'blog:document_list' %}" class="btn btn-outline-secondary">
-              <i class="fas fa-times me-2"></i>
-              Bekor qilish
-            </a>
-          </div>
-        </form>
-      </div>
+        <div class="mb-4" id="roleAccessSection">
+          <label class="form-label fw-semibold small">{{ form.allowed_roles.label }}</label>
+          <div class="zl-role-box">{{ form.allowed_roles }}</div>
+          {% if form.allowed_roles.help_text %}
+          <small class="zl-meta d-block mt-1">{{ form.allowed_roles.help_text }}</small>
+          {% endif %}
+          {% if form.allowed_roles.errors %}
+          <div class="text-danger small mt-1">{% for error in form.allowed_roles.errors %}{{ error }}{% endfor %}</div>
+          {% endif %}
+        </div>
+
+        <div class="d-flex flex-wrap gap-2">
+          <button type="submit" class="btn btn-primary">
+            <i class="fas fa-upload me-1"></i> Hujjatni yuklash
+          </button>
+          <a href="{% url 'blog:document_list' %}" class="btn btn-outline-secondary">Bekor qilish</a>
+        </div>
+      </form>
     </div>
   </div>
 </div>
@@ -274,12 +162,12 @@ document.addEventListener('DOMContentLoaded', function() {
     const roleAccessSection = document.getElementById('roleAccessSection');
     const roleCheckboxes = document.querySelectorAll('input[name="allowed_roles"]');
 
-    // File upload area click handler
-    fileUploadArea.addEventListener('click', function() {
-        fileInput.click();
+    fileUploadArea.addEventListener('click', function(e) {
+        if (e.target.tagName !== 'INPUT' && e.target.tagName !== 'LABEL') {
+            fileInput.click();
+        }
     });
 
-    // Drag and drop functionality
     fileUploadArea.addEventListener('dragover', function(e) {
         e.preventDefault();
         fileUploadArea.classList.add('dragover');
@@ -300,21 +188,18 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     });
 
-    // File input change handler
     fileInput.addEventListener('change', function(e) {
         if (e.target.files.length > 0) {
             updateFilePreview(e.target.files[0]);
         }
     });
 
-    // Update file preview
     function updateFilePreview(file) {
         fileName.textContent = file.name;
         fileSize.textContent = formatFileSize(file.size);
         filePreview.style.display = 'block';
     }
 
-    // Format file size
     function formatFileSize(bytes) {
         if (bytes === 0) return '0 Bytes';
         const k = 1024;
@@ -323,7 +208,6 @@ document.addEventListener('DOMContentLoaded', function() {
         return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
     }
 
-    // Public checkbox handler
     isPublicCheckbox.addEventListener('change', function() {
         if (this.checked) {
             roleAccessSection.style.opacity = '0.5';
@@ -339,7 +223,6 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     });
 
-    // Form validation
     document.getElementById('documentUploadForm').addEventListener('submit', function(e) {
         const title = document.querySelector('input[name="title"]').value.trim();
         const category = document.querySelector('select[name="category"]').value;
@@ -352,19 +235,16 @@ document.addEventListener('DOMContentLoaded', function() {
             alert('Iltimos, hujjat nomini kiriting');
             return;
         }
-
         if (!category) {
             e.preventDefault();
             alert('Iltimos, kategoriyani tanlang');
             return;
         }
-
         if (!file) {
             e.preventDefault();
             alert('Iltimos, faylni tanlang');
             return;
         }
-
         if (!isPublic && selectedRoles.length === 0) {
             e.preventDefault();
             alert('Iltimos, kamida bitta foydalanuvchi roli yoki "Barcha foydalanuvchilar uchun ochiq" ni tanlang');
@@ -373,4 +253,4 @@ document.addEventListener('DOMContentLoaded', function() {
     });
 });
 </script>
-{% endblock %} 
+{% endblock %}

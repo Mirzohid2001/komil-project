@@ -1,0 +1,48 @@
+{% extends 'base.html' %}
+
+{% block title %}Sertifikat tekshirish{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+  <div class="col-lg-7">
+    <div class="text-center mb-4">
+      <span class="zl-brand-mark mb-3 d-inline-grid" style="place-items:center;color:var(--zl-brass);font-size:1.4rem;"><i class="fas fa-certificate"></i></span>
+      <h1 class="zl-section-title mb-1">Sertifikatni tekshirish</h1>
+      <p class="zl-section-lead mb-0 mx-auto">ID raqam orqali sertifikat haqiqiyligini tasdiqlang.</p>
+    </div>
+
+    <div class="zl-card p-3 p-md-4 mb-3">
+      <form method="get" action="{% url 'accounts:verify_certificate' %}">
+        <label class="form-label small fw-semibold" for="certificate_id">Sertifikat ID</label>
+        <div class="input-group">
+          <input type="text" id="certificate_id" name="certificate_id" class="form-control"
+                 value="{{ lookup_id }}"
+                 placeholder="Sertifikat ID raqami" required>
+          <button class="btn btn-primary" type="submit">Tekshirish</button>
+        </div>
+      </form>
+    </div>
+
+    {% if lookup_id %}
+      {% if is_valid %}
+      <div class="zl-card p-3 p-md-4 border-success" style="border-width: 1px;">
+        <div class="d-flex align-items-center gap-2 mb-3">
+          <span class="zl-chip ok"><i class="fas fa-check me-1"></i> Yaroqli</span>
+          <strong>Yaroqli sertifikat</strong>
+        </div>
+        <ul class="list-unstyled mb-0">
+          <li class="mb-2"><span class="zl-meta d-block">ID</span>{{ certificate.certificate_id }}</li>
+          <li class="mb-2"><span class="zl-meta d-block">Egasi</span>{{ user.get_full_name|default:user.username }}</li>
+          <li class="mb-2"><span class="zl-meta d-block">Kurs / kategoriya</span>{{ title }}</li>
+          <li><span class="zl-meta d-block">Berilgan sana</span>{{ issued_at|date:"d.m.Y" }}</li>
+        </ul>
+      </div>
+      {% elif not_found %}
+      <div class="alert alert-danger mb-0">
+        Bu ID bo‘yicha sertifikat topilmadi.
+      </div>
+      {% endif %}
+    {% endif %}
+  </div>
+</div>
+{% endblock %}

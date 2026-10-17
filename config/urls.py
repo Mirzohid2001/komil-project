@@ -3,10 +3,17 @@ from django.contrib import admin
 from django.urls import path, include
 from django.conf import settings
 from django.conf.urls.static import static
+from accounts.views import verify_certificate
 
 urlpatterns = [
     path('admin/', admin.site.urls),
     path('accounts/', include('accounts.urls', namespace='accounts')),
+    # Public QR verification URL used in generated certificate PDFs
+    path(
+        'verify-certificate/<str:certificate_id>/',
+        verify_certificate,
+        name='verify_certificate_detail',
+    ),
     path('', include('blog.urls', namespace='blog')),
     path('courses/', include('courses.urls', namespace='courses')),
 ]

@@ -1,61 +1,17 @@
-<footer class="py-5">
-  <div class="container">
-    <div class="row g-4 justify-content-between align-items-center">
-      <div class="col-md-5" data-aos="fade-right">
-        <div class="d-flex align-items-center mb-3">
-          <span class="brand-icon me-2 d-inline-flex align-items-center justify-content-center">
-            <i class="fas fa-blog text-white fs-5"></i>
-          </span>
-          <span class="fs-4 fw-bold text-gradient">Isomer Edu</span>
-        </div>
-        <p class="text-muted mb-0">Zamonaviy texnologiyalar bilan yaratilgan platformada professional kontentni boshqarish tizimi.</p>
+{% load static %}
+<footer class="zl-footer">
+  <div class="zl-shell d-flex flex-column flex-md-row justify-content-between gap-3 align-items-md-center">
+    <div class="d-flex align-items-center gap-3">
+      <img src="{% static 'img/logo.png' %}" alt="Isomer Oil" width="44" height="44"
+           style="border-radius:50%;object-fit:cover;border:1.5px solid var(--zl-brass);box-shadow:0 0 0 3px rgba(201,162,39,.2);">
+      <div>
+        <strong>Isomer Oil</strong>
+        <div class="mt-1">Ichki o‘quv, test va hujjatlar platformasi.</div>
       </div>
-      
-      <div class="col-md-4 text-md-end" data-aos="fade-left">
-        <div class="social-icons mb-3">
-          <!-- Удаляем неактивные ссылки на социальные сети -->
-          <span class="text-muted small">© {{ now.year }} Isomer Oil Group</span>
-        </div>
-        <p class="mb-0 text-muted">&copy; {{ now.year }} Isomer Oil. Barcha huquqlar himoyalangan.</p>
-      </div>
+    </div>
+    <div class="text-md-end">
+      <div style="color:var(--zl-brass-light);letter-spacing:.12em;text-transform:uppercase;font-size:.72rem;font-weight:700;">Zavod LMS</div>
+      <div class="mt-1">© {% now "Y" %} Isomer Oil · Ichki foydalanish</div>
     </div>
   </div>
 </footer>
-
-<style>
-  footer {
-    position: relative;
-    overflow: hidden;
-  }
-  
-  footer::before {
-    content: '';
-    position: absolute;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 1px;
-    background: linear-gradient(to right, transparent, var(--primary), transparent);
-  }
-  
-  .social-icon {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    width: 38px;
-    height: 38px;
-    border-radius: 50%;
-    color: var(--primary);
-    background: rgba(79, 70, 229, 0.1);
-    transition: all 0.3s ease;
-    font-size: 1.2rem;
-  }
-  
-  .social-icon:hover {
-    color: white;
-    background: var(--gradient-primary);
-    transform: translateY(-3px);
-    box-shadow: 0 5px 15px rgba(79, 70, 229, 0.4);
-  }
-</style>
-  

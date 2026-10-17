@@ -1,234 +1,208 @@
-import json
 import logging
-import random
-import requests
-from datetime import datetime
+
+from django.contrib.auth import get_user_model
 from django.core.management.base import BaseCommand
 from django.db import transaction
 from django.utils import timezone
-from blog.models import Test, Question, Option, User
 
-# Configure logging
+from blog.models import Test, Question, Option
+
+User = get_user_model()
 logger = logging.getLogger(__name__)
 
-# API endpoints for different test categories
-# This is just a placeholder API - in a real implementation, you would use actual API endpoints
-API_ENDPOINTS = {
-    'админ': 'https://api.example.com/tests/admin',
-    'бухгалтер': 'https://api.example.com/tests/accountant', 
-    'естокада': 'https://api.example.com/tests/estokada',
-    'финансист': 'https://api.example.com/tests/financier',
+# Map live roles onto local fallback question buckets.
+ROLE_BUCKET_MAP = {
+    'admin': 'admin',
+    'Оператор': 'оператор',
+    'Диспетчер': 'оператор',
+    'естокада': 'оператор',
+    'temiryo`lchi': 'оператор',
+    'охраник': 'оператор',
+    'уборщик': 'оператор',
+    'повар': 'оператор',
+    'склад': 'оператор',
+    'механик': 'наладчик',
+    'электрик': 'наладчик',
+    'сварщик': 'наладчик',
+    'слесарь': 'наладчик',
+    'КИП и А': 'наладчик',
+    'технолог': 'инженер',
+    'офисный-персонал': 'инженер',
 }
 
-# Fallback test questions in case API is not accessible
 FALLBACK_QUESTIONS = {
-    'админ': [
+    'admin': [
         {
-            'question': 'Какой тип аутентификации считается наиболее безопасным?',
+            'question': 'Qaysi autentifikatsiya turi eng xavfsiz hisoblanadi?',
             'options': [
-                {'text': 'Одиночный пароль', 'is_correct': False},
-                {'text': 'Двухфакторная аутентификация', 'is_correct': True},
-                {'text': 'Биометрические данные без второго фактора', 'is_correct': False},
-                {'text': 'Устаревшие пароли', 'is_correct': False},
+                {'text': 'Oddiy parol', 'is_correct': False},
+                {'text': 'Ikki bosqichli autentifikatsiya', 'is_correct': True},
+                {'text': 'Ikkinchi omilsiz biometriya', 'is_correct': False},
+                {'text': 'Eskirgan parollar', 'is_correct': False},
             ],
-            'explanation': 'Двухфакторная аутентификация добавляет второй уровень безопасности, требуя что-то, что вы знаете (пароль) и что-то, что у вас есть (например, телефон).'
+            'explanation': 'Ikki bosqichli autentifikatsiya qo‘shimcha himoya qatlamini beradi.',
         },
         {
-            'question': 'Какой протокол используется для безопасного просмотра веб-страниц?',
+            'question': 'Veb-sahifalarni xavfsiz ko‘rish uchun qaysi protokol ishlatiladi?',
             'options': [
                 {'text': 'HTTP', 'is_correct': False},
                 {'text': 'FTP', 'is_correct': False},
                 {'text': 'HTTPS', 'is_correct': True},
                 {'text': 'SMTP', 'is_correct': False},
             ],
-            'explanation': 'HTTPS (HTTP Secure) шифрует данные, передаваемые между вашим браузером и веб-сайтом, защищая их от перехвата.'
+            'explanation': 'HTTPS ma’lumotlarni shifrlaydi.',
         },
     ],
-    'бухгалтер': [
+    'оператор': [
         {
-            'question': 'Что такое двойная запись в бухгалтерском учете?',
+            'question': 'Ish boshlashdan oldin nima qilish kerak?',
             'options': [
-                {'text': 'Каждая операция записывается дважды для проверки', 'is_correct': False},
-                {'text': 'Каждая операция отражается по дебету одного и кредиту другого счета', 'is_correct': True},
-                {'text': 'Бухгалтер проверяет каждую запись дважды', 'is_correct': False},
-                {'text': 'Запись, сделанная двумя бухгалтерами независимо', 'is_correct': False},
+                {'text': 'Darhol uskunani yoqish', 'is_correct': False},
+                {'text': 'Yo‘riqnoma va himoya vositalarini tekshirish', 'is_correct': True},
+                {'text': 'Tekshiruvlarni o‘tkazib yuborish', 'is_correct': False},
+                {'text': 'Himoya vositalarisiz ishlash', 'is_correct': False},
             ],
-            'explanation': 'Принцип двойной записи заключается в том, что каждая операция отражается по дебету одного и кредиту другого счета в одинаковой сумме.'
+            'explanation': 'Xavfsizlik tekshiruvi majburiy.',
         },
         {
-            'question': 'Что такое актив в бухгалтерском балансе?',
+            'question': 'Favqulodda signal eshitilganda nima qilish kerak?',
             'options': [
-                {'text': 'Обязательства компании', 'is_correct': False},
-                {'text': 'Ресурсы, контролируемые компанией, от которых ожидается экономическая выгода', 'is_correct': True},
-                {'text': 'Долги компании', 'is_correct': False},
-                {'text': 'Капитал владельцев', 'is_correct': False},
+                {'text': 'Ishni davom ettirish', 'is_correct': False},
+                {'text': 'Ishni to‘xtatib, rahbarga xabar berish', 'is_correct': True},
+                {'text': 'Signallarni e’tiborsiz qoldirish', 'is_correct': False},
+                {'text': 'Faqat smena oxirida xabar berish', 'is_correct': False},
             ],
-            'explanation': 'Активы — это ресурсы, которыми владеет или контролирует компания, и от которых ожидается получение экономических выгод в будущем.'
-        },
-    ],
-    'естокада': [
-        {
-            'question': 'Какие меры безопасности должны соблюдаться при работе на эстакаде?',
-            'options': [
-                {'text': 'Использование страховочных систем только при высоте более 10 метров', 'is_correct': False},
-                {'text': 'Проверка оборудования раз в год', 'is_correct': False},
-                {'text': 'Регулярный осмотр конструкций и использование средств индивидуальной защиты', 'is_correct': True},
-                {'text': 'Работа без защитного снаряжения для ускорения процесса', 'is_correct': False},
-            ],
-            'explanation': 'Безопасность на эстакаде требует регулярной проверки конструкций на целостность, использования средств индивидуальной защиты, соблюдения правил работы на высоте.'
-        },
-        {
-            'question': 'Что необходимо проверить перед началом работ на наливной эстакаде?',
-            'options': [
-                {'text': 'Только наличие продукта в резервуарах', 'is_correct': False},
-                {'text': 'Исправность заземления, наличие средств пожаротушения, герметичность соединений', 'is_correct': True},
-                {'text': 'Только погодные условия', 'is_correct': False},
-                {'text': 'Наличие других работников в зоне', 'is_correct': False},
-            ],
-            'explanation': 'Перед началом работ на наливной эстакаде необходимо проверить исправность заземления, наличие средств пожаротушения, герметичность соединений и отсутствие утечек, работоспособность запорной арматуры.'
+            'explanation': 'Favqulodda holatda ish to‘xtatiladi va xabar beriladi.',
         },
     ],
-    'финансист': [
+    'наладчик': [
         {
-            'question': 'Что такое NPV (Net Present Value)?',
+            'question': 'Uskunani sozlashdan oldin nima qilish kerak?',
             'options': [
-                {'text': 'Сумма всех затрат проекта', 'is_correct': False},
-                {'text': 'Чистая приведенная стоимость - разница между приведенной стоимостью денежных поступлений и затрат', 'is_correct': True},
-                {'text': 'Национальный показатель валюты', 'is_correct': False},
-                {'text': 'Негативное процентное значение', 'is_correct': False},
+                {'text': 'Elektr ta’minotini o‘chirmasdan ishlash', 'is_correct': False},
+                {'text': 'Xavfsizlik choralarini ko‘rib, diagnostika o‘tkazish', 'is_correct': True},
+                {'text': 'Hujjatlarsiz ishlash', 'is_correct': False},
+                {'text': 'Faqat ko‘z bilan chamalab sozlash', 'is_correct': False},
             ],
-            'explanation': 'NPV — это сумма дисконтированных значений потока платежей, приведённых к сегодняшнему дню. Положительный NPV указывает на то, что проект принесет прибыль.'
+            'explanation': 'Diagnostika va xavfsizlik birinchi o‘rinda.',
         },
         {
-            'question': 'Что такое ликвидность актива?',
+            'question': 'Nosoz qismni almashtirishda nima afzal?',
             'options': [
-                {'text': 'Способность актива быстро конвертироваться в деньги без существенной потери стоимости', 'is_correct': True},
-                {'text': 'Способность актива генерировать прибыль', 'is_correct': False},
-                {'text': 'Юридический статус актива', 'is_correct': False},
-                {'text': 'Физическое состояние актива', 'is_correct': False},
+                {'text': 'Vaqtinchalik yechimlar', 'is_correct': False},
+                {'text': 'Original ehtiyot qismlar va hujjatlashtirish', 'is_correct': True},
+                {'text': 'Mos kelmaydigan detal', 'is_correct': False},
+                {'text': 'Sinovsiz ishga tushirish', 'is_correct': False},
             ],
-            'explanation': 'Ликвидность — это способность актива быть быстро проданным по рыночной цене. Чем выше ликвидность, тем быстрее можно продать актив без существенной потери в его стоимости.'
+            'explanation': 'Original qism va tekshiruv sifatni ta’minlaydi.',
+        },
+    ],
+    'инженер': [
+        {
+            'question': 'NPV nima?',
+            'options': [
+                {'text': 'Loyiha xarajatlari yig‘indisi', 'is_correct': False},
+                {'text': 'Sof keltirilgan qiymat', 'is_correct': True},
+                {'text': 'Valyuta kursi', 'is_correct': False},
+                {'text': 'Negativ foiz', 'is_correct': False},
+            ],
+            'explanation': 'NPV kelajakdagi pul oqimlarining bugungi qiymatini bildiradi.',
+        },
+        {
+            'question': 'Tizim samaradorligini oshirishda nima muhim?',
+            'options': [
+                {'text': 'Hisob-kitoblarni e’tiborsiz qoldirish', 'is_correct': False},
+                {'text': 'Tahlil, sinov va optimallashtirish', 'is_correct': True},
+                {'text': 'Eskirgan standartlarga rioya qilish', 'is_correct': False},
+                {'text': 'Prototipsiz joriy etish', 'is_correct': False},
+            ],
+            'explanation': 'Muhandislik yechimi tahlil va sinovga asoslanadi.',
         },
     ],
 }
 
+
 class Command(BaseCommand):
-    help = 'Обновляет базу вопросов для тестов из внешнего API'
-    
+    help = 'Yangilaydi yoki yaratadi test savollarini (lokal fallback / mock)'
+
     def add_arguments(self, parser):
-        parser.add_argument(
-            '--role',
-            help='Обновить тесты только для указанной роли'
-        )
+        parser.add_argument('--role', help='Faqat ko‘rsatilgan rol uchun yangilash')
         parser.add_argument(
             '--mock',
             action='store_true',
-            help='Использовать локальные тестовые данные вместо API'
+            help='Tashqi API o‘rniga lokal savollardan foydalanish',
         )
-        
+
+    def resolve_bucket(self, role):
+        return ROLE_BUCKET_MAP.get(role, 'оператор')
+
     def handle(self, *args, **options):
         role = options.get('role')
         use_mock = options.get('mock', False)
-        
-        if role and role not in [r[0] for r in User.ROLE_CHOICES]:
-            self.stdout.write(self.style.ERROR(f"Неверная роль: {role}"))
-            self.stdout.write(self.style.WARNING(f"Доступные роли: {', '.join([r[0] for r in User.ROLE_CHOICES])}"))
+        valid_roles = [r[0] for r in User.ROLE_CHOICES]
+
+        if role and role not in valid_roles:
+            self.stdout.write(self.style.ERROR(f"Noto‘g‘ri rol: {role}"))
+            self.stdout.write(self.style.WARNING(f"Mavjud rollar: {', '.join(valid_roles)}"))
             return
-        
-        roles_to_update = [role] if role else [r[0] for r in User.ROLE_CHOICES]
-        
-        for role in roles_to_update:
-            try:
-                self.stdout.write(f"Обновление тестов для роли '{role}'...")
-                
-                if use_mock:
-                    questions_data = FALLBACK_QUESTIONS.get(role, [])
-                    if not questions_data:
-                        self.stdout.write(self.style.WARNING(f"Нет локальных тестовых данных для роли '{role}'"))
-                        continue
-                    
-                    self.create_or_update_tests(role, questions_data)
-                    self.stdout.write(self.style.SUCCESS(f"Тесты для роли '{role}' успешно обновлены (использованы локальные данные)"))
-                else:
-                    # В реальном сценарии здесь должен быть запрос к API
-                    # Для демонстрации используем заглушку
-                    try:
-                        # Это имитация запроса к API
-                        # В реальном коде здесь был бы фактический запрос к внешнему API
-                        # response = requests.get(API_ENDPOINTS[role])
-                        # if response.status_code == 200:
-                        #     questions_data = response.json()
-                        # else:
-                        #     raise Exception(f"API вернул ошибку: {response.status_code}")
-                        
-                        # Для тестирования используем локальные данные
-                        questions_data = FALLBACK_QUESTIONS.get(role, [])
-                        if not questions_data:
-                            self.stdout.write(self.style.WARNING(f"Нет данных для роли '{role}'"))
-                            continue
-                        
-                        self.create_or_update_tests(role, questions_data)
-                        self.stdout.write(self.style.SUCCESS(f"Тесты для роли '{role}' успешно обновлены"))
-                    except Exception as e:
-                        logger.error(f"Ошибка при обновлении тестов для роли '{role}': {str(e)}")
-                        self.stdout.write(self.style.ERROR(f"Ошибка: {str(e)}"))
-                        
-                        # Используем резервные вопросы в случае ошибки
-                        fallback_questions = FALLBACK_QUESTIONS.get(role, [])
-                        if fallback_questions:
-                            self.stdout.write(self.style.WARNING(f"Используем резервные вопросы для роли '{role}'"))
-                            self.create_or_update_tests(role, fallback_questions)
-                            self.stdout.write(self.style.SUCCESS(f"Тесты для роли '{role}' успешно обновлены (использованы резервные данные)"))
-                        else:
-                            self.stdout.write(self.style.ERROR(f"Нет резервных данных для роли '{role}'"))
-            except Exception as e:
-                logger.error(f"Необработанная ошибка при обновлении тестов для роли '{role}': {str(e)}")
-                self.stdout.write(self.style.ERROR(f"Необработанная ошибка: {str(e)}"))
-    
+
+        roles_to_update = [role] if role else valid_roles
+
+        for current_role in roles_to_update:
+            bucket = self.resolve_bucket(current_role)
+            questions_data = FALLBACK_QUESTIONS.get(bucket, [])
+            if not questions_data:
+                self.stdout.write(
+                    self.style.WARNING(f"'{current_role}' roli uchun lokal savollar yo‘q")
+                )
+                continue
+
+            # Without a real external API, --mock and default path both use local data.
+            source = 'mock/local' if use_mock else 'local-fallback'
+            self.create_or_update_tests(current_role, questions_data)
+            self.stdout.write(
+                self.style.SUCCESS(
+                    f"'{current_role}' testi yangilandi ({source}, {len(questions_data)} savol)"
+                )
+            )
+
     @transaction.atomic
     def create_or_update_tests(self, role, questions_data):
-        """
-        Создает или обновляет тесты для указанной роли на основе полученных данных
-        """
-        # Проверяем существует ли уже тест для этой роли
+        role_label = dict(User.ROLE_CHOICES).get(role, role)
         test, created = Test.objects.get_or_create(
             role=role,
+            title=f"Test: {role_label}",
             defaults={
-                'title': f"Тест для {dict(User.ROLE_CHOICES)[role]}",
-                'description': f"Проверка знаний для сотрудников с ролью {dict(User.ROLE_CHOICES)[role]}",
-                'time_limit': 30,  # 30 минут на тест
-                'passing_score': 70,  # 70% для прохождения
-                'is_active': True
-            }
+                'description': f"{role_label} roli uchun bilim tekshiruvi",
+                'time_limit': 30,
+                'passing_score': 70,
+                'is_active': True,
+            },
         )
-        
+
         if not created:
-            # Обновляем существующий тест
-            test.title = f"Тест для {dict(User.ROLE_CHOICES)[role]}"
-            test.description = f"Проверка знаний для сотрудников с ролью {dict(User.ROLE_CHOICES)[role]}"
+            test.description = f"{role_label} roli uchun bilim tekshiruvi"
             test.updated_at = timezone.now()
+            test.is_active = True
             test.save()
-            
-            # Удаляем существующие вопросы, чтобы не было дубликатов
-            # В более сложном сценарии здесь может быть логика для сохранения существующих вопросов
-            # и добавления только новых
             Question.objects.filter(test=test).delete()
-        
-        # Создаем новые вопросы
+
         for q_data in questions_data:
             question = Question.objects.create(
                 test=test,
                 text=q_data['question'],
-                explanation=q_data.get('explanation', '')
+                explanation=q_data.get('explanation', ''),
             )
-            
-            # Создаем варианты ответов
             for opt_data in q_data['options']:
                 Option.objects.create(
                     question=question,
                     text=opt_data['text'],
-                    is_correct=opt_data['is_correct']
+                    is_correct=opt_data['is_correct'],
                 )
-        
-        # Добавляем логирование
-        logger.info(f"Тест для роли '{role}' был {'создан' if created else 'обновлен'} с {len(questions_data)} вопросами") 
+
+        logger.info(
+            "Test for role '%s' was %s with %s questions",
+            role,
+            'created' if created else 'updated',
+            len(questions_data),
+        )

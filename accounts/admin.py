@@ -4,15 +4,18 @@ from django.db.models import Count
 from django.utils.safestring import mark_safe
 from django.contrib.auth.admin import UserAdmin as BaseUserAdmin
 
-from .models import User, FavoritePost, UserActivity, Achievement, UserAchievement, LearningProgress, Certificate, LevelUpEvent
+from .models import (
+    User, FavoritePost, UserActivity, Achievement, UserAchievement,
+    LearningProgress, Certificate, LevelUpEvent, Department, Notification,
+)
 
 class FavoritePostInline(admin.TabularInline):
     model = FavoritePost
     extra = 0
     readonly_fields = ('post', 'added_at')
     can_delete = True
-    verbose_name = 'Избранный пост'
-    verbose_name_plural = 'Избранные посты'
+    verbose_name = 'Sevimli post'
+    verbose_name_plural = 'Sevimli postlar'
 
 class UserActivityInline(admin.TabularInline):
     model = UserActivity
@@ -20,21 +23,42 @@ class UserActivityInline(admin.TabularInline):
     readonly_fields = ('activity_type', 'timestamp', 'post', 'ip_address', 'details')
     can_delete = False
     max_num = 10
-    verbose_name = 'Активность пользователя'
-    verbose_name_plural = 'Активность пользователя'
+    verbose_name = 'Faollik'
+    verbose_name_plural = 'Faolliklar'
     
     def has_add_permission(self, request, obj=None):
         return False
 
 class CustomUserAdmin(BaseUserAdmin):
     fieldsets = BaseUserAdmin.fieldsets + (
-        ('Дополнительные данные', {
-            'fields': ('role', 'profile_image', 'bio', 'phone_number', 'experience_points', 'level')
+        ('Zavod maʼlumotlari', {
+            'fields': (
+                'role', 'employee_id', 'department', 'shift',
+                'profile_image', 'bio', 'phone_number',
+                'experience_points', 'level',
+            ),
+            'description': 'Xodimlarni faqat admin yaratadi. Rol zavod bo‘limiga mos tanlanadi.',
         }),
     )
-    list_display = ('username', 'email', 'first_name', 'last_name', 'role', 'level', 'experience_points')
-    list_filter = BaseUserAdmin.list_filter + ('role', 'level')
-    search_fields = BaseUserAdmin.search_fields + ('bio', 'phone_number')
+    add_fieldsets = (
+        (None, {
+            'classes': ('wide',),
+            'fields': (
+                'username', 'password1', 'password2',
+                'role', 'employee_id', 'department', 'shift',
+                'first_name', 'last_name', 'email',
+            ),
+            'description': 'Yangi xodim — ochiq ro‘yxatdan o‘tish o‘chirilgan.',
+        }),
+    )
+    list_display = (
+        'username', 'employee_id', 'get_full_name', 'email', 'role',
+        'department', 'shift', 'level', 'is_staff', 'is_active',
+    )
+    list_filter = BaseUserAdmin.list_filter + ('role', 'department', 'shift', 'level')
+    search_fields = BaseUserAdmin.search_fields + ('bio', 'phone_number', 'employee_id')
+    list_editable = ('role', 'is_active')
+    ordering = ('username',)
     
     def profile_preview(self, obj):
         if obj.profile_image:
@@ -177,8 +201,8 @@ class LearningProgressAdmin(admin.ModelAdmin):
 
 
 class CertificateAdmin(admin.ModelAdmin):
-    list_display = ('certificate_id', 'user', 'category', 'issued_at')
-    list_filter = ('issued_at', 'category')
+    list_display = ('certificate_id', 'user', 'category', 'issued_at', 'valid_until')
+    list_filter = ('issued_at', 'valid_until', 'category')
     search_fields = ('certificate_id', 'user__username', 'category__name')
     date_hierarchy = 'issued_at'
 
@@ -188,6 +212,20 @@ class LevelUpEventAdmin(admin.ModelAdmin):
     list_filter = ('timestamp',)
     search_fields = ('user__username',)
     date_hierarchy = 'timestamp'
+
+
+@admin.register(Department)
+class DepartmentAdmin(admin.ModelAdmin):
+    list_display = ('name', 'code')
+    search_fields = ('name', 'code')
+
+
+@admin.register(Notification)
+class NotificationAdmin(admin.ModelAdmin):
+    list_display = ('user', 'title', 'notification_type', 'is_read', 'created_at')
+    list_filter = ('notification_type', 'is_read', 'created_at')
+    search_fields = ('user__username', 'title', 'message')
+    date_hierarchy = 'created_at'
 
 
 # Регистрируем модели с кастомными админками

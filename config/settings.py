@@ -21,31 +21,54 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # See https://docs.djangoproject.com/en/5.2/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = 'django-insecure-ovj4x579_gdt#$@s450-eefj%#=rg#o(vn$sl-xci+!-z(tb!7'
+SECRET_KEY = os.environ.get(
+    'DJANGO_SECRET_KEY',
+    'django-insecure-ovj4x579_gdt#$@s450-eefj%#=rg#o(vn$sl-xci+!-z(tb!7',
+)
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
+DEBUG = os.environ.get('DJANGO_DEBUG', 'True').lower() in ('1', 'true', 'yes', 'on')
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = [
+    host.strip()
+    for host in os.environ.get('DJANGO_ALLOWED_HOSTS', 'localhost,127.0.0.1').split(',')
+    if host.strip()
+]
 
 # Base URL для генерации абсолютных URL (для сертификатов и т.п.)
-BASE_URL = 'http://localhost:8000'
+BASE_URL = os.environ.get('DJANGO_BASE_URL', 'http://localhost:8000')
 
 
 # Application definition
 
 INSTALLED_APPS = [
+    'jazzmin',
     'django.contrib.admin',
     'django.contrib.auth',
     'django.contrib.contenttypes',
-    'django.contrib.sessions',  
+    'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+    'django_crontab',
 
-    'blog',                         
+    'blog.apps.BlogConfig',
     'accounts.apps.AccountsConfig',
     'courses.apps.CoursesConfig',
 ]
+
+# Avto-yangilanish. Faollashtirish: python manage.py crontab add
+# Ko‘rish: python manage.py crontab show
+CRONJOBS = [
+    # 01:00 — to‘liq: kunlik testlar + yetishmayotgan rollar + health
+    ('0 1 * * *', 'blog.cron.full_auto_update_job'),
+    # 08:00 — muddat / majburiy test bildirishnomalari
+    ('0 8 * * *', 'blog.cron.deadline_notifications_job'),
+    # 13:00 — kunduzi faqat yetishmayotgan testlarni ta’minlash
+    ('0 13 * * *', 'blog.cron.midday_ensure_tests_job'),
+]
+CRONTAB_LOCK_JOBS = True
+# Loyiha yo‘lida bo‘shliqlar bo‘lishi mumkin
+CRONTAB_COMMAND_PREFIX = f'cd "{BASE_DIR}" && '
 
 
 MIDDLEWARE = [
@@ -56,6 +79,7 @@ MIDDLEWARE = [
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
+    'accounts.middleware.ComplianceGateMiddleware',
 ]
 
 AUTH_USER_MODEL = 'accounts.User'
@@ -76,6 +100,7 @@ TEMPLATES = [
                 'django.template.context_processors.request',
                 'django.contrib.auth.context_processors.auth',
                 'django.contrib.messages.context_processors.messages',
+                'accounts.context_processors.zavod_extras',
             ],
         },
     },
@@ -123,7 +148,7 @@ AUTH_PASSWORD_VALIDATORS = [
 
 LANGUAGE_CODE = 'en-us'
 
-TIME_ZONE = 'UTC'
+TIME_ZONE = 'Asia/Tashkent'
 
 USE_I18N = True
 
@@ -134,6 +159,7 @@ USE_TZ = True
 # https://docs.djangoproject.com/en/5.2/howto/static-files/
 
 STATIC_URL = 'static/'
+STATIC_ROOT = BASE_DIR / 'staticfiles'
 
 STATICFILES_DIRS = [
     os.path.join(BASE_DIR, 'static'),
@@ -147,6 +173,63 @@ MEDIA_ROOT = BASE_DIR / 'media'
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
+# Email (parol tiklash). Productionda SMTP o‘rnating.
+EMAIL_BACKEND = os.environ.get(
+    'EMAIL_BACKEND',
+    'django.core.mail.backends.console.EmailBackend',
+)
+DEFAULT_FROM_EMAIL = os.environ.get('DEFAULT_FROM_EMAIL', 'noreply@isomer-oil.local')
+EMAIL_HOST = os.environ.get('EMAIL_HOST', '')
+EMAIL_PORT = int(os.environ.get('EMAIL_PORT', '587') or 587)
+EMAIL_HOST_USER = os.environ.get('EMAIL_HOST_USER', '')
+EMAIL_HOST_PASSWORD = os.environ.get('EMAIL_HOST_PASSWORD', '')
+EMAIL_USE_TLS = os.environ.get('EMAIL_USE_TLS', 'True').lower() in ('1', 'true', 'yes', 'on')
+
+# --- Bepul AI (test generator) ---
+# AI_PROVIDER: groq | gemini | off
+# Kalit: GROQ_API_KEY yoki GEMINI_API_KEY yoki umumiy AI_API_KEY
+AI_PROVIDER = os.environ.get('AI_PROVIDER', 'groq').lower()
+AI_API_KEY = (
+    os.environ.get('AI_API_KEY')
+    or os.environ.get('GROQ_API_KEY')
+    or os.environ.get('GEMINI_API_KEY')
+    or ''
+)
+AI_MODEL = os.environ.get('AI_MODEL', '')  # bo‘sh bo‘lsa provider default
+
+_LOG_DIR = BASE_DIR / 'logs'
+_LOG_DIR.mkdir(exist_ok=True)
+
+LOGGING = {
+    'version': 1,
+    'disable_existing_loggers': False,
+    'formatters': {
+        'verbose': {
+            'format': '[{asctime}] {levelname} {name}: {message}',
+            'style': '{',
+        },
+    },
+    'handlers': {
+        'console': {
+            'class': 'logging.StreamHandler',
+            'formatter': 'verbose',
+        },
+        'auto_update_file': {
+            'class': 'logging.FileHandler',
+            'filename': str(_LOG_DIR / 'auto_update.log'),
+            'formatter': 'verbose',
+        },
+    },
+    'loggers': {
+        'blog.auto_update': {
+            'handlers': ['console', 'auto_update_file'],
+            'level': 'INFO',
+            'propagate': False,
+        },
+    },
+}
+
+from .jazzmin import JAZZMIN_SETTINGS, JAZZMIN_UI_TWEAKS  # noqa: F401
 
 try:
     from .settings_dev import *

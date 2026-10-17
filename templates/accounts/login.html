@@ -2,205 +2,274 @@
 {% load static %}
 
 {% block title %}Kirish{% endblock %}
+{% block body_class %}is-auth{% endblock %}
+{% block chrome_nav %}{% endblock %}
+{% block chrome_footer %}{% endblock %}
 
 {% block extra_css %}
 <style>
-  .auth-section {
+  .auth-stage {
+    min-height: 100vh;
+    display: grid;
+    grid-template-columns: 1.2fr 1fr;
+  }
+  @media (max-width: 900px) {
+    .auth-stage { grid-template-columns: 1fr; }
+    .auth-visual { min-height: 34vh; padding: 1.5rem 1.25rem 1.75rem; }
+    .auth-visual h1 { max-width: none; }
+    .auth-form-side { padding: 1.25rem 1rem 2rem; align-items: start; }
+    .auth-form-box { width: 100%; padding: 1.35rem 1.15rem; border-radius: 16px; box-shadow: var(--zl-shadow); }
+    .auth-ring { display: none; }
+    .auth-foot { margin-top: 1.25rem; }
+  }
+  @media (max-width: 480px) {
+    .auth-visual { min-height: auto; }
+    .auth-visual h1 { font-size: 2.2rem; }
+    .auth-meta span { font-size: 0.75rem; }
+  }
+
+  .auth-visual {
     position: relative;
-    min-height: 75vh;
-    display: flex;
-    align-items: center;
-  }
-  
-  .auth-section::before {
-    content: '';
-    position: absolute;
-    top: -100px;
-    right: -100px;
-    width: 400px;
-    height: 400px;
-    background: radial-gradient(circle, rgba(139, 92, 246, 0.1) 0%, rgba(255,255,255,0) 70%);
-    border-radius: 50%;
-    z-index: -1;
-  }
-  
-  .auth-card {
-    border-radius: 24px;
     overflow: hidden;
-    background: rgba(255, 255, 255, 0.8);
-    backdrop-filter: blur(20px);
-    box-shadow: 0 20px 50px -10px rgba(0, 0, 0, 0.15);
-    border: 1px solid rgba(255, 255, 255, 0.7);
-    transition: all 0.5s ease;
-    padding: 3rem 2rem;
+    background:
+      radial-gradient(900px 500px at 15% 20%, rgba(201, 162, 39, 0.28), transparent 55%),
+      radial-gradient(700px 400px at 90% 90%, rgba(27, 92, 63, 0.45), transparent 50%),
+      linear-gradient(155deg, #040c09 0%, #0a1812 40%, #0f2a1c 78%, #163528 100%);
+    color: #f7f4ec;
+    padding: clamp(2rem, 5vw, 4rem);
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    min-height: 44vh;
   }
-  
-  .auth-title {
-    font-weight: 800;
-    margin-bottom: 1.5rem;
-    text-align: center;
-    background: var(--gradient-primary);
-    background-clip: text;
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
+  .auth-visual::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background-image:
+      linear-gradient(rgba(255,255,255,0.04) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(255,255,255,0.04) 1px, transparent 1px);
+    background-size: 48px 48px;
+    mask-image: linear-gradient(180deg, #000 30%, transparent 95%);
+    pointer-events: none;
+    animation: grid-drift 18s linear infinite;
   }
-  
-  .auth-form .form-control {
-    background-color: rgba(255, 255, 255, 0.8);
-    border: 1px solid rgba(0, 0, 0, 0.1);
-    border-radius: 12px;
-    padding: 0.75rem 1rem;
-    transition: all 0.3s ease;
-    font-size: 1rem;
+  .auth-ring {
+    position: absolute;
+    width: 420px;
+    height: 420px;
+    right: -80px;
+    bottom: -120px;
+    border-radius: 50%;
+    border: 1px solid rgba(196, 163, 90, 0.35);
+    box-shadow: 0 0 0 40px rgba(196, 163, 90, 0.05);
+    animation: pulse-ring 6s ease-in-out infinite;
+    pointer-events: none;
   }
-  
-  .auth-form .form-control:focus {
-    box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.2);
-    border-color: var(--primary);
+  @keyframes grid-drift {
+    from { transform: translateY(0); }
+    to { transform: translateY(48px); }
   }
-  
-  .auth-form .form-label {
+  @keyframes pulse-ring {
+    0%, 100% { transform: scale(1); opacity: 0.7; }
+    50% { transform: scale(1.05); opacity: 1; }
+  }
+  .auth-visual > * { position: relative; z-index: 1; }
+
+  .auth-eyebrow {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-size: 0.78rem;
+    font-weight: 700;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--zl-brass);
+    margin-bottom: 1.25rem;
+    animation: zl-fade-up 0.6s both;
+  }
+  .auth-visual h1 {
+    font-family: var(--zl-display);
+    font-size: clamp(3rem, 6.5vw, 5.2rem);
+    line-height: 0.92;
+    letter-spacing: 0.01em;
     font-weight: 600;
-    margin-bottom: 0.5rem;
-    color: var(--dark);
+    color: var(--zl-brass-light);
+    max-width: 10ch;
+    margin: 0 0 1rem;
+    text-shadow: 0 12px 48px rgba(0,0,0,0.4);
   }
-  
-  .auth-form .btn-login {
-    border-radius: 12px;
-    padding: 0.75rem 1rem;
+  .auth-visual p {
+    max-width: 28rem;
+    font-size: 1.08rem;
+    color: rgba(244, 241, 234, 0.84);
+    margin: 0;
+    animation: zl-fade-up 0.7s 0.1s both;
+  }
+  .auth-meta {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.6rem;
+    margin-top: 2rem;
+    animation: zl-fade-up 0.7s 0.18s both;
+  }
+  .auth-meta span {
+    border: 1px solid rgba(255,255,255,0.18);
+    background: rgba(255,255,255,0.06);
+    border-radius: 999px;
+    padding: 0.4rem 0.85rem;
+    font-size: 0.8rem;
     font-weight: 600;
-    transition: all 0.3s ease;
-    width: 100%;
+    backdrop-filter: blur(8px);
+    transition: transform 0.3s ease, background 0.3s ease;
   }
-  
-  .auth-form .btn-login:hover {
-    transform: translateY(-3px);
-    box-shadow: 0 10px 20px -5px rgba(79, 70, 229, 0.4);
+  .auth-meta span:hover {
+    transform: translateY(-2px);
+    background: rgba(255,255,255,0.12);
   }
-  
-  .auth-form .errorlist {
-    color: #ef4444;
-    font-size: 0.875rem;
-    margin-top: 0.5rem;
-    padding-left: 1.5rem;
+  .auth-foot {
+    font-size: 0.85rem;
+    color: rgba(244, 241, 234, 0.55);
   }
-  
-  .auth-form .non-field-errors {
-    background-color: rgba(239, 68, 68, 0.1);
-    color: #ef4444;
-    padding: 1rem;
-    border-radius: 12px;
+
+  .auth-form-side {
+    display: grid;
+    place-items: center;
+    padding: clamp(1.5rem, 4vw, 3rem);
+    background:
+      radial-gradient(600px 300px at 100% 0%, rgba(201, 162, 39, 0.12), transparent 60%),
+      #ebe6db;
+  }
+  .auth-form-box {
+    width: min(420px, 100%);
+    background: #f7f4ec;
+    border: 1px solid var(--zl-line);
+    border-radius: 18px;
+    padding: 1.75rem 1.6rem;
+    box-shadow: 0 24px 56px rgba(7, 20, 14, 0.12);
+    animation: rise-in 0.8s cubic-bezier(0.22, 1, 0.36, 1) both;
+  }
+  @keyframes rise-in {
+    from { opacity: 0; transform: translateY(22px) scale(0.98); }
+    to { opacity: 1; transform: translateY(0) scale(1); }
+  }
+  .auth-form-box h2 {
+    font-size: 1.75rem;
+    margin: 0 0 0.35rem;
+  }
+  .auth-form-box .sub {
+    color: var(--zl-muted);
     margin-bottom: 1.5rem;
+  }
+  .auth-form-box .form-label {
+    font-weight: 700;
+    font-size: 0.88rem;
+  }
+  .auth-form-box .form-control {
+    border-radius: 12px;
+    border: 1.5px solid var(--zl-line);
+    padding: 0.85rem 0.95rem;
+    background: var(--zl-card);
+    transition: border-color 0.25s ease, box-shadow 0.25s ease, transform 0.25s ease;
+  }
+  .auth-form-box .form-control:focus {
+    border-color: var(--zl-brass);
+    box-shadow: 0 0 0 4px rgba(201, 162, 39, 0.2);
+    transform: translateY(-1px);
+  }
+  .auth-errors {
+    background: #fdecea;
+    color: #8a1f14;
+    border: 1px solid #f5c6c0;
+    border-radius: 12px;
+    padding: 0.8rem 1rem;
+    margin-bottom: 1rem;
     list-style: none;
   }
-  
-  .auth-link {
-    color: var(--primary);
-    font-weight: 600;
-    transition: all 0.3s ease;
-    text-decoration: none;
+  .auth-submit {
+    width: 100%;
+    padding: 0.9rem 1rem;
+    margin-top: 0.35rem;
+    font-size: 1rem;
   }
-  
-  .auth-link:hover {
-    color: var(--primary-dark);
-    text-decoration: underline;
-  }
-  
-  .auth-divider {
-    display: flex;
-    align-items: center;
-    margin: 1.5rem 0;
-  }
-  
-  .auth-divider::before,
-  .auth-divider::after {
-    content: '';
-    flex: 1;
-    height: 1px;
-    background: rgba(0, 0, 0, 0.1);
-  }
-  
-  .auth-divider span {
-    padding: 0 1rem;
-    color: #64748b;
-    font-size: 0.875rem;
+  .auth-note {
+    margin-top: 1.25rem;
+    padding: 0.9rem 1rem;
+    border-radius: 12px;
+    background: rgba(196, 163, 90, 0.12);
+    border: 1px solid rgba(196, 163, 90, 0.35);
+    color: #6b5424;
+    font-size: 0.86rem;
   }
 </style>
 {% endblock %}
 
 {% block content %}
-<div class="auth-section">
-  <div class="container">
-    <div class="row justify-content-center">
-      <div class="col-md-7 col-lg-5">
-        <!-- Auth Card -->
-        <div class="auth-card animate__animated animate__fadeInDown" data-aos="fade-down">
-          <h2 class="auth-title display-6">Tizimga kirish</h2>
-          
-          <!-- Login Form -->
-          <form method="post" class="auth-form" novalidate>
-            {% csrf_token %}
-            
-            <!-- Form Errors -->
-            {% if form.non_field_errors %}
-              <ul class="non-field-errors">
-                {% for error in form.non_field_errors %}
-                  <li><i class="fas fa-exclamation-circle me-2"></i>{{ error }}</li>
-                {% endfor %}
-              </ul>
-            {% endif %}
-            
-            <!-- Username Field -->
-            <div class="mb-4">
-              <label for="id_username" class="form-label">
-                <i class="fas fa-user me-2"></i>Foydalanuvchi nomi
-              </label>
-              <input type="text" name="username" class="form-control" id="id_username" placeholder="Foydalanuvchi nomingizni kiriting" autofocus>
-              {% if form.username.errors %}
-                <ul class="errorlist">
-                  {% for error in form.username.errors %}
-                    <li>{{ error }}</li>
-                  {% endfor %}
-                </ul>
-              {% endif %}
-            </div>
-            
-            <!-- Password Field -->
-            <div class="mb-4">
-              <label for="id_password" class="form-label">
-                <i class="fas fa-lock me-2"></i>Parol
-              </label>
-              <input type="password" name="password" class="form-control" id="id_password" placeholder="Parolingizni kiriting">
-              {% if form.password.errors %}
-                <ul class="errorlist">
-                  {% for error in form.password.errors %}
-                    <li>{{ error }}</li>
-                  {% endfor %}
-                </ul>
-              {% endif %}
-            </div>
-            
-            <!-- Submit Button -->
-            <button type="submit" class="btn btn-primary btn-login mt-4">
-              <i class="fas fa-sign-in-alt me-2"></i>Kirish
-            </button>
-          </form>
-          
-          <!-- Divider -->
-          <div class="auth-divider">
-            <span>Yoki</span>
-          </div>
-          
-          <!-- Registration Link -->
-          <p class="text-center mb-0">
-            Hisobingiz yo'qmi?
-            <a href="{% url 'accounts:signup' %}" class="auth-link">
-              Ro'yxatdan o'tish
-            </a>
-          </p>
-        </div>
+<div class="auth-stage">
+  <aside class="auth-visual" data-zl-parallax>
+    <div class="zl-shimmer-line"></div>
+    <div class="zl-orb a"></div>
+    <div class="zl-orb b"></div>
+    <div class="auth-ring"></div>
+    <div>
+      <div class="auth-eyebrow">
+        <img src="{% static 'img/logo.png' %}" alt="" width="22" height="22" style="border-radius:50%;object-fit:cover;border:1px solid rgba(201,162,39,.5);">
+        Premium · Ichki portal
+      </div>
+      <h1 class="zl-title-clip"><span>Isomer Oil</span></h1>
+      <p>Zavod LMS — xodimlar uchun o‘quv, xavfsizlik testlari va hujjatlar.</p>
+      <div class="auth-meta">
+        <span>Kurslar</span>
+        <span>Testlar</span>
+        <span>Hujjatlar</span>
       </div>
     </div>
-  </div>
+    <div class="auth-foot">Faqat Isomer Oil xodimlari · Admin orqali kirish</div>
+  </aside>
+
+  <section class="auth-form-side">
+    <div class="auth-form-box">
+      <h2>Tizimga kirish</h2>
+      <p class="sub">Login va parolni administrator beradi.</p>
+
+      <form method="post" novalidate>
+        {% csrf_token %}
+        {% if form.non_field_errors %}
+          <ul class="auth-errors">
+            {% for error in form.non_field_errors %}<li>{{ error }}</li>{% endfor %}
+          </ul>
+        {% endif %}
+
+        <div class="mb-3">
+          <label class="form-label" for="id_username">Foydalanuvchi nomi</label>
+          <input type="text" name="username" id="id_username" class="form-control"
+                 autofocus autocomplete="username" placeholder="operator01"
+                 value="{{ form.username.value|default:'' }}">
+          {% if form.username.errors %}
+            <div class="text-danger small mt-1">{{ form.username.errors.0 }}</div>
+          {% endif %}
+        </div>
+
+        <div class="mb-3">
+          <label class="form-label" for="id_password">Parol</label>
+          <input type="password" name="password" id="id_password" class="form-control"
+                 autocomplete="current-password" placeholder="••••••••">
+          {% if form.password.errors %}
+            <div class="text-danger small mt-1">{{ form.password.errors.0 }}</div>
+          {% endif %}
+        </div>
+
+        <button type="submit" class="btn btn-primary auth-submit" data-zl-magnetic>Kirish</button>
+      </form>
+
+      <p class="text-center mt-3 mb-0">
+        <a href="{% url 'accounts:password_reset' %}" class="small">Parolni unutdingizmi?</a>
+      </p>
+
+      <div class="auth-note">
+        Ochiq ro‘yxatdan o‘tish yo‘q. Yangi xodim uchun admin bilan bog‘laning.
+      </div>
+    </div>
+  </section>
 </div>
 {% endblock %}

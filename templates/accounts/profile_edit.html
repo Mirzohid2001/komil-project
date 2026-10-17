@@ -3,75 +3,71 @@
 {% block profile_title %}Profilni tahrirlash{% endblock %}
 
 {% block profile_content %}
-<div class="card border-0 shadow-sm">
-  <div class="card-body">
-    <form method="post" enctype="multipart/form-data">
-      {% csrf_token %}
-      
-      <div class="row">
-        <!-- Shaxsiy ma'lumotlar -->
-        <div class="col-md-6 mb-4">
-          <h5 class="mb-3 text-primary">Shaxsiy ma'lumotlar</h5>
-          
-          <div class="mb-3">
-            <label for="{{ form.first_name.id_for_label }}" class="form-label">Ism</label>
-            {{ form.first_name }}
-          </div>
-          
-          <div class="mb-3">
-            <label for="{{ form.last_name.id_for_label }}" class="form-label">Familiya</label>
-            {{ form.last_name }}
-          </div>
-          
-          <div class="mb-3">
-            <label for="{{ form.email.id_for_label }}" class="form-label">Email</label>
-            {{ form.email }}
-          </div>
-          
-          <div class="mb-3">
-            <label for="{{ form.phone_number.id_for_label }}" class="form-label">Telefon</label>
-            {{ form.phone_number }}
-          </div>
+<p class="zl-section-lead mb-4">Ism, aloqa va profil rasmini yangilang.</p>
+
+<div class="zl-panel">
+  <form method="post" enctype="multipart/form-data">
+    {% csrf_token %}
+
+    <div class="row g-4">
+      <div class="col-md-6">
+        <h3 class="zl-section-title h5 mb-3">Shaxsiy ma’lumotlar</h3>
+
+        <div class="mb-3">
+          <label for="{{ form.first_name.id_for_label }}" class="form-label">Ism</label>
+          {{ form.first_name }}
         </div>
-        
-        <!-- Profil rasmi va biografiya -->
-        <div class="col-md-6 mb-4">
-          <h5 class="mb-3 text-primary">Rasm va biografiya</h5>
-          
-          <div class="mb-4">
-            <label for="{{ form.profile_image.id_for_label }}" class="form-label">Profil rasmi</label>
-            <div class="d-flex align-items-start mb-3">
-              {% if user.profile_image %}
-                <img src="{{ user.profile_image.url }}" alt="Current Profile Image" class="me-3" style="width: 80px; height: 80px; border-radius: 8px; object-fit: cover;">
-              {% else %}
-                <div class="me-3 d-flex align-items-center justify-content-center bg-light" style="width: 80px; height: 80px; border-radius: 8px;">
-                  <i class="fas fa-user-circle fa-3x text-muted"></i>
-                </div>
-              {% endif %}
-              <div>
-                {{ form.profile_image }}
-                <small class="form-text text-muted">Tavsiya etilgan o'lchamlar: 400x400px, JPG yoki PNG</small>
+
+        <div class="mb-3">
+          <label for="{{ form.last_name.id_for_label }}" class="form-label">Familiya</label>
+          {{ form.last_name }}
+        </div>
+
+        <div class="mb-3">
+          <label for="{{ form.email.id_for_label }}" class="form-label">Email</label>
+          {{ form.email }}
+        </div>
+
+        <div class="mb-3">
+          <label for="{{ form.phone_number.id_for_label }}" class="form-label">Telefon</label>
+          {{ form.phone_number }}
+        </div>
+      </div>
+
+      <div class="col-md-6">
+        <h3 class="zl-section-title h5 mb-3">Rasm va biografiya</h3>
+
+        <div class="mb-4">
+          <label for="{{ form.profile_image.id_for_label }}" class="form-label">Profil rasmi</label>
+          <div class="d-flex align-items-start gap-3 mb-2">
+            {% if user.profile_image %}
+              <img src="{{ user.profile_image.url }}" alt="Profil rasmi" class="rounded-3 border" style="width: 80px; height: 80px; object-fit: cover;">
+            {% else %}
+              <div class="d-flex align-items-center justify-content-center rounded-3 border bg-light" style="width: 80px; height: 80px;">
+                <i class="fas fa-user-circle fa-2x zl-meta"></i>
               </div>
+            {% endif %}
+            <div class="flex-grow-1">
+              {{ form.profile_image }}
+              <small class="form-text zl-meta d-block mt-1">Tavsiya: 400×400 px, JPG yoki PNG</small>
             </div>
           </div>
-          
-          <div class="mb-3">
-            <label for="{{ form.bio.id_for_label }}" class="form-label">O'zim haqimda</label>
-            {{ form.bio }}
-            <small class="form-text text-muted">Siz haqingizda qisqacha ma'lumot</small>
-          </div>
+        </div>
+
+        <div class="mb-3">
+          <label for="{{ form.bio.id_for_label }}" class="form-label">O‘zim haqimda</label>
+          {{ form.bio }}
+          <small class="form-text zl-meta">Qisqacha tavsif</small>
         </div>
       </div>
-      
-      <div class="border-top pt-4 mt-2">
-        <div class="d-flex">
-          <button type="submit" class="btn btn-primary px-4">
-            <i class="fas fa-save me-2"></i> O'zgarishlarni saqlash
-          </button>
-          <a href="{% url 'accounts:profile' %}" class="btn btn-outline-secondary ms-2">Bekor qilish</a>
-        </div>
-      </div>
-    </form>
-  </div>
+    </div>
+
+    <div class="border-top pt-4 mt-2 d-flex flex-wrap gap-2">
+      <button type="submit" class="btn btn-primary">
+        <i class="fas fa-save me-2"></i> O‘zgarishlarni saqlash
+      </button>
+      <a href="{% url 'accounts:profile' %}" class="btn btn-outline-secondary">Bekor qilish</a>
+    </div>
+  </form>
 </div>
-{% endblock %} 
+{% endblock %}

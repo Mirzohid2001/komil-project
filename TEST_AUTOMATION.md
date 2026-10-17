@@ -2,6 +2,26 @@
 
 This project includes several tools for automating test creation and management. Here's how to use them:
 
+## 0. Full Auto-Update (recommended)
+
+Single pipeline: daily tests → fill missing role tests → health check.
+
+```bash
+# Bir marta cron’ga qo‘shish
+python manage.py crontab add
+python manage.py crontab show
+
+# Qo‘lda ishga tushirish
+python manage.py auto_update
+python manage.py auto_update --force
+```
+
+Admin: **Avto-yangilanish** (`/admin/blog/test/auto-update/`)
+
+Cron jadvali:
+- `01:00` — to‘liq yangilanish
+- `13:00` — yetishmayotgan testlarni ta’minlash
+
 ## 1. Automatic Daily Test Generation
 
 Tests are automatically generated each day for all user roles. Each test contains 30 questions specific to the role.

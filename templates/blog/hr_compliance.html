@@ -1,0 +1,124 @@
+{% extends 'base.html' %}
+
+{% block title %}HR compliance{% endblock %}
+
+{% block content %}
+<div class="zl-page-head">
+  <div>
+    <h1 class="zl-section-title mb-1">HR compliance</h1>
+    <p class="zl-section-lead mb-0">Majburiy testlar, hujjat tasdiqlari va sertifikat muddatlari.</p>
+  </div>
+  <div class="d-flex flex-wrap gap-2">
+    <a class="btn btn-sm btn-outline-primary" href="{% url 'blog:hr_reports' %}">Test hisobot</a>
+    <a class="btn btn-sm btn-primary" href="?role={{ selected_role }}&export=csv">
+      <i class="fas fa-file-csv me-1"></i> CSV
+    </a>
+  </div>
+</div>
+
+<div class="row g-3 mb-3">
+  <div class="col-md-4">
+    <div class="zl-card p-3">
+      <div class="zl-meta">Xodimlar</div>
+      <strong class="fs-3">{{ total_users }}</strong>
+    </div>
+  </div>
+  <div class="col-md-4">
+    <div class="zl-card p-3">
+      <div class="zl-meta">Muvofiq</div>
+      <strong class="fs-3 text-success">{{ compliant }}</strong>
+    </div>
+  </div>
+  <div class="col-md-4">
+    <div class="zl-card p-3">
+      <div class="zl-meta">Muammoli</div>
+      <strong class="fs-3 text-danger">{{ non_compliant }}</strong>
+    </div>
+  </div>
+</div>
+
+<div class="zl-card p-3 mb-3">
+  <form method="get" class="row g-2 align-items-end">
+    <div class="col-md-4">
+      <label class="form-label small fw-semibold">Rol</label>
+      <select name="role" class="form-select form-select-sm">
+        <option value="">Barcha rollar</option>
+        {% for value, label in roles %}
+          {% if value != 'admin' %}
+          <option value="{{ value }}" {% if selected_role == value %}selected{% endif %}>{{ label }}</option>
+          {% endif %}
+        {% endfor %}
+      </select>
+    </div>
+    <div class="col-md-2">
+      <button class="btn btn-primary btn-sm w-100" type="submit">Filtrlash</button>
+    </div>
+  </form>
+</div>
+
+<div class="zl-card overflow-hidden">
+  <div class="table-responsive">
+    <table class="table table-sm table-hover align-middle mb-0">
+      <thead class="table-light">
+        <tr>
+          <th>Tabel</th>
+          <th>Xodim</th>
+          <th>Rol / Bo‘lim</th>
+          <th>Muddati o‘tgan testlar</th>
+          <th>Tasdiq kerak</th>
+          <th>Sertifikat</th>
+          <th>Holat</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for row in rows %}
+        <tr>
+          <td>{{ row.user.employee_id|default:"—" }}</td>
+          <td>
+            <strong>{{ row.user.get_full_name|default:row.user.username }}</strong>
+            <div class="zl-meta">{{ row.user.username }}</div>
+          </td>
+          <td>
+            <span class="zl-chip">{{ row.user.get_role_display }}</span>
+            {% if row.user.department %}<div class="zl-meta">{{ row.user.department.name }}</div>{% endif %}
+            {% if row.user.shift %}<div class="zl-meta">{{ row.user.get_shift_display }}</div>{% endif %}
+          </td>
+          <td>
+            {% for t in row.overdue_tests %}
+              <div class="small text-danger">{{ t.title }}</div>
+            {% empty %}
+              <span class="text-muted">—</span>
+            {% endfor %}
+          </td>
+          <td>
+            {% for d in row.missing_acks %}
+              <div class="small">{{ d.title }}</div>
+            {% empty %}
+              <span class="text-muted">—</span>
+            {% endfor %}
+          </td>
+          <td>
+            {% for c in row.expiring_certs %}
+              <div class="small {% if c.is_expired %}text-danger{% else %}text-warning{% endif %}">
+                {{ c.title }} · {{ c.valid_until|date:"d.m.Y" }}
+              </div>
+            {% empty %}
+              <span class="text-muted">—</span>
+            {% endfor %}
+          </td>
+          <td>
+            {% if row.is_compliant %}
+              <span class="badge text-bg-success">OK</span>
+            {% else %}
+              <span class="badge text-bg-danger">Muammo</span>
+            {% endif %}
+          </td>
+        </tr>
+        {% empty %}
+        <tr><td colspan="7" class="text-center text-muted py-4">Ma’lumot yo‘q</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endblock %}

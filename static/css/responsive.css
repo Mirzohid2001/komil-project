@@ -1,0 +1,230 @@
+/* Zavod LMS — adaptive / responsive layer */
+
+/* Safe areas (notch / home indicator) */
+@supports (padding: max(0px)) {
+  .zl-nav .zl-shell {
+    padding-left: max(1rem, env(safe-area-inset-left));
+    padding-right: max(1rem, env(safe-area-inset-right));
+  }
+  .zl-footer {
+    padding-bottom: max(2.25rem, env(safe-area-inset-bottom));
+  }
+}
+
+/* Touch-friendly targets */
+@media (pointer: coarse) {
+  .btn,
+  .nav-link,
+  .zl-option,
+  .list-group-item-action {
+    min-height: 44px;
+  }
+  .zl-card:hover,
+  .zl-row-card:hover,
+  .zl-course-card:hover,
+  .zl-test:hover,
+  .zl-panel:hover,
+  .glass-card:hover {
+    transform: none;
+  }
+}
+
+/* Tablet and down */
+@media (max-width: 991.98px) {
+  .zl-shell {
+    width: min(1140px, calc(100% - 1.25rem));
+  }
+  .zl-main {
+    padding: 1.25rem 0 2.75rem;
+  }
+
+  .zl-nav .navbar-nav {
+    width: 100%;
+  }
+  .zl-nav .nav-link {
+    padding: 0.7rem 0.85rem;
+  }
+  .zl-nav-collapse .d-flex {
+    width: 100%;
+    padding-top: 0.5rem;
+    border-top: 1px solid var(--zl-line);
+    margin-top: 0.35rem;
+  }
+  .zl-nav-collapse .btn {
+    width: 100%;
+  }
+  .zl-role-chip {
+    justify-content: center;
+    width: 100%;
+  }
+
+  .zl-page-head {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 0.75rem;
+  }
+  .zl-page-head .btn,
+  .zl-page-head .d-flex {
+    width: 100%;
+  }
+  .zl-page-head .d-flex {
+    flex-wrap: wrap;
+  }
+  .zl-page-head .d-flex .btn {
+    flex: 1 1 auto;
+  }
+
+  .sticky-lg-top {
+    position: static !important;
+    top: auto !important;
+  }
+}
+
+/* Phone */
+@media (max-width: 767.98px) {
+  .zl-shell {
+    width: calc(100% - 1rem);
+  }
+  .zl-main {
+    padding: 1rem 0 2.25rem;
+  }
+
+  .zl-brand-text {
+    font-size: 1.05rem;
+  }
+  .zl-brand-mark {
+    width: 2.25rem;
+    height: 2.25rem;
+  }
+
+  .zl-section-title {
+    font-size: 1.35rem;
+  }
+  .zl-section-lead {
+    font-size: 0.95rem;
+    margin-bottom: 1rem;
+  }
+
+  .zl-stats {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 0.55rem;
+  }
+  .zl-stat {
+    padding: 0.85rem 0.9rem;
+  }
+  .zl-stat strong {
+    font-size: 1.25rem;
+  }
+
+  .zl-row-card {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 0.75rem;
+    padding: 0.95rem 1rem;
+  }
+  .zl-row-card .btn,
+  .zl-row-card .d-flex.gap-2 {
+    width: 100%;
+  }
+  .zl-row-card .d-flex.gap-2 {
+    display: grid !important;
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .zl-panel,
+  .zl-card {
+    border-radius: 14px;
+  }
+
+  .table-responsive {
+    margin-inline: -0.15rem;
+    border-radius: 12px;
+  }
+  .table {
+    font-size: 0.88rem;
+  }
+  .table thead th {
+    white-space: nowrap;
+  }
+
+  .breadcrumb {
+    font-size: 0.8rem;
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    white-space: nowrap;
+    -webkit-overflow-scrolling: touch;
+    padding-bottom: 0.25rem;
+  }
+
+  .profile-content {
+    padding: 1.15rem 1rem !important;
+  }
+  .profile-sidebar {
+    margin-bottom: 0.75rem;
+  }
+
+  .accordion-button {
+    font-size: 0.95rem;
+    padding: 0.85rem 1rem;
+  }
+
+  .modal-dialog {
+    margin: 0.75rem;
+  }
+}
+
+/* Small phones */
+@media (max-width: 399.98px) {
+  .zl-stats {
+    grid-template-columns: 1fr 1fr;
+  }
+  .zl-brand-text small {
+    letter-spacing: 0.08em;
+  }
+  .zl-home-actions .btn {
+    width: 100%;
+  }
+  .zl-row-card .d-flex.gap-2 {
+    grid-template-columns: 1fr !important;
+  }
+}
+
+/* Course grid */
+@media (max-width: 575.98px) {
+  .zl-course-grid {
+    grid-template-columns: 1fr !important;
+  }
+}
+
+@media (min-width: 576px) and (max-width: 991.98px) {
+  .zl-course-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+  }
+}
+
+/* Utility: prevent horizontal page scroll */
+html, body {
+  max-width: 100%;
+  overflow-x: clip;
+}
+
+img, video, iframe {
+  max-width: 100%;
+  height: auto;
+}
+
+/* Forms full-width on mobile */
+@media (max-width: 575.98px) {
+  .input-group {
+    flex-wrap: wrap;
+  }
+  .input-group > .form-control {
+    width: 100%;
+    border-radius: var(--zl-radius-sm) !important;
+    margin-bottom: 0.5rem;
+  }
+  .input-group > .btn {
+    width: 100%;
+    border-radius: var(--zl-radius-sm) !important;
+  }
+}

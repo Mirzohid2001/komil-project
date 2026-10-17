@@ -7,25 +7,24 @@ from django.utils import timezone
 from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger
 from django.views.decorators.http import require_POST
 from django.urls import reverse
-from django.views.decorators.csrf import csrf_exempt
-
-from .models import Course, Module, Lesson, Enrollment, CompletedLesson, CourseCategory, CourseCertificate
+from .models import (
+    Course, Module, Lesson, Enrollment, CompletedLesson,
+    CourseCategory, CourseCertificate, LessonComment,
+    LessonQuizQuestion, LessonQuizOption, LessonQuizAttempt,
+    CourseAssignment, LessonAssignmentSubmission,
+)
+from .services import create_course_certificate, generate_course_certificate_pdf
 from accounts.models import UserActivity
 
 import json
-import uuid
-import os
 from django.conf import settings
-from io import BytesIO
-from django.template.loader import get_template
-from xhtml2pdf import pisa
 
 def course_list(request, category_slug=None):
     """Отображение списка курсов с фильтрацией по категории"""
     categories = CourseCategory.objects.all()
     
-    # Базовый запрос для опубликованных курсов
-    courses = Course.objects.filter(status='published')
+    # Rol bo‘yicha filtrlangan nashr etilgan kurslar
+    courses = Course.published_for_user(request.user)
     
     # Фильтр по категории, если указан slug
     if category_slug:
@@ -36,12 +35,6 @@ def course_list(request, category_slug=None):
     difficulty = request.GET.get('difficulty')
     if difficulty:
         courses = courses.filter(difficulty=difficulty)
-    
-    price_filter = request.GET.get('price')
-    if price_filter == 'free':
-        courses = courses.filter(is_free=True)
-    elif price_filter == 'paid':
-        courses = courses.filter(is_free=False)
     
     # Сортировка
     sort = request.GET.get('sort', 'newest')
@@ -65,7 +58,7 @@ def course_list(request, category_slug=None):
         courses = paginator.page(paginator.num_pages)
     
     # Рекомендуемые курсы для боковой панели
-    featured_courses = Course.objects.filter(status='published', is_featured=True)[:5]
+    featured_courses = Course.published_for_user(request.user).filter(is_featured=True)[:5]
     
     context = {
         'categories': categories,
@@ -74,7 +67,6 @@ def course_list(request, category_slug=None):
         'current_category': category_slug,
         'difficulty_choices': Course.DIFFICULTY_CHOICES,
         'current_difficulty': difficulty,
-        'current_price': price_filter,
         'current_sort': sort,
     }
     
@@ -86,12 +78,10 @@ def course_search(request):
     query = request.GET.get('q', '')
     
     if query:
-        # Поиск по названию, описанию, короткому описанию
-        courses = Course.objects.filter(
-            Q(title__icontains=query) | 
+        courses = Course.published_for_user(request.user).filter(
+            Q(title__icontains=query) |
             Q(description__icontains=query) |
             Q(short_description__icontains=query),
-            status='published'
         ).distinct()
     else:
         courses = Course.objects.none()
@@ -117,43 +107,63 @@ def course_search(request):
 
 def course_detail(request, course_slug):
     """Детальная страница курса"""
-    course = get_object_or_404(Course, slug=course_slug, status='published')
-    
-    # Проверка записи текущего пользователя на курс
+    course = get_object_or_404(
+        Course.objects.select_related('category'),
+        slug=course_slug,
+        status='published',
+    )
+
+    if not course.can_user_access(request.user):
+        if request.user.is_authenticated:
+            messages.error(request, "Bu kurs sizning rolingiz uchun ochiq emas.")
+            return redirect('courses:list')
+        messages.info(request, "Bu kursga kirish uchun tizimga kiring.")
+        return redirect('accounts:login')
+
     enrollment = None
     if request.user.is_authenticated:
-        try:
-            enrollment = Enrollment.objects.get(user=request.user, course=course)
-        except Enrollment.DoesNotExist:
-            pass
-    
-    # Получаем модули и уроки курса
+        enrollment = Enrollment.objects.filter(user=request.user, course=course).first()
+
     modules = course.modules.all().prefetch_related('lessons')
-    
-    # Статистика курса
-    total_duration = course.total_duration()
-    total_students = course.students_count()
-    
-    # Список бесплатных уроков для предпросмотра
-    free_preview_lessons = Lesson.objects.filter(module__course=course, is_free_preview=True)
-    
-    # Отзывы и рейтинг
-    # TODO: Добавить модель отзывов и расчет рейтинга
-    
-    # Убираем ссылку на teacher
-    instructor_other_courses = []
-    
+    free_preview_lessons = Lesson.objects.filter(
+        module__course=course, is_free_preview=True
+    )
+    related_courses = (
+        Course.published_for_user(request.user).filter(category=course.category)
+        .exclude(id=course.id)
+        .order_by('-created_at')[:4]
+    )
+
+    is_enrolled = enrollment is not None
+    is_completed = bool(enrollment and enrollment.is_completed)
+    progress = enrollment.progress() if enrollment else 0
+    certificate = (
+        CourseCertificate.objects.filter(enrollment=enrollment).first()
+        if enrollment
+        else None
+    )
+    completed_lesson_ids = set()
+    if enrollment:
+        completed_lesson_ids = set(
+            CompletedLesson.objects.filter(enrollment=enrollment)
+            .values_list('lesson_id', flat=True)
+        )
+
     context = {
         'course': course,
         'enrollment': enrollment,
         'modules': modules,
-        'total_duration': total_duration,
-        'total_students': total_students,
+        'total_duration': course.total_duration(),
+        'total_students': course.students_count(),
         'free_preview_lessons': free_preview_lessons,
-        'instructor_other_courses': instructor_other_courses,
+        'related_courses': related_courses,
+        'is_enrolled': is_enrolled,
+        'is_completed': is_completed,
+        'progress': progress,
+        'certificate': certificate,
+        'completed_lesson_ids': completed_lesson_ids,
     }
-    
-    # Записываем активность пользователя
+
     if request.user.is_authenticated:
         UserActivity.objects.create(
             user=request.user,
@@ -161,27 +171,39 @@ def course_detail(request, course_slug):
             details={'course_id': course.id, 'course_title': course.title},
             ip_address=request.META.get('REMOTE_ADDR')
         )
-    
+
     return render(request, 'courses/course_detail.html', context)
 
 
 @login_required
+@require_POST
+def course_unenroll(request, course_slug):
+    """Remove current user enrollment from a course."""
+    course = get_object_or_404(Course, slug=course_slug)
+    deleted, _ = Enrollment.objects.filter(user=request.user, course=course).delete()
+    if deleted:
+        messages.success(request, f"Siz '{course.title}' kursidan chiqdingiz.")
+    else:
+        messages.info(request, "Siz bu kursga yozilmagansiz.")
+    return redirect('courses:detail', course_slug=course.slug)
+
+
+@login_required
+@require_POST
 def course_enroll(request, course_slug):
     """Запись на курс"""
     course = get_object_or_404(Course, slug=course_slug, status='published')
+
+    if not course.can_user_access(request.user):
+        messages.error(request, "Bu kurs sizning rolingiz uchun ochiq emas.")
+        return redirect('courses:list')
     
     # Проверка, не записан ли пользователь уже
     if Enrollment.objects.filter(user=request.user, course=course).exists():
         messages.info(request, f"Siz allaqachon '{course.title}' kursiga yozilgansiz.")
         return redirect('courses:learn', course_slug=course.slug)
     
-    # Обработка платежа, если курс платный
-    if not course.is_free:
-        # TODO: Реализовать логику обработки платежей
-        messages.error(request, "Tizimda to'lov qilish hozircha mavjud emas.")
-        return redirect('courses:detail', course_slug=course.slug)
-    
-    # Создаем запись о зачислении на курс
+    # Ichki zavod loyihasi — barcha kurslar bepul, to'lov yo'q.
     enrollment = Enrollment.objects.create(
         user=request.user,
         course=course
@@ -203,7 +225,16 @@ def course_enroll(request, course_slug):
 def my_courses(request):
     """Список курсов пользователя"""
     # Получаем все записи на курсы текущего пользователя
-    enrollments = Enrollment.objects.filter(user=request.user).select_related('course')
+    enrollments = Enrollment.objects.filter(user=request.user).select_related(
+        'course', 'certificate'
+    )
+    assignments = (
+        CourseAssignment.objects.filter(user=request.user)
+        .select_related('course')
+        .order_by('deadline')
+    )
+    for a in assignments:
+        a.sync_completion()
     
     # Разделяем на активные и завершенные курсы
     active_enrollments = enrollments.filter(is_completed=False)
@@ -216,17 +247,101 @@ def my_courses(request):
     # Рекомендуемые курсы
     # TODO: Улучшить алгоритм рекомендаций на основе категорий пройденных курсов
     enrolled_course_ids = enrollments.values_list('course_id', flat=True)
-    recommended_courses = Course.objects.filter(status='published').exclude(
+    recommended_courses = Course.published_for_user(request.user).exclude(
         id__in=enrolled_course_ids
-    ).order_by('?')[:4]  # Случайные 4 курса, которые пользователь еще не проходил
+    ).order_by('?')[:4]
     
     context = {
         'active_enrollments': active_enrollments,
         'completed_enrollments': completed_enrollments,
         'recommended_courses': recommended_courses,
+        'assignments': assignments,
     }
     
     return render(request, 'courses/my_courses.html', context)
+
+
+@login_required
+@require_POST
+def submit_assignment(request, course_slug, module_id, lesson_id):
+    """Amaliy vazifa faylini yuklash."""
+    course = get_object_or_404(Course, slug=course_slug, status='published')
+    module = get_object_or_404(Module, id=module_id, course=course)
+    lesson = get_object_or_404(Lesson, id=lesson_id, module=module)
+
+    if lesson.lesson_type != 'assignment':
+        messages.error(request, "Bu dars amaliy vazifa emas.")
+        return redirect('courses:lesson_detail', course_slug, module_id, lesson_id)
+
+    if not Enrollment.objects.filter(user=request.user, course=course).exists():
+        messages.error(request, "Avval kursga yoziling.")
+        return redirect('courses:detail', course_slug=course_slug)
+
+    uploaded = request.FILES.get('file')
+    if not uploaded:
+        messages.error(request, "Fayl tanlang.")
+        return redirect('courses:lesson_detail', course_slug, module_id, lesson_id)
+
+    comment = (request.POST.get('comment') or '').strip()
+    LessonAssignmentSubmission.objects.create(
+        lesson=lesson,
+        user=request.user,
+        file=uploaded,
+        comment=comment,
+        status=LessonAssignmentSubmission.STATUS_PENDING,
+    )
+    messages.success(request, "Vazifa yuborildi. Instruktur tasdiğini kuting.")
+    return redirect('courses:lesson_detail', course_slug, module_id, lesson_id)
+
+
+@login_required
+@require_POST
+def review_assignment(request, submission_id):
+    """Admin/staff: vazifani tasdiqlash yoki rad etish."""
+    if request.user.role != 'admin' and not request.user.is_staff:
+        messages.error(request, "Ruxsat yo‘q.")
+        return redirect('courses:list')
+
+    submission = get_object_or_404(
+        LessonAssignmentSubmission.objects.select_related('lesson__module__course', 'user'),
+        pk=submission_id,
+    )
+    action = request.POST.get('action')
+    note = (request.POST.get('reviewer_note') or '').strip()
+    lesson = submission.lesson
+    course = lesson.module.course
+
+    if action == 'approve':
+        submission.status = LessonAssignmentSubmission.STATUS_APPROVED
+        submission.reviewed_by = request.user
+        submission.reviewed_at = timezone.now()
+        submission.reviewer_note = note
+        submission.save()
+        enrollment = Enrollment.objects.filter(user=submission.user, course=course).first()
+        if enrollment:
+            CompletedLesson.objects.get_or_create(
+                enrollment=enrollment,
+                lesson=lesson,
+                defaults={'user': submission.user},
+            )
+            enrollment.progress()
+        messages.success(request, "Vazifa tasdiqlandi — dars yakunlandi.")
+    elif action == 'reject':
+        submission.status = LessonAssignmentSubmission.STATUS_REJECTED
+        submission.reviewed_by = request.user
+        submission.reviewed_at = timezone.now()
+        submission.reviewer_note = note
+        submission.save()
+        messages.warning(request, "Vazifa rad etildi.")
+    else:
+        messages.error(request, "Noto‘g‘ri amal.")
+
+    return redirect(
+        'courses:lesson_detail',
+        course_slug=course.slug,
+        module_id=lesson.module_id,
+        lesson_id=lesson.id,
+    )
 
 
 @login_required
@@ -236,7 +351,9 @@ def course_learn(request, course_slug):
     
     # Проверка, записан ли пользователь на курс
     try:
-        enrollment = Enrollment.objects.get(user=request.user, course=course)
+        enrollment = Enrollment.objects.select_related('certificate').get(
+            user=request.user, course=course
+        )
     except Enrollment.DoesNotExist:
         messages.error(request, "Kursni ko'rish uchun avval ro'yxatdan o'ting")
         return redirect('courses:detail', course_slug=course.slug)
@@ -269,6 +386,7 @@ def course_learn(request, course_slug):
         enrollment.is_completed = True
         enrollment.completed_at = timezone.now()
         enrollment.save()
+        enrollment.sync_course_assignments()
         
         # Создаем сертификат о прохождении курса
         certificate = create_course_certificate(enrollment)
@@ -309,6 +427,17 @@ def module_detail(request, course_slug, module_id):
     completed_lesson_ids = CompletedLesson.objects.filter(
         enrollment=enrollment
     ).values_list('lesson_id', flat=True)
+
+    siblings = list(course.modules.all().order_by('order'))
+    prev_module = None
+    next_module = None
+    for idx, sibling in enumerate(siblings):
+        if sibling.id == module.id:
+            if idx > 0:
+                prev_module = siblings[idx - 1]
+            if idx + 1 < len(siblings):
+                next_module = siblings[idx + 1]
+            break
     
     context = {
         'course': course,
@@ -316,6 +445,8 @@ def module_detail(request, course_slug, module_id):
         'lessons': lessons,
         'enrollment': enrollment,
         'completed_lesson_ids': completed_lesson_ids,
+        'prev_module': prev_module,
+        'next_module': next_module,
     }
     
     return render(request, 'courses/module_detail.html', context)
@@ -397,7 +528,43 @@ def lesson_detail(request, course_slug, module_id, lesson_id):
     if total_lessons > 0:
         progress = round((completed_count / total_lessons) * 100)
     
-    # Подготовка контекста для шаблона
+    comments = (
+        LessonComment.objects.filter(lesson=lesson)
+        .select_related('user')
+        .order_by('-created_at')
+    )
+    quiz_questions = (
+        LessonQuizQuestion.objects.filter(lesson=lesson)
+        .prefetch_related('answers')
+        .order_by('order', 'id')
+    )
+    last_quiz_attempt = (
+        LessonQuizAttempt.objects.filter(lesson=lesson, user=request.user)
+        .order_by('-completed_at')
+        .first()
+    )
+
+    assignment_submission = None
+    pending_assignment_submissions = []
+    can_review_assignment = (
+        request.user.role == 'admin' or request.user.is_staff
+    )
+    if lesson.lesson_type == 'assignment':
+        assignment_submission = (
+            LessonAssignmentSubmission.objects.filter(lesson=lesson, user=request.user)
+            .order_by('-submitted_at')
+            .first()
+        )
+        if can_review_assignment:
+            pending_assignment_submissions = list(
+                LessonAssignmentSubmission.objects.filter(
+                    lesson=lesson,
+                    status=LessonAssignmentSubmission.STATUS_PENDING,
+                )
+                .select_related('user')
+                .order_by('submitted_at')
+            )
+
     context = {
         'course': course,
         'modules': modules,
@@ -408,7 +575,13 @@ def lesson_detail(request, course_slug, module_id, lesson_id):
         'is_completed': is_completed,
         'completed_lessons_ids': completed_lessons_ids,
         'progress': progress,
-        'module': module,  # Добавляем для совместимости с формами
+        'module': module,
+        'comments': comments,
+        'quiz_questions': quiz_questions,
+        'last_quiz_attempt': last_quiz_attempt,
+        'assignment_submission': assignment_submission,
+        'pending_assignment_submissions': pending_assignment_submissions,
+        'can_review_assignment': can_review_assignment,
         'debug_info': {
             'lesson_type': lesson.lesson_type,
             'video_url': lesson.video_url,
@@ -417,8 +590,86 @@ def lesson_detail(request, course_slug, module_id, lesson_id):
             'has_video_file': bool(lesson.video_file)
         }
     }
-    
+
     return render(request, 'courses/lesson_detail.html', context)
+
+
+@login_required
+@require_POST
+def submit_quiz(request, course_slug, module_id, lesson_id):
+    course = get_object_or_404(Course, slug=course_slug)
+    module = get_object_or_404(Module, id=module_id, course=course)
+    lesson = get_object_or_404(Lesson, id=lesson_id, module=module)
+
+    if not (
+        request.user.is_staff
+        or request.user.role == 'admin'
+        or Enrollment.objects.filter(user=request.user, course=course).exists()
+    ):
+        messages.error(request, "Quiz topshirish uchun kursga yozilishingiz kerak.")
+        return redirect('courses:detail', course_slug=course_slug)
+
+    questions = list(
+        LessonQuizQuestion.objects.filter(lesson=lesson).prefetch_related('answers')
+    )
+    if not questions:
+        messages.warning(request, "Bu darsda quiz savollari yo‘q.")
+        return redirect(
+            'courses:lesson_detail',
+            course_slug=course_slug,
+            module_id=module_id,
+            lesson_id=lesson_id,
+        )
+
+    correct = 0
+    total = len(questions)
+    for question in questions:
+        selected_id = request.POST.get(f'question_{question.id}')
+        if not selected_id:
+            continue
+        try:
+            option = question.answers.get(id=int(selected_id))
+        except (LessonQuizOption.DoesNotExist, ValueError, TypeError):
+            continue
+        if option.is_correct:
+            correct += 1
+
+    percentage = (correct / total * 100) if total else 0
+    is_passed = percentage >= 70
+    LessonQuizAttempt.objects.create(
+        lesson=lesson,
+        user=request.user,
+        score=correct,
+        total=total,
+        percentage=percentage,
+        is_passed=is_passed,
+    )
+
+    if is_passed:
+        enrollment = Enrollment.objects.filter(user=request.user, course=course).first()
+        if enrollment:
+            CompletedLesson.objects.get_or_create(
+                enrollment=enrollment,
+                lesson=lesson,
+                defaults={'user': request.user},
+            )
+            enrollment.progress()
+        messages.success(
+            request,
+            f"Quiz topshirildi: {correct}/{total} ({percentage:.0f}%). Dars yakunlandi.",
+        )
+    else:
+        messages.warning(
+            request,
+            f"Quiz natijasi: {correct}/{total} ({percentage:.0f}%). O‘tish uchun kamida 70% kerak.",
+        )
+
+    return redirect(
+        'courses:lesson_detail',
+        course_slug=course_slug,
+        module_id=module_id,
+        lesson_id=lesson_id,
+    )
 
 
 @login_required
@@ -464,6 +715,7 @@ def complete_lesson(request, course_slug, lesson_id):
         enrollment.is_completed = True
         enrollment.completed_at = timezone.now()
         enrollment.save()
+        enrollment.sync_course_assignments()
         
         # Создаем сертификат
         certificate = create_course_certificate(enrollment)
@@ -538,6 +790,24 @@ def mark_lesson_complete(request, course_slug, module_id, lesson_id):
     course = get_object_or_404(Course, slug=course_slug)
     module = get_object_or_404(Module, id=module_id, course=course)
     lesson = get_object_or_404(Lesson, id=lesson_id, module=module)
+
+    if lesson.lesson_type == 'assignment':
+        approved = LessonAssignmentSubmission.objects.filter(
+            lesson=lesson,
+            user=request.user,
+            status=LessonAssignmentSubmission.STATUS_APPROVED,
+        ).exists()
+        if not approved and request.user.role != 'admin' and not request.user.is_staff:
+            messages.error(
+                request,
+                "Amaliy vazifa uchun fayl yuklang va instruktur tasdiğini kuting.",
+            )
+            return redirect(
+                'courses:lesson_detail',
+                course_slug=course_slug,
+                module_id=module_id,
+                lesson_id=lesson_id,
+            )
     
     # Получаем запись о зачислении
     try:
@@ -574,6 +844,7 @@ def mark_lesson_complete(request, course_slug, module_id, lesson_id):
             enrollment.is_completed = True
             enrollment.completed_at = timezone.now()
             enrollment.save()
+            enrollment.sync_course_assignments()
             
             # Создаем сертификат о прохождении курса
             certificate = create_course_certificate(enrollment)
@@ -627,14 +898,20 @@ def get_course_progress(request, course_slug):
 def view_certificate(request, certificate_id):
     """Просмотр сертификата"""
     certificate = get_object_or_404(
-        CourseCertificate,
+        CourseCertificate.objects.select_related(
+            'enrollment__user', 'enrollment__course'
+        ),
         certificate_id=certificate_id
     )
     
     # Проверяем, что сертификат принадлежит пользователю или пользователь - администратор
-    if certificate.enrollment.user != request.user and not request.user.is_staff:
+    if (
+        certificate.enrollment.user != request.user
+        and not request.user.is_staff
+        and request.user.role != 'admin'
+    ):
         messages.error(request, "Sizda bu sertifikatni ko'rish huquqi yo'q")
-        return redirect('accounts:dashboard')
+        return redirect('accounts:profile')
     
     # Проверяем возможно устаревший сертификат
     if not certificate.enrollment.is_completed:
@@ -652,80 +929,135 @@ def view_certificate(request, certificate_id):
 @login_required
 def download_certificate(request, certificate_id):
     """Скачивание PDF-файла сертификата"""
-    certificate = get_object_or_404(CourseCertificate, certificate_id=certificate_id)
+    certificate = get_object_or_404(
+        CourseCertificate.objects.select_related(
+            'enrollment__user', 'enrollment__course'
+        ),
+        certificate_id=certificate_id,
+    )
     
     # Проверка, что сертификат принадлежит пользователю
-    if certificate.enrollment.user != request.user:
+    if (
+        certificate.enrollment.user != request.user
+        and not request.user.is_staff
+        and request.user.role != 'admin'
+    ):
         raise Http404("Sertifikat topilmadi")
     
-    # Если файл сертификата уже существует, возвращаем его
-    if certificate.pdf_file:
+    if not certificate.pdf_file:
+        generate_course_certificate_pdf(certificate)
+        certificate.refresh_from_db()
+
+    if not certificate.pdf_file:
+        return HttpResponse("Sertifikat yaratib bo'lmadi", content_type='text/plain', status=500)
+
+    certificate.pdf_file.open('rb')
+    try:
         response = HttpResponse(certificate.pdf_file.read(), content_type='application/pdf')
-        response['Content-Disposition'] = f'attachment; filename="{certificate.certificate_id}.pdf"'
-        return response
-    
-    # Если файла нет, создаем его
-    # TODO: Создание PDF сертификата
-    # В реальном проекте здесь будет логика для создания PDF
-    
-    # Временно возвращаем пустой PDF
-    response = HttpResponse("Sertifikat hali yaratilmagan", content_type='text/plain')
+    finally:
+        certificate.pdf_file.close()
+    response['Content-Disposition'] = f'attachment; filename="{certificate.certificate_id}.pdf"'
     return response
 
 
-# Вспомогательные функции
-
-def create_course_certificate(enrollment):
-    """Создание сертификата о прохождении курса"""
-    # Генерируем уникальный ID сертификата
-    certificate_id = str(uuid.uuid4())
-    
-    # Создаем запись о сертификате
-    certificate = CourseCertificate.objects.create(
-        enrollment=enrollment,
-        certificate_id=certificate_id,
-        title=f"{enrollment.course.title} kursi sertifikati",
-        certificate_type='course'
-    )
-    
-    # TODO: Генерация PDF файла сертификата
-    # В реальном проекте здесь будет логика для создания PDF и превью
-    
-    return certificate
-
-
-# Временные заглушки для функций комментариев
-
 @login_required
 @require_POST
-def add_comment_placeholder(request, course_slug, module_id, lesson_id):
-    """Временная заглушка для добавления комментария"""
-    messages.info(request, "Izohlar funktsiyasi hozircha mavjud emas")
+def add_comment(request, course_slug, module_id, lesson_id):
+    course = get_object_or_404(Course, slug=course_slug)
+    module = get_object_or_404(Module, id=module_id, course=course)
+    lesson = get_object_or_404(Lesson, id=lesson_id, module=module)
+
+    if not lesson.allow_comments:
+        messages.error(request, "Bu dars uchun izohlar o‘chirilgan.")
+        return redirect('courses:lesson_detail', course_slug=course_slug, module_id=module_id, lesson_id=lesson_id)
+
+    if not (
+        request.user.is_staff
+        or request.user.role == 'admin'
+        or Enrollment.objects.filter(user=request.user, course=course).exists()
+    ):
+        messages.error(request, "Izoh qoldirish uchun kursga yozilishingiz kerak.")
+        return redirect('courses:detail', course_slug=course_slug)
+
+    content = (request.POST.get('content') or '').strip()
+    if not content:
+        messages.error(request, "Izoh matni bo‘sh bo‘lishi mumkin emas.")
+    elif len(content) > 2000:
+        messages.error(request, "Izoh 2000 belgidan oshmasligi kerak.")
+    else:
+        LessonComment.objects.create(lesson=lesson, user=request.user, content=content)
+        messages.success(request, "Izoh qo‘shildi.")
+
     return redirect('courses:lesson_detail', course_slug=course_slug, module_id=module_id, lesson_id=lesson_id)
 
 
 @login_required
-def edit_comment_placeholder(request, comment_id):
-    """Временная заглушка для редактирования комментария"""
-    messages.info(request, "Izohlar tahrirlash funktsiyasi hozircha mavjud emas")
-    return redirect(request.META.get('HTTP_REFERER', 'courses:list'))
+def edit_comment(request, comment_id):
+    comment = get_object_or_404(
+        LessonComment.objects.select_related('lesson__module__course', 'user'),
+        id=comment_id,
+    )
+    if comment.user != request.user:
+        messages.error(request, "Bu izohni tahrirlash huquqingiz yo‘q.")
+        return redirect('courses:list')
+
+    lesson = comment.lesson
+    course = lesson.module.course
+    module = lesson.module
+
+    if request.method == 'POST':
+        content = (request.POST.get('content') or '').strip()
+        if not content:
+            messages.error(request, "Izoh matni bo‘sh bo‘lishi mumkin emas.")
+        elif len(content) > 2000:
+            messages.error(request, "Izoh 2000 belgidan oshmasligi kerak.")
+        else:
+            comment.content = content
+            comment.save(update_fields=['content', 'updated_at'])
+            messages.success(request, "Izoh yangilandi.")
+            return redirect(
+                'courses:lesson_detail',
+                course_slug=course.slug,
+                module_id=module.id,
+                lesson_id=lesson.id,
+            )
+
+    return render(request, 'courses/edit_comment.html', {
+        'comment': comment,
+        'course': course,
+        'module': module,
+        'lesson': lesson,
+    })
 
 
 @login_required
 @require_POST
-def delete_comment_placeholder(request, comment_id):
-    """Временная заглушка для удаления комментария"""
-    messages.info(request, "Izohlar o'chirish funktsiyasi hozircha mavjud emas")
-    return redirect(request.META.get('HTTP_REFERER', 'courses:list'))
+def delete_comment(request, comment_id):
+    comment = get_object_or_404(
+        LessonComment.objects.select_related('lesson__module__course', 'user'),
+        id=comment_id,
+    )
+    if comment.user != request.user and request.user.role != 'admin' and not request.user.is_staff:
+        messages.error(request, "Bu izohni o‘chirish huquqingiz yo‘q.")
+        return redirect('courses:list')
+
+    lesson = comment.lesson
+    course = lesson.module.course
+    module = lesson.module
+    comment.delete()
+    messages.success(request, "Izoh o‘chirildi.")
+    return redirect(
+        'courses:lesson_detail',
+        course_slug=course.slug,
+        module_id=module.id,
+        lesson_id=lesson.id,
+    )
 
 
+@login_required
 @require_POST
-@csrf_exempt
 def track_video_view(request):
     """Track video view duration and save it to UserActivity"""
-    if not request.user.is_authenticated:
-        return JsonResponse({'status': 'error', 'message': 'Требуется авторизация'}, status=401)
-    
     try:
         data = json.loads(request.body)
         duration = data.get('duration', 0)
@@ -736,12 +1068,15 @@ def track_video_view(request):
         
         lesson = get_object_or_404(Lesson, id=lesson_id)
         
-        # Создаем запись об активности пользователя
         UserActivity.objects.create(
             user=request.user,
-            activity_type='video_view',
-            content_object=lesson,
-            duration=duration
+            activity_type='view_video',
+            duration=duration,
+            details={
+                'lesson_id': lesson.id,
+                'lesson_title': lesson.title,
+                'course_slug': lesson.module.course.slug,
+            },
         )
         
         return JsonResponse({'status': 'success', 'message': 'Просмотр видео записан'})

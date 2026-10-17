@@ -1,0 +1,109 @@
+/* Isomer Oil — Jazzmin admin (premium neft) */
+
+:root {
+  --zlms-ink: #0a1610;
+  --zlms-muted: #5a6b60;
+  --zlms-teal: #1b5c3f;
+  --zlms-teal-dark: #0f2a1c;
+  --zlms-brass: #c9a227;
+  --zlms-surface: #ebe6db;
+  --zlms-card: #f7f4ec;
+  --zlms-border: #d4cbb8;
+}
+
+body {
+  font-family: "Outfit", "Segoe UI", system-ui, sans-serif;
+  color: var(--zlms-ink);
+  background: var(--zlms-surface) !important;
+}
+
+.main-sidebar,
+.brand-link {
+  background: linear-gradient(180deg, #07140e 0%, #0f2a1c 100%) !important;
+  border-right: 1px solid rgba(201, 162, 39, 0.25) !important;
+}
+
+.brand-link .brand-text {
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  color: #e8c96a !important;
+  font-family: "Cormorant Garamond", Georgia, serif;
+  font-size: 1.25rem;
+}
+
+.content-wrapper {
+  background: var(--zlms-surface) !important;
+}
+
+.content-header h1 {
+  font-weight: 600;
+  letter-spacing: -0.02em;
+  font-family: "Cormorant Garamond", Georgia, serif;
+  color: var(--zlms-teal-dark);
+}
+
+.card {
+  border: 1px solid var(--zlms-border) !important;
+  border-radius: 12px !important;
+  box-shadow: 0 2px 8px rgba(7, 20, 14, 0.06) !important;
+  background: var(--zlms-card) !important;
+}
+
+.card-header {
+  border-bottom: 1px solid var(--zlms-border) !important;
+  background: rgba(15, 42, 28, 0.04) !important;
+  font-weight: 600;
+}
+
+.btn-primary,
+.btn-info {
+  background-color: var(--zlms-brass) !important;
+  border-color: var(--zlms-brass) !important;
+  color: #0a1610 !important;
+  font-weight: 700;
+}
+
+.btn-primary:hover,
+.btn-info:hover {
+  background-color: #8a7018 !important;
+  border-color: #8a7018 !important;
+  color: #fff !important;
+}
+
+.page-item.active .page-link,
+.nav-pills .nav-link.active,
+.nav-pills .show > .nav-link {
+  background-color: var(--zlms-teal) !important;
+  border-color: var(--zlms-teal) !important;
+}
+
+.table thead th {
+  font-size: 0.78rem;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--zlms-muted);
+  border-bottom-width: 1px !important;
+}
+
+.table td {
+  vertical-align: middle;
+}
+
+.sidebar-dark-primary .nav-sidebar > .nav-item > .nav-link.active {
+  background-color: rgba(201, 162, 39, 0.18) !important;
+  color: #e8c96a !important;
+}
+
+.main-header {
+  background: #f7f4ec !important;
+  border-bottom: 1px solid var(--zlms-border) !important;
+}
+
+.select2-container--default .select2-selection--single,
+.form-control {
+  border-color: var(--zlms-border) !important;
+  border-radius: 8px !important;
+}
+
+a { color: var(--zlms-teal); }
+a:hover { color: var(--zlms-brass); }

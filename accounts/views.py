@@ -5,7 +5,7 @@ from django.contrib.auth.decorators import login_required
 from django.contrib import messages
 from django.contrib.auth.forms import PasswordChangeForm
 from django.core.paginator import Paginator
-from django.http import JsonResponse, HttpResponse, FileResponse
+from django.http import JsonResponse, HttpResponse, FileResponse, Http404
 from .models import User, FavoritePost, UserActivity, Achievement, UserAchievement, LearningProgress, Certificate, LevelUpEvent
 from blog.models import Post, Category, Test, TestResult
 from django.db.models import Count, Q, Sum, Avg
@@ -27,24 +27,57 @@ from django.templatetags.static import static
 from .forms import SignUpForm, ProfileUpdateForm
 
 
+def verify_certificate(request, certificate_id=None):
+    """Public certificate verification (QR + form lookup)."""
+    lookup_id = certificate_id or request.GET.get('certificate_id') or request.GET.get('id')
+    certificate = None
+    not_found = False
+
+    if lookup_id:
+        certificate = Certificate.objects.select_related('user', 'category').filter(
+            certificate_id=lookup_id
+        ).first()
+        if certificate is None:
+            # Also allow verifying course certificates by the same public URL.
+            from courses.models import CourseCertificate
+            course_cert = CourseCertificate.objects.select_related(
+                'enrollment__user', 'enrollment__course'
+            ).filter(certificate_id=lookup_id).first()
+            if course_cert is None:
+                if certificate_id:
+                    raise Http404("Sertifikat topilmadi")
+                not_found = True
+            else:
+                return render(request, 'accounts/verify_certificate.html', {
+                    'certificate': course_cert,
+                    'cert_type': 'course',
+                    'user': course_cert.enrollment.user,
+                    'title': course_cert.enrollment.course.title,
+                    'issued_at': course_cert.issue_date,
+                    'lookup_id': lookup_id,
+                    'not_found': False,
+                    'is_valid': True,
+                })
+
+    return render(request, 'accounts/verify_certificate.html', {
+        'certificate': certificate,
+        'cert_type': 'category' if certificate else None,
+        'user': certificate.user if certificate else None,
+        'title': certificate.category.name if certificate else None,
+        'issued_at': certificate.issued_at if certificate else None,
+        'lookup_id': lookup_id or '',
+        'not_found': not_found,
+        'is_valid': certificate is not None,
+    })
+
+
 def signup(request):
-    if request.method == 'POST':
-        form = SignUpForm(request.POST)
-        if form.is_valid():
-            user = form.save()
-            login(request, user)
-            
-            # Записываем активность пользователя
-            UserActivity.objects.create(
-                user=user,
-                activity_type='login',
-                ip_address=request.META.get('REMOTE_ADDR')
-            )
-            
-            return redirect('blog:home')
-    else:
-        form = SignUpForm()
-    return render(request, 'accounts/signup.html', {'form': form})
+    """Public signup is disabled — users are created by admins only."""
+    messages.info(
+        request,
+        "Ochiq ro'yxatdan o'tish yopilgan. Hisobni administrator yaratadi.",
+    )
+    return redirect('accounts:login')
 
 
 class MyLoginView(LoginView):
@@ -200,25 +233,31 @@ def toggle_favorite(request, post_id):
 @login_required
 def favorites_list(request):
     """Просмотр списка избранных постов"""
-    favorites = FavoritePost.objects.filter(user=request.user)
-    
+    favorites = FavoritePost.objects.filter(user=request.user).select_related(
+        'post', 'post__category'
+    )
+
     return render(request, 'accounts/favorites.html', {'favorites': favorites})
 
 
 @login_required
 def learning_progress(request):
     """Страница с прогрессом обучения по категориям"""
-    from courses.models import Enrollment, Course, CompletedLesson
+    from courses.models import Enrollment, Course, CompletedLesson, CourseCertificate
     
     # Получаем записи о зачислении пользователя на курсы
-    enrollments = Enrollment.objects.filter(user=request.user).select_related('course')
+    enrollments = Enrollment.objects.filter(user=request.user).select_related(
+        'course', 'course__category'
+    )
     
     # Обновляем статус завершения для каждой записи
     for enrollment in enrollments:
         enrollment.progress()
     
     # Получаем обновленные данные
-    enrollments = Enrollment.objects.filter(user=request.user).select_related('course')
+    enrollments = Enrollment.objects.filter(user=request.user).select_related(
+        'course', 'course__category'
+    )
     
     # Статистика по курсам
     enrolled_courses_count = enrollments.count()
@@ -230,7 +269,7 @@ def learning_progress(request):
     if enrollments.count() > 0:
         total_progress = sum(enrollment.progress() for enrollment in enrollments)
         average_score = round(total_progress / enrollments.count())
-    
+
     # Получаем активные курсы
     active_courses = []
     for enrollment in enrollments.filter(is_completed=False):
@@ -244,7 +283,7 @@ def learning_progress(request):
             'title': enrollment.course.title,
             'url': reverse('courses:detail', args=[enrollment.course.slug]),
             'image': enrollment.course.cover,
-            'teacher': 'Администратор',
+            'teacher': enrollment.course.category.name if enrollment.course.category_id else 'Isomer Edu',
             'enrollment_date': enrollment.enrolled_at,
             'progress': enrollment.progress(),
             'completed_lessons': completed_lessons,
@@ -254,16 +293,17 @@ def learning_progress(request):
     
     # Получаем завершенные курсы
     completed_courses = []
-    for enrollment in enrollments.filter(is_completed=True):
+    for enrollment in enrollments.filter(is_completed=True).select_related('course__category'):
+        certificate = CourseCertificate.objects.filter(enrollment=enrollment).first()
         course_data = {
             'title': enrollment.course.title,
             'url': reverse('courses:detail', args=[enrollment.course.slug]),
             'image': enrollment.course.cover,
-            'teacher': 'Администратор',
+            'teacher': enrollment.course.category.name if enrollment.course.category_id else 'Isomer Edu',
             'completion_date': enrollment.completed_at,
             'score': 100,
-            'has_certificate': hasattr(enrollment, 'certificate'),
-            'certificate_id': enrollment.certificate.certificate_id if hasattr(enrollment, 'certificate') else None
+            'has_certificate': certificate is not None,
+            'certificate_id': certificate.certificate_id if certificate else None
         }
         completed_courses.append(course_data)
     
@@ -577,7 +617,9 @@ def user_statistics(request):
     from courses.models import Enrollment, Course, CompletedLesson
     
     # Получаем все записи пользователя на курсы
-    enrollments = Enrollment.objects.filter(user=request.user).select_related('course')
+    enrollments = Enrollment.objects.filter(user=request.user).select_related(
+        'course', 'course__category'
+    )
     
     # Принудительно обновляем статус завершения для каждой записи на курс
     for enrollment in enrollments:
@@ -585,7 +627,9 @@ def user_statistics(request):
         enrollment.progress()
     
     # Обновляем запрос после возможных изменений
-    enrollments = Enrollment.objects.filter(user=request.user).select_related('course')
+    enrollments = Enrollment.objects.filter(user=request.user).select_related(
+        'course', 'course__category'
+    )
     
     # Общая статистика по курсам
     enrolled_courses_count = enrollments.count()
@@ -610,34 +654,17 @@ def user_statistics(request):
         total_lessons = enrollment.course.total_lessons()
         progress_percentage = (completed_lessons_count / total_lessons * 100) if total_lessons > 0 else 0
         
-        # Безопасно получаем результаты тестов пользователя по этому курсу
-        try:
-            course_test_results = TestResult.objects.filter(
-                user=request.user,
-                test__lesson__module__course=enrollment.course
-            )
-            
-            # Средний балл по курсу
-            if course_test_results.exists():
-                course_score = course_test_results.aggregate(avg_score=Avg('score'))['avg_score']
-                total_scores += course_score
-                courses_with_scores += 1
-            else:
-                course_score = progress_percentage  # Если нет тестов, используем прогресс
-                total_scores += course_score
-                courses_with_scores += 1
-        except Exception as e:
-            # Если произошла ошибка при получении результатов тестов, используем прогресс
-            course_score = progress_percentage
-            total_scores += course_score
-            courses_with_scores += 1
-        
-        # Безопасно получаем данные о создателе курса
-        try:
-            teacher = enrollment.course.creator.get_full_name() if hasattr(enrollment.course, 'creator') and enrollment.course.creator else 'Администратор'
-        except:
-            teacher = 'Администратор'
-        
+        # Course LMS has no linked blog.Test; use lesson progress as the score.
+        course_score = progress_percentage
+        total_scores += course_score
+        courses_with_scores += 1
+
+        teacher = (
+            enrollment.course.category.name
+            if getattr(enrollment.course, 'category_id', None)
+            else 'Isomer Edu'
+        )
+
         # Информация о курсе для шаблона
         course_info = {
             'title': enrollment.course.title,
@@ -916,3 +943,32 @@ def check_category_completion_achievement(user):
     except Exception as e:
         # Если произошла критическая ошибка, просто выходим из функции
         pass
+
+
+@login_required
+def notifications_list(request):
+    from .models import Notification
+    notes = Notification.objects.filter(user=request.user)[:50]
+    return render(request, 'accounts/notifications.html', {
+        'notifications': notes,
+    })
+
+
+@login_required
+def notification_mark_read(request, pk):
+    from .models import Notification
+    note = get_object_or_404(Notification, pk=pk, user=request.user)
+    note.is_read = True
+    note.save(update_fields=['is_read'])
+    if note.link:
+        return redirect(note.link)
+    return redirect('accounts:notifications')
+
+
+@login_required
+def notifications_mark_all_read(request):
+    from .models import Notification
+    if request.method == 'POST':
+        Notification.objects.filter(user=request.user, is_read=False).update(is_read=True)
+        messages.success(request, "Barcha bildirishnomalar o‘qildi.")
+    return redirect('accounts:notifications')

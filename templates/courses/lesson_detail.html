@@ -7,18 +7,18 @@
 <div class="row">
   <!-- Навигация по курсу -->
   <div class="col-lg-3 d-none d-lg-block">
-    <div class="card shadow-sm sticky-top" style="top: 20px; z-index: 100;">
-      <div class="card-header bg-white">
+    <div class="zl-card sticky-top" style="top: 20px; z-index: 100;">
+      <div class="p-3 border-bottom">
         <div class="d-flex align-items-center">
           <a href="{% url 'courses:detail' course.slug %}" class="me-2 text-decoration-none">
             <i class="fas fa-arrow-left"></i>
           </a>
-          <h5 class="card-title mb-0 text-truncate">{{ course.title }}</h5>
+          <h5 class="h6 mb-0 text-truncate">{{ course.title }}</h5>
         </div>
         <div class="progress mt-2" style="height: 6px;">
-          <div class="progress-bar" role="progressbar" style="width: {{ progress }}%;" aria-valuenow="{{ progress }}" aria-valuemin="0" aria-valuemax="100"></div>
+          <div class="progress-bar" role="progressbar" style="width: {{ progress }}%; background: linear-gradient(90deg, var(--zl-forest-mid), var(--zl-brass));" aria-valuenow="{{ progress }}" aria-valuemin="0" aria-valuemax="100"></div>
         </div>
-        <small class="text-muted">{{ progress }}% tugallandi</small>
+        <small class="zl-meta">{{ progress }}% tugallandi</small>
       </div>
       <div class="card-body p-0">
         <div class="accordion" id="modulesAccordion">
@@ -36,7 +36,7 @@
                 <div class="accordion-body p-0">
                   <div class="list-group list-group-flush">
                     {% for lesson_item in module_item.lessons.all %}
-                      <a href="{% url 'courses:lesson_detail' course.slug module_item.id lesson_item.id %}" class="list-group-item list-group-item-action {% if lesson_item.id == lesson.id %}active{% endif %}">
+                      <a href="{% url 'courses:lesson_detail' course.slug module_item.id lesson_item.id %}" class="list-group-item list-group-item-action {% if lesson_item.id == lesson.id %}active{% endif %}" style="{% if lesson_item.id == lesson.id %}background:var(--zl-forest);border-color:var(--zl-forest);{% endif %}">
                         <div class="d-flex align-items-center">
                           <div class="me-2">
                             {% if lesson_item.id in completed_lessons_ids %}
@@ -63,43 +63,30 @@
   
   <!-- Содержимое урока -->
   <div class="col-lg-9">
-    <div class="card shadow-sm mb-4">
-      <div class="card-header bg-white d-flex justify-content-between align-items-center">
+    <div class="zl-card mb-3">
+      <div class="p-3 border-bottom d-flex justify-content-between align-items-center">
         <button class="btn btn-sm btn-outline-primary d-lg-none" type="button" data-bs-toggle="offcanvas" data-bs-target="#courseNavigationOffcanvas" aria-controls="courseNavigationOffcanvas">
           <i class="fas fa-list me-1"></i> Kurs tarkibi
         </button>
-        <div class="d-flex align-items-center">
+        <div class="d-flex align-items-center ms-auto">
           {% if lesson.lesson_type == 'video' %}
-            <span class="badge bg-primary me-2"><i class="fas fa-video me-1"></i> Video</span>
+            <span class="zl-chip me-2"><i class="fas fa-video me-1"></i> Video</span>
           {% elif lesson.lesson_type == 'text' %}
-            <span class="badge bg-info me-2"><i class="fas fa-file-alt me-1"></i> Matn</span>
+            <span class="zl-chip me-2"><i class="fas fa-file-alt me-1"></i> Matn</span>
           {% elif lesson.lesson_type == 'quiz' %}
-            <span class="badge bg-warning me-2"><i class="fas fa-question-circle me-1"></i> Test</span>
+            <span class="zl-chip warn me-2"><i class="fas fa-question-circle me-1"></i> Quiz</span>
+          {% elif lesson.lesson_type == 'assignment' %}
+            <span class="zl-chip warn me-2"><i class="fas fa-upload me-1"></i> Vazifa</span>
           {% endif %}
-          <small class="text-muted">{{ lesson.duration }} daqiqa</small>
+          <small class="zl-meta">{{ lesson.duration }} daqiqa</small>
         </div>
       </div>
-      <div class="card-body">
+      <div class="p-4">
         <h1 class="h3 mb-4">{{ lesson.title }}</h1>
-        
-        <!-- Отладочная информация -->
-        {% if request.user.is_staff %}
-        <div class="alert alert-secondary mb-4">
-          <h5>Debug Info</h5>
-          <ul>
-            <li>lesson_type: {{ debug_info.lesson_type }}</li>
-            <li>video_url: {{ debug_info.video_url|default:"Not set" }}</li>
-            <li>video_file: {{ debug_info.video_file|default:"Not set" }}</li>
-            <li>has_video_url: {{ debug_info.has_video_url }}</li>
-            <li>has_video_file: {{ debug_info.has_video_file }}</li>
-          </ul>
-        </div>
-        {% endif %}
-        
-        <!-- Видео контент -->
+
         {% if lesson.lesson_type == 'video' %}
           {% if lesson.video_url %}
-            <div class="ratio ratio-16x9 mb-4">
+            <div class="ratio ratio-16x9 mb-4 rounded overflow-hidden">
               {% if 'youtube.com/watch?v=' in lesson.video_url %}
                 <iframe src="https://www.youtube.com/embed/{{ lesson.video_url|truncatewords:1|cut:'https://www.youtube.com/watch?v=' }}" frameborder="0" allowfullscreen allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"></iframe>
               {% elif 'youtu.be/' in lesson.video_url %}
@@ -109,29 +96,18 @@
               {% endif %}
             </div>
           {% elif lesson.video_file %}
-            <div class="ratio ratio-16x9 mb-4">
+            <div class="ratio ratio-16x9 mb-4 rounded overflow-hidden bg-dark">
               <video class="w-100 h-100" controls preload="metadata" {% if lesson.module.course.cover %}poster="{{ lesson.module.course.cover.url }}"{% endif %}>
                 <source src="{{ lesson.video_file.url }}" type="video/mp4">
-                <p>Ваш браузер не поддерживает HTML5 видео.</p>
               </video>
             </div>
-            <!-- Кнопка для скачивания видео -->
             <div class="d-grid mb-4">
               <a href="{{ lesson.video_file.url }}" class="btn btn-outline-primary" download>
                 <i class="fas fa-download me-1"></i> Videoni yuklab olish
               </a>
             </div>
           {% else %}
-            <div class="alert alert-info mb-4">
-              <i class="fas fa-info-circle me-2"></i> Bu dars uchun video mavjud emas
-            </div>
-          {% endif %}
-        {% else %}
-          <!-- Если тип урока не видео, показываем это сообщение для отладки -->
-          {% if request.user.is_staff %}
-          <div class="alert alert-warning mb-4">
-            <i class="fas fa-exclamation-triangle me-2"></i> Dars turi: {{ lesson.lesson_type }} (video emas)
-          </div>
+            <div class="alert alert-info mb-4">Bu dars uchun video mavjud emas</div>
           {% endif %}
         {% endif %}
         
@@ -160,36 +136,131 @@
           </div>
         {% endif %}
         
-        {% if lesson.lesson_type == 'quiz' %}
-          <div id="quizContainer">
-            <form id="quizForm" method="post" action="{% url 'courses:submit_quiz' course.slug module.id lesson.id %}">
+        {% if lesson.lesson_type == 'assignment' %}
+          <div class="zl-card p-3 mb-3" style="border-color:rgba(201,162,39,.4);">
+            <h3 class="h6 fw-bold mb-2"><i class="fas fa-tasks me-1"></i> Amaliy vazifa</h3>
+            <p class="zl-meta mb-3">Fayl yuklang. Instruktur tasdiqlagach dars yakunlanadi.</p>
+
+            {% if assignment_submission %}
+            <div class="alert {% if assignment_submission.status == 'approved' %}alert-success{% elif assignment_submission.status == 'rejected' %}alert-danger{% else %}alert-warning{% endif %} mb-3">
+              Holat: <strong>{{ assignment_submission.get_status_display }}</strong>
+              · {{ assignment_submission.submitted_at|date:"d.m.Y H:i" }}
+              {% if assignment_submission.file %}
+              · <a href="{{ assignment_submission.file.url }}" target="_blank">Yuklangan fayl</a>
+              {% endif %}
+              {% if assignment_submission.reviewer_note %}
+              <div class="mt-1 small">{{ assignment_submission.reviewer_note }}</div>
+              {% endif %}
+            </div>
+            {% endif %}
+
+            {% if not is_completed %}
+            <form method="post" enctype="multipart/form-data"
+                  action="{% url 'courses:submit_assignment' course.slug module.id lesson.id %}">
               {% csrf_token %}
-              
-              {% for question in quiz_questions %}
-                <div class="card mb-3">
-                  <div class="card-header bg-white">
-                    <h5 class="h6 mb-0">{{ forloop.counter }}. {{ question.text }}</h5>
-                  </div>
-                  <div class="card-body">
-                    {% for answer in question.answers.all %}
-                      <div class="form-check mb-2">
-                        <input class="form-check-input" type="radio" name="question_{{ question.id }}" id="answer_{{ answer.id }}" value="{{ answer.id }}" required>
-                        <label class="form-check-label" for="answer_{{ answer.id }}">
-                          {{ answer.text }}
-                        </label>
-                      </div>
-                    {% endfor %}
-                  </div>
-                </div>
-              {% endfor %}
-              
-              <div class="d-grid">
-                <button type="submit" class="btn btn-primary">Topshirish</button>
+              <div class="mb-2">
+                <label class="form-label small fw-semibold">Fayl</label>
+                <input type="file" name="file" class="form-control" required>
               </div>
+              <div class="mb-3">
+                <label class="form-label small fw-semibold">Izoh (ixtiyoriy)</label>
+                <textarea name="comment" class="form-control" rows="2"></textarea>
+              </div>
+              <button type="submit" class="btn btn-primary">
+                <i class="fas fa-upload me-1"></i> Topshirish
+              </button>
             </form>
+            {% endif %}
+
+            {% if can_review_assignment and pending_assignment_submissions %}
+            <hr>
+            <h4 class="h6">Instruktur tekshiruvi ({{ pending_assignment_submissions|length }})</h4>
+            {% for sub in pending_assignment_submissions %}
+            <div class="border rounded p-2 mb-2">
+              <div class="small mb-2">
+                <strong>{{ sub.user.get_full_name|default:sub.user.username }}</strong>
+                · {{ sub.submitted_at|date:"d.m.Y H:i" }}
+                {% if sub.file %}
+                · <a href="{{ sub.file.url }}" target="_blank">Fayl</a>
+                {% endif %}
+                {% if sub.comment %}<div class="text-muted">{{ sub.comment }}</div>{% endif %}
+              </div>
+              <form method="post" action="{% url 'courses:review_assignment' sub.id %}" class="row g-2">
+                {% csrf_token %}
+                <div class="col-12">
+                  <textarea name="reviewer_note" class="form-control form-control-sm" rows="2" placeholder="Izoh"></textarea>
+                </div>
+                <div class="col-auto">
+                  <button type="submit" name="action" value="approve" class="btn btn-sm btn-primary">Tasdiqlash</button>
+                </div>
+                <div class="col-auto">
+                  <button type="submit" name="action" value="reject" class="btn btn-sm btn-outline-danger">Rad etish</button>
+                </div>
+              </form>
+            </div>
+            {% endfor %}
+            {% endif %}
           </div>
+          {% if is_completed %}
+            <div class="d-grid">
+              <button type="button" class="btn btn-outline-success" disabled>
+                <i class="fas fa-check-circle me-2"></i> Dars yakunlandi
+              </button>
+            </div>
+          {% endif %}
+
+        {% elif lesson.lesson_type == 'quiz' %}
+          {% if last_quiz_attempt %}
+            <div class="alert {% if last_quiz_attempt.is_passed %}alert-success{% else %}alert-warning{% endif %} mb-3">
+              Oxirgi natija: {{ last_quiz_attempt.score }}/{{ last_quiz_attempt.total }}
+              ({{ last_quiz_attempt.percentage|floatformat:0 }}%)
+              — {{ last_quiz_attempt.completed_at|date:"d.m.Y H:i" }}
+            </div>
+          {% endif %}
+
+          {% if quiz_questions %}
+            <div id="quizContainer" class="mb-3">
+              <form id="quizForm" method="post" action="{% url 'courses:submit_quiz' course.slug module.id lesson.id %}">
+                {% csrf_token %}
+                {% for question in quiz_questions %}
+                  <div class="card mb-3">
+                    <div class="card-header bg-white">
+                      <h5 class="h6 mb-0">{{ forloop.counter }}. {{ question.text }}</h5>
+                    </div>
+                    <div class="card-body">
+                      {% for answer in question.answers.all %}
+                        <div class="form-check mb-2">
+                          <input class="form-check-input" type="radio"
+                                 name="question_{{ question.id }}"
+                                 id="answer_{{ answer.id }}"
+                                 value="{{ answer.id }}" required>
+                          <label class="form-check-label" for="answer_{{ answer.id }}">
+                            {{ answer.text }}
+                          </label>
+                        </div>
+                      {% endfor %}
+                    </div>
+                  </div>
+                {% endfor %}
+                <div class="d-grid">
+                  <button type="submit" class="btn btn-primary">Quizni topshirish</button>
+                </div>
+              </form>
+            </div>
+          {% else %}
+            <div class="alert alert-info mb-3">
+              Bu dars uchun savollar hali qo‘shilmagan. Admin panel orqali quiz savollarini kiriting.
+            </div>
+            {% if user.is_authenticated and not is_completed %}
+              <form method="post" action="{% url 'courses:mark_complete' course.slug current_module.id lesson.id %}" class="d-grid">
+                {% csrf_token %}
+                <button type="submit" class="btn btn-success mt-3">
+                  <i class="fas fa-check-circle me-2"></i> Dars yakunlandi deb belgilash
+                </button>
+              </form>
+            {% endif %}
+          {% endif %}
         {% else %}
-          <!-- Кнопка для отметки урока как завершенного -->
           {% if user.is_authenticated and not is_completed %}
             <form method="post" action="{% url 'courses:mark_complete' course.slug current_module.id lesson.id %}" class="d-grid">
               {% csrf_token %}
@@ -205,19 +276,26 @@
             </div>
           {% endif %}
         {% endif %}
+
+        {% if is_completed and lesson.lesson_type == 'quiz' %}
+          <div class="d-grid">
+            <button type="button" class="btn btn-outline-success mt-3" disabled>
+              <i class="fas fa-check-circle me-2"></i> Dars yakunlandi
+            </button>
+          </div>
+        {% endif %}
       </div>
     </div>
     
-    <!-- Навигация между уроками -->
-    <div class="d-flex justify-content-between mb-4">
+    <div class="d-flex flex-column flex-sm-row justify-content-between gap-2 mb-4">
       {% if prev_lesson %}
         <a href="{% url 'courses:lesson_detail' course.slug prev_lesson.module.id prev_lesson.id %}" class="btn btn-outline-primary">
           <i class="fas fa-arrow-left me-1"></i> Oldingi dars
         </a>
       {% else %}
-        <div></div>
+        <div class="d-none d-sm-block"></div>
       {% endif %}
-      
+
       {% if next_lesson %}
         <a href="{% url 'courses:lesson_detail' course.slug next_lesson.module.id next_lesson.id %}" class="btn btn-primary">
           Keyingi dars <i class="fas fa-arrow-right ms-1"></i>
@@ -239,25 +317,20 @@
           <form method="post" action="{% url 'courses:add_comment' course.slug module.id lesson.id %}" class="mb-4">
             {% csrf_token %}
             <div class="mb-3">
-              <textarea name="content" class="form-control" rows="3" placeholder="Izohingizni qoldiring..." required></textarea>
+              <textarea name="content" class="form-control" rows="3" placeholder="Izohingizni qoldiring..." required maxlength="2000"></textarea>
             </div>
             <div class="d-grid">
               <button type="submit" class="btn btn-primary">Yuborish</button>
             </div>
           </form>
-          
-          <div class="text-center py-4">
-            <i class="fas fa-comments fa-3x text-muted mb-3"></i>
-            <p class="text-muted">Izohlar funktsiyasi ishlab chiqilmoqda</p>
-          </div>
-          
+
           {% if comments %}
             <div class="comments">
               {% for comment in comments %}
                 <div class="d-flex mb-4">
                   <div class="flex-shrink-0 me-3">
-                    {% if comment.user.profile.avatar %}
-                      <img src="{{ comment.user.profile.avatar.url }}" alt="{{ comment.user.get_full_name }}" class="rounded-circle" width="48" height="48" style="object-fit: cover;">
+                    {% if comment.user.profile_image %}
+                      <img src="{{ comment.user.profile_image.url }}" alt="{{ comment.user.get_full_name|default:comment.user.username }}" class="rounded-circle" width="48" height="48" style="object-fit: cover;">
                     {% else %}
                       <div class="bg-light rounded-circle d-flex align-items-center justify-content-center" style="width: 48px; height: 48px;">
                         <i class="fas fa-user text-muted"></i>
@@ -266,13 +339,15 @@
                   </div>
                   <div class="flex-grow-1">
                     <div class="d-flex justify-content-between align-items-center mb-1">
-                      <h5 class="h6 mb-0">{{ comment.user.get_full_name }}</h5>
+                      <h5 class="h6 mb-0">{{ comment.user.get_full_name|default:comment.user.username }}</h5>
                       <small class="text-muted">{{ comment.created_at|date:"d.m.Y H:i" }}</small>
                     </div>
                     <p class="mb-1">{{ comment.content }}</p>
-                    {% if request.user == comment.user %}
+                    {% if request.user == comment.user or request.user.role == 'admin' %}
                       <div class="d-flex gap-2">
+                        {% if request.user == comment.user %}
                         <a href="{% url 'courses:edit_comment' comment.id %}" class="btn btn-sm btn-link text-decoration-none p-0">Tahrirlash</a>
+                        {% endif %}
                         <form method="post" action="{% url 'courses:delete_comment' comment.id %}" onsubmit="return confirm('Haqiqatan ham bu izohni o\'chirmoqchimisiz?');">
                           {% csrf_token %}
                           <button type="submit" class="btn btn-sm btn-link text-danger text-decoration-none p-0">O'chirish</button>
@@ -281,7 +356,12 @@
                     {% endif %}
                   </div>
                 </div>
+              {% empty %}
               {% endfor %}
+            </div>
+          {% else %}
+            <div class="text-center py-3">
+              <p class="text-muted mb-0">Hali izohlar yo‘q. Birinchi bo‘lib yozing.</p>
             </div>
           {% endif %}
         </div>
@@ -423,7 +503,7 @@
     // Функция для отправки данных о просмотре на сервер
     function trackVideoView(duration) {
       // Используем Fetch API для отправки данных на сервер
-      fetch('/api/track-video-view/', {
+      fetch("{% url 'courses:track_video_view' %}", {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

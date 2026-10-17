@@ -1,171 +1,157 @@
 {% extends 'base.html' %}
-{% load static %}
 
-{% block title %}{{ question.text|truncatechars:30 }}{% endblock %}
+{% block title %}Savol {{ current }}/{{ total }}{% endblock %}
 
 {% block extra_css %}
 <style>
-  .option-label {
-    display: block;
-    padding: 1rem;
-    border-radius: 12px;
-    border: 2px solid #e5e7eb;
-    margin-bottom: 1rem;
-    cursor: pointer;
-    transition: all 0.2s ease;
-  }
-  
-  .option-label:hover {
-    border-color: #c7d2fe;
-    background-color: #f5f7ff;
-  }
-  
-  .option-input {
-    display: none;
-  }
-  
-  .option-input:checked + .option-label {
-    border-color: #4f46e5;
-    background-color: #eef2ff;
-  }
-  
-  .test-progress {
-    height: 8px;
-    border-radius: 4px;
-    overflow: hidden;
-  }
-  
-  .timer {
-    font-size: 1.2rem;
-    color: #1e293b;
-  }
-  
-  .test-header {
+  .zl-quiz-top {
     position: sticky;
-    top: 0;
-    background: white;
-    z-index: 100;
-    padding: 1rem 0;
-    border-bottom: 1px solid #eaeaea;
+    top: 64px;
+    z-index: 20;
+    background: linear-gradient(145deg, var(--zl-forest) 0%, var(--zl-forest-deep) 100%);
+    border: 1px solid rgba(201, 162, 39, 0.3);
+    border-radius: 14px;
+    margin: 0 0 1.25rem;
+    padding: 1rem 1.15rem;
+    box-shadow: var(--zl-shadow);
   }
-  
-  .question-content {
-    min-height: 50vh;
+  @media (max-width: 991.98px) {
+    .zl-quiz-top { top: 56px; }
+  }
+  .zl-quiz-meta {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: space-between;
+    gap: 0.75rem;
+    align-items: center;
+    margin-bottom: 0.55rem;
+  }
+  .zl-quiz-meta h1 {
+    font-size: 1.05rem;
+    margin: 0;
+    color: var(--zl-brass-light);
+    font-family: var(--zl-display);
+    font-weight: 600;
+  }
+  .zl-timer {
+    font-weight: 700;
+    font-variant-numeric: tabular-nums;
+    font-family: var(--zl-display);
+    font-size: 1.4rem;
+    color: var(--zl-brass-light);
+  }
+  .zl-timer.is-warn { color: #e8c96a; }
+  .zl-timer.is-danger { color: #f0a090; }
+  .zl-quiz-card {
+    background: var(--zl-card);
+    border: 1px solid var(--zl-line);
+    border-radius: 14px;
+    padding: clamp(1.25rem, 3vw, 1.75rem);
+    box-shadow: var(--zl-shadow);
+    animation: zl-fade-up 0.55s cubic-bezier(0.22,1,0.36,1) both;
+  }
+  .zl-quiz-card h2 {
+    font-size: clamp(1.2rem, 2.4vw, 1.5rem);
+    margin: 0 0 1.25rem;
+    color: var(--zl-forest-deep);
+  }
+  .zl-option {
+    display: block;
+    width: 100%;
+    text-align: left;
+    padding: 0.95rem 1rem;
+    border-radius: 12px;
+    border: 1.5px solid var(--zl-line);
+    background: #fffcf6;
+    margin-bottom: 0.65rem;
+    cursor: pointer;
+    font-weight: 500;
+    transition: border-color 0.2s ease, background 0.2s ease, transform 0.25s cubic-bezier(0.22,1,0.36,1);
+  }
+  .zl-option:hover {
+    border-color: var(--zl-brass);
+    background: var(--zl-brass-soft);
+    transform: translateX(4px);
+  }
+  .zl-option-input {
+    position: absolute;
+    opacity: 0;
+    pointer-events: none;
+  }
+  .zl-option-input:checked + .zl-option {
+    border-color: var(--zl-brass);
+    background: var(--zl-brass-soft);
+    box-shadow: inset 0 0 0 1px var(--zl-brass);
+  }
+  .zl-quiz-actions {
+    display: flex;
+    justify-content: space-between;
+    gap: 0.75rem;
+    margin-top: 1.25rem;
+    flex-wrap: wrap;
+  }
+  @media (max-width: 575.98px) {
+    .zl-quiz-card { padding: 1.1rem; }
+    .zl-quiz-actions { flex-direction: column-reverse; }
+    .zl-quiz-actions .btn { width: 100%; }
   }
 </style>
 {% endblock %}
 
 {% block content %}
-<div class="container">
-  <!-- Test sarlavhasi va jarayon -->
-  <div class="test-header mb-4">
-    <div class="row align-items-center">
-      <div class="col-md-8">
-        <h2 class="mb-3">{{ test.title }}</h2>
-        <div class="d-flex justify-content-between align-items-center mb-2">
-          <span>Savol {{ current }} dan {{ total }}</span>
-          <span id="timer" class="timer fw-bold"><i class="fas fa-clock me-2"></i> <span id="minutes">{{ test.time_limit }}</span>:<span id="seconds">00</span></span>
-        </div>
-        <div class="progress test-progress">
-          <div class="progress-bar bg-primary" role="progressbar" style="width: {{ progress }}%" aria-valuenow="{{ progress }}" aria-valuemin="0" aria-valuemax="100"></div>
-        </div>
-      </div>
-      <div class="col-md-4 d-flex justify-content-end">
-        <button type="button" class="btn btn-outline-danger" data-bs-toggle="modal" data-bs-target="#exitTestModal">
-          <i class="fas fa-times me-2"></i> Testni to'xtatish
-        </button>
-      </div>
+<div class="zl-quiz-top">
+  <div class="zl-quiz-meta">
+    <h1>{{ test.title }} · Savol {{ current }} / {{ total }}</h1>
+    <div id="timer" class="zl-timer">
+      <i class="far fa-clock me-1"></i>
+      <span id="minutes">{{ time_remaining|default:0 }}</span>:<span id="seconds">00</span>
     </div>
   </div>
-  
-  <!-- Savol -->
-  <div class="card border-0 shadow-sm mb-4">
-    <div class="card-body p-4">
-      <div class="question-content mb-4">
-        <h3 class="mb-4">{{ question.text }}</h3>
-        
-        <form method="post" id="questionForm">
-          {% csrf_token %}
-          {% for option in options %}
-            <div class="option">
-              <input type="radio" name="option" value="{{ option.id }}" id="option-{{ option.id }}" class="option-input" required>
-              <label for="option-{{ option.id }}" class="option-label">{{ option.text }}</label>
-            </div>
-          {% endfor %}
-        </form>
-      </div>
-      
-      <div class="d-flex justify-content-between">
-        <button type="button" class="btn btn-outline-secondary" disabled>
-          <i class="fas fa-chevron-left me-2"></i> Oldingi
-        </button>
-        <button type="submit" form="questionForm" class="btn btn-primary">
-          Keyingi savol <i class="fas fa-chevron-right ms-2"></i>
-        </button>
-      </div>
-    </div>
+  <div class="progress" style="height: 6px; border-radius: 999px; background: rgba(255,255,255,0.12);">
+    <div class="progress-bar" style="width: {{ progress }}%; background: linear-gradient(90deg, var(--zl-brass-dark), var(--zl-brass-light));"></div>
   </div>
 </div>
 
-<!-- Testdan chiqishni tasdiqlash modali -->
-<div class="modal fade" id="exitTestModal" tabindex="-1" aria-labelledby="exitTestModalLabel" aria-hidden="true">
-  <div class="modal-dialog">
-    <div class="modal-content">
-      <div class="modal-header">
-        <h5 class="modal-title" id="exitTestModalLabel">Testni to'xtatish?</h5>
-        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-      </div>
-      <div class="modal-body">
-        <p>Siz rostdan ham testni to'xtatmoqchimisiz? Sizning jarayoningiz yo'qoladi.</p>
-      </div>
-      <div class="modal-footer">
-        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Bekor qilish</button>
-        <a href="{% url 'blog:test_list' %}" class="btn btn-danger">Ha, testni to'xtatish</a>
-      </div>
+<div class="zl-quiz-card">
+  <h2>{{ question.text }}</h2>
+  <form method="post" id="questionForm">
+    {% csrf_token %}
+    {% for option in options %}
+      <input class="zl-option-input" type="radio" name="option" id="opt{{ option.id }}" value="{{ option.id }}" required>
+      <label class="zl-option" for="opt{{ option.id }}">{{ option.text }}</label>
+    {% endfor %}
+    <div class="zl-quiz-actions">
+      <a href="{% url 'blog:test_list' %}" class="btn btn-outline-primary">Chiqish</a>
+      <button type="submit" class="btn btn-primary">
+        {% if current == total %}Yakunlash{% else %}Keyingi{% endif %}
+      </button>
     </div>
-  </div>
+  </form>
 </div>
 {% endblock %}
 
 {% block extra_js %}
 <script>
-  document.addEventListener('DOMContentLoaded', function() {
-    // Test uchun vaqt hisoblagichi
-    const startTime = new Date("{{ started_at|date:'c' }}");
-    const timeLimit = {{ test.time_limit }}; // daqiqalarda
+  document.addEventListener('DOMContentLoaded', function () {
+    let remainingTime = {{ time_remaining|default:0 }};
     const timerDisplay = document.getElementById('timer');
     const minutesDisplay = document.getElementById('minutes');
     const secondsDisplay = document.getElementById('seconds');
-    
+
     function updateTimer() {
-      const now = new Date();
-      const elapsedTime = Math.floor((now - startTime) / 1000); // soniyalarda
-      const remainingTime = (timeLimit * 60) - elapsedTime;
-      
       if (remainingTime <= 0) {
-        // Vaqt tugadi - avtomatik ravishda formani yuboramiz
-        document.getElementById('questionForm').submit();
+        window.location.href = "{% url 'blog:test_finish' %}";
         return;
       }
-      
-      const minutes = Math.floor(remainingTime / 60);
-      const seconds = remainingTime % 60;
-      
-      minutesDisplay.textContent = String(minutes).padStart(2, '0');
-      secondsDisplay.textContent = String(seconds).padStart(2, '0');
-      
-      // Vaqt tugashiga oz qolganida ogohlantirish
-      if (remainingTime < 60) {
-        timerDisplay.classList.add('text-danger');
-        timerDisplay.classList.add('animate__animated', 'animate__pulse', 'animate__infinite');
-      } else if (remainingTime < 300) { // 5 daqiqadan kam
-        timerDisplay.classList.add('text-warning');
-      }
+      minutesDisplay.textContent = String(Math.floor(remainingTime / 60)).padStart(2, '0');
+      secondsDisplay.textContent = String(remainingTime % 60).padStart(2, '0');
+      timerDisplay.classList.remove('is-warn', 'is-danger');
+      if (remainingTime < 60) timerDisplay.classList.add('is-danger');
+      else if (remainingTime < 300) timerDisplay.classList.add('is-warn');
+      remainingTime -= 1;
     }
-    
-    // Har soniyada vaqt hisoblagichini yangilash
     updateTimer();
     setInterval(updateTimer, 1000);
   });
 </script>
-{% endblock %} 
+{% endblock %}

@@ -1,0 +1,35 @@
+{% extends 'base.html' %}
+
+{% block title %}Bildirishnomalar{% endblock %}
+
+{% block content %}
+<div class="zl-page-head">
+  <div>
+    <h1 class="zl-section-title mb-1">Bildirishnomalar</h1>
+    <p class="zl-section-lead mb-0">Muddatlar, majburiy testlar va tizim xabarlari.</p>
+  </div>
+  <form method="post" action="{% url 'accounts:notifications_read_all' %}">
+    {% csrf_token %}
+    <button type="submit" class="btn btn-sm btn-outline-primary">Barchasini o‘qildi</button>
+  </form>
+</div>
+
+<div class="zl-test-list">
+  {% for n in notifications %}
+  <a href="{% url 'accounts:notification_read' n.pk %}"
+     class="zl-card p-3 d-block mb-2 text-decoration-none {% if not n.is_read %}border-primary{% endif %}"
+     style="color: inherit;">
+    <div class="d-flex justify-content-between gap-2">
+      <strong>{{ n.title }}</strong>
+      <span class="zl-meta">{{ n.created_at|date:"d.m.Y H:i" }}</span>
+    </div>
+    <p class="mb-0 mt-1 zl-meta">{{ n.message }}</p>
+    {% if not n.is_read %}<span class="badge text-bg-primary mt-2">Yangi</span>{% endif %}
+  </a>
+  {% empty %}
+  <div class="zl-empty text-center text-muted p-4">
+    Hozircha bildirishnoma yo‘q.
+  </div>
+  {% endfor %}
+</div>
+{% endblock %}
