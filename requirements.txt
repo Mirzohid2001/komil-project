@@ -15,6 +15,7 @@ defusedxml==0.7.1
 Django==5.2
 django-crontab==0.7.1
 django-jazzmin==3.0.1
+whitenoise==6.9.0
 fonttools==4.57.0
 google-api-core==2.24.2
 google-api-python-client==2.167.0
