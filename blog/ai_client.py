@@ -26,7 +26,8 @@ GEMINI_URL = (
 )
 
 DEFAULT_MODELS = {
-    'groq': 'llama-3.3-70b-versatile',
+    # llama-3.3-70b-versatile 2026-08 da decommission qilindi
+    'groq': 'openai/gpt-oss-20b',
     'gemini': 'gemini-2.0-flash',
 }
 
