@@ -1,12 +1,40 @@
 from django.test import TestCase, Client, override_settings
 from django.urls import reverse, NoReverseMatch, resolve
 from django.contrib.auth import get_user_model
+from django.utils import translation
+from django.utils.translation import gettext
 
+from accounts.audit import log_compliance_event
 from accounts.forms import SignUpForm
-from accounts.models import Certificate, UserActivity
+from accounts.models import Certificate, ComplianceAuditLog, UserActivity
 from blog.models import Category
 
 User = get_user_model()
+
+
+class I18nLocaleTests(TestCase):
+    def test_home_msgid_translates_ru_and_uz(self):
+        with translation.override('ru'):
+            self.assertEqual(gettext('Home'), 'Главная')
+        with translation.override('uz'):
+            self.assertEqual(gettext('Home'), 'Bosh sahifa')
+
+    def test_setlang_sets_language_cookie(self):
+        response = self.client.post(
+            '/i18n/setlang/',
+            {'language': 'ru', 'next': '/'},
+        )
+        self.assertIn(response.status_code, (302, 303))
+        cookie = response.cookies.get('django_language')
+        if cookie is not None:
+            self.assertEqual(cookie.value, 'ru')
+        else:
+            follow = self.client.get(response.url)
+            self.assertEqual(follow.status_code, 200)
+            self.assertEqual(
+                self.client.cookies.get('django_language').value,
+                'ru',
+            )
 
 
 class AdminPanelSmokeTests(TestCase):
@@ -157,6 +185,27 @@ class UserActivityModelTests(TestCase):
                 details={'ok': True},
             )
             self.assertEqual(activity.activity_type, activity_type)
+
+
+class ComplianceAuditLogTests(TestCase):
+    def test_log_compliance_event_creates_row(self):
+        actor = User.objects.create_user(username='auditor', password='pass12345')
+        subject = User.objects.create_user(username='subject', password='pass12345')
+        entry = log_compliance_event(
+            event_type='course_assigned',
+            actor=actor,
+            subject_user=subject,
+            object_type='course',
+            object_id=42,
+            message='assigned',
+            payload={'course_id': 42},
+            ip_address='127.0.0.1',
+        )
+        self.assertIsNotNone(entry)
+        self.assertEqual(ComplianceAuditLog.objects.count(), 1)
+        self.assertEqual(entry.event_type, 'course_assigned')
+        self.assertEqual(entry.object_id, '42')
+        self.assertEqual(entry.payload['course_id'], 42)
 
 
 class FavoritesListTests(TestCase):

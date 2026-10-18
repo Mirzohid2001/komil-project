@@ -1,7 +1,7 @@
 {% extends 'base.html' %}
-{% load static %}
+{% load static i18n %}
 
-{% block title %}Bosh sahifa{% endblock %}
+{% block title %}{% trans "Home" %}{% endblock %}
 
 {% block extra_css %}
 <style>
@@ -229,60 +229,60 @@
   <div class="zl-hero-inner">
     <div class="eyebrow">
       <img src="{% static 'img/logo.png' %}" alt="" width="18" height="18" style="border-radius:50%;object-fit:cover;vertical-align:-3px;border:1px solid rgba(201,162,39,.45);">
-      Zavod LMS · Xodimlar portali
+      {% trans "Factory LMS · Employee portal" %}
     </div>
     <h1 class="zl-title-clip"><span>Isomer Oil</span></h1>
     <p>
       {% if request.user.is_authenticated %}
         {{ request.user.get_full_name|default:request.user.username }} —
-        {{ request.user.get_role_display }} · o‘quv, test va hujjatlar.
+        {{ request.user.get_role_display }}
       {% else %}
-        Premium ichki o‘quv va test platformasi.
+        {% trans "Premium internal training and test platform." %}
       {% endif %}
     </p>
     <div class="zl-home-actions">
-      <a href="{% url 'blog:test_list' %}" class="btn btn-primary" data-zl-magnetic>Testlarga o‘tish</a>
-      <a href="{% url 'courses:list' %}" class="btn btn-outline-light" data-zl-magnetic>Kurslar</a>
+      <a href="{% url 'blog:test_list' %}" class="btn btn-primary" data-zl-magnetic>{% trans "Go to tests" %}</a>
+      <a href="{% url 'courses:list' %}" class="btn btn-outline-light" data-zl-magnetic>{% trans "Courses" %}</a>
     </div>
   </div>
 </section>
 
-<nav class="zl-quick zl-stagger" aria-label="Tezkor havolalar">
+<nav class="zl-quick zl-stagger" aria-label="{% trans 'Quick links' %}">
   <a href="{% url 'blog:test_list' %}">
     <i class="fas fa-clipboard-check"></i>
-    <strong>Testlar</strong>
-    <span>Bilim tekshiruvi</span>
+    <strong>{% trans "Tests" %}</strong>
+    <span>{% trans "Knowledge check" %}</span>
   </a>
   <a href="{% url 'courses:list' %}">
     <i class="fas fa-graduation-cap"></i>
-    <strong>Kurslar</strong>
-    <span>Darslar va quiz</span>
+    <strong>{% trans "Courses" %}</strong>
+    <span>{% trans "Lessons and quizzes" %}</span>
   </a>
   <a href="{% url 'blog:document_list' %}">
     <i class="fas fa-file-alt"></i>
-    <strong>Hujjatlar</strong>
-    <span>Yo‘riqnomalar</span>
+    <strong>{% trans "Documents" %}</strong>
+    <span>{% trans "Guidelines" %}</span>
   </a>
   <a href="{% url 'blog:category_list' %}">
     <i class="fas fa-book-open"></i>
-    <strong>Materiallar</strong>
-    <span>Post va videolar</span>
+    <strong>{% trans "Materials" %}</strong>
+    <span>{% trans "Posts and videos" %}</span>
   </a>
 </nav>
 
 {% if overdue_deadlines or upcoming_deadlines %}
 <section class="mb-4 zl-reveal">
-  <h2 class="zl-section-title">Muddatli testlar</h2>
-  <p class="zl-section-lead">Majburiy va yaqinlashayotgan topshiriqlar.</p>
+  <h2 class="zl-section-title">{% trans "Deadline tests" %}</h2>
+  <p class="zl-section-lead">{% trans "Mandatory and upcoming assignments." %}</p>
   {% if overdue_deadlines %}
   <div class="zl-deadline is-overdue">
-    <h3><i class="fas fa-exclamation-triangle me-1"></i> Muddati o‘tgan</h3>
+    <h3><i class="fas fa-exclamation-triangle me-1"></i> {% trans "Overdue" %}</h3>
     <ul>
       {% for item in overdue_deadlines %}
       <li>
         <a href="{% url 'blog:test_start' item.test.id %}">{{ item.test.title }}</a>
         — {{ item.test.deadline|date:"d.m.Y" }}
-        {% if item.is_mandatory %}<span class="badge text-bg-danger">Majburiy</span>{% endif %}
+        {% if item.is_mandatory %}<span class="badge text-bg-danger">{% trans "Mandatory" %}</span>{% endif %}
       </li>
       {% endfor %}
     </ul>
@@ -290,13 +290,13 @@
   {% endif %}
   {% if upcoming_deadlines %}
   <div class="zl-deadline is-soon">
-    <h3><i class="fas fa-bell me-1"></i> Yaqinlashayotgan</h3>
+    <h3><i class="fas fa-bell me-1"></i> {% trans "Upcoming" %}</h3>
     <ul>
       {% for item in upcoming_deadlines %}
       <li>
         <a href="{% url 'blog:test_start' item.test.id %}">{{ item.test.title }}</a>
         — {{ item.test.deadline|date:"d.m.Y" }}
-        ({% if item.days_left == 0 %}bugun{% else %}{{ item.days_left }} kun{% endif %})
+        ({% if item.days_left == 0 %}{% trans "today" %}{% else %}{% blocktrans with count=item.days_left %}{{ count }} days{% endblocktrans %}{% endif %})
       </li>
       {% endfor %}
     </ul>
@@ -308,26 +308,26 @@
 <section class="zl-reveal zl-reveal-delay-1">
   <div class="d-flex flex-wrap justify-content-between align-items-end gap-2 mb-3">
     <div>
-      <h2 class="zl-section-title mb-1">So‘nggi materiallar</h2>
-      <p class="zl-section-lead mb-0">Sizning rolingizga tegishli postlar.</p>
+      <h2 class="zl-section-title mb-1">{% trans "Latest materials" %}</h2>
+      <p class="zl-section-lead mb-0">{% trans "Posts for your role." %}</p>
     </div>
-    <a href="{% url 'blog:category_list' %}" class="btn btn-sm btn-outline-primary">Barchasi</a>
+    <a href="{% url 'blog:category_list' %}" class="btn btn-sm btn-outline-primary">{% trans "All" %}</a>
   </div>
 
   {% if is_admin %}
   <form method="get" class="zl-admin-filter">
     <div class="row g-2 align-items-end">
       <div class="col-md-6">
-        <label class="form-label small fw-semibold mb-1" for="view_as_role">Rol bo‘yicha ko‘rish</label>
+        <label class="form-label small fw-semibold mb-1" for="view_as_role">{% trans "View by role" %}</label>
         <select name="view_as_role" id="view_as_role" class="form-select form-select-sm">
-          <option value="">Barcha rollar</option>
+          <option value="">{% trans "All roles" %}</option>
           {% for role_key, role_name in roles %}
             <option value="{{ role_key }}" {% if selected_role == role_key %}selected{% endif %}>{{ role_name }}</option>
           {% endfor %}
         </select>
       </div>
       <div class="col-md-3">
-        <button class="btn btn-sm btn-primary" type="submit">Ko‘rsatish</button>
+        <button class="btn btn-sm btn-primary" type="submit">{% trans "Show" %}</button>
       </div>
     </div>
   </form>
@@ -343,15 +343,15 @@
           {{ post.category.name }} · {{ post.get_role_display }} · {{ post.created_at|date:"d.m.Y" }}
         </div>
       </div>
-      <a href="{% url 'blog:post_detail' post.id %}" class="btn btn-sm btn-primary flex-shrink-0">Ochish</a>
+      <a href="{% url 'blog:post_detail' post.id %}" class="btn btn-sm btn-primary flex-shrink-0">{% trans "Open" %}</a>
     </article>
     {% endfor %}
   </div>
   {% else %}
   <div class="zl-empty">
     <i class="fas fa-book-open d-block"></i>
-    <h2 class="h5 text-dark">Hozircha material yo‘q</h2>
-    <p class="mb-0">Tez orada rolingizga mos postlar qo‘shiladi.</p>
+    <h2 class="h5 text-dark">{% trans "No materials yet" %}</h2>
+    <p class="mb-0">{% trans "Posts for your role will appear soon." %}</p>
   </div>
   {% endif %}
 </section>

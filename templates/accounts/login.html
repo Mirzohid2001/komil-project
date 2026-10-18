@@ -1,7 +1,7 @@
 {% extends 'base.html' %}
-{% load static %}
+{% load static i18n %}
 
-{% block title %}Kirish{% endblock %}
+{% block title %}{% trans "Login" %}{% endblock %}
 {% block body_class %}is-auth{% endblock %}
 {% block chrome_nav %}{% endblock %}
 {% block chrome_footer %}{% endblock %}
@@ -148,12 +148,32 @@
   }
 
   .auth-form-side {
+    position: relative;
     display: grid;
     place-items: center;
     padding: clamp(1.5rem, 4vw, 3rem);
     background:
       radial-gradient(600px 300px at 100% 0%, rgba(201, 162, 39, 0.12), transparent 60%),
       #ebe6db;
+  }
+  .auth-lang-corner {
+    position: absolute;
+    top: clamp(0.85rem, 2.5vw, 1.35rem);
+    right: clamp(0.85rem, 2.5vw, 1.35rem);
+    z-index: 2;
+  }
+  .auth-form-side .zl-lang-toggle {
+    background: rgba(7, 20, 14, 0.06);
+    border-color: rgba(201, 162, 39, 0.55);
+  }
+  .auth-form-side .zl-lang-btn {
+    color: rgba(7, 20, 14, 0.62);
+  }
+  .auth-form-side .zl-lang-btn.is-active {
+    color: #07140e;
+  }
+  .auth-form-side .zl-lang-btn:not(.is-active):hover {
+    color: var(--zl-forest-deep);
   }
   .auth-form-box {
     width: min(420px, 100%);
@@ -229,23 +249,26 @@
     <div class="auth-visual-copy">
       <div class="auth-eyebrow">
         <img src="{% static 'img/logo.png' %}" alt="" width="22" height="22" style="border-radius:50%;object-fit:cover;border:1px solid rgba(201,162,39,.5);">
-        Premium · Ichki portal
+        {% trans "Premium · Internal portal" %}
       </div>
       <h1 class="zl-title-clip"><span>Isomer Oil</span></h1>
-      <p>Zavod LMS — xodimlar uchun o‘quv, xavfsizlik testlari va hujjatlar.</p>
+      <p>{% trans "Factory LMS — training, safety tests and documents for employees." %}</p>
       <div class="auth-meta">
-        <span>Kurslar</span>
-        <span>Testlar</span>
-        <span>Hujjatlar</span>
+        <span>{% trans "Courses" %}</span>
+        <span>{% trans "Tests" %}</span>
+        <span>{% trans "Documents" %}</span>
       </div>
     </div>
-    <div class="auth-foot">Faqat Isomer Oil xodimlari · Admin orqali kirish</div>
+    <div class="auth-foot">{% trans "Isomer Oil employees only · Access via admin" %}</div>
   </aside>
 
   <section class="auth-form-side">
+    <div class="auth-lang-corner">
+      {% include 'partials/lang_switcher.html' %}
+    </div>
     <div class="auth-form-box">
-      <h2>Tizimga kirish</h2>
-      <p class="sub">Login va parolni administrator beradi.</p>
+      <h2>{% trans "Sign in" %}</h2>
+      <p class="sub">{% trans "Username and password are provided by the administrator." %}</p>
 
       <form method="post" novalidate>
         {% csrf_token %}
@@ -256,7 +279,7 @@
         {% endif %}
 
         <div class="mb-3">
-          <label class="form-label" for="id_username">Foydalanuvchi nomi</label>
+          <label class="form-label" for="id_username">{% trans "Username" %}</label>
           <input type="text" name="username" id="id_username" class="form-control"
                  autofocus autocomplete="username" placeholder="operator01"
                  value="{{ form.username.value|default:'' }}">
@@ -266,7 +289,7 @@
         </div>
 
         <div class="mb-3">
-          <label class="form-label" for="id_password">Parol</label>
+          <label class="form-label" for="id_password">{% trans "Password" %}</label>
           <input type="password" name="password" id="id_password" class="form-control"
                  autocomplete="current-password" placeholder="••••••••">
           {% if form.password.errors %}
@@ -274,15 +297,15 @@
           {% endif %}
         </div>
 
-        <button type="submit" class="btn btn-primary auth-submit" data-zl-magnetic>Kirish</button>
+        <button type="submit" class="btn btn-primary auth-submit" data-zl-magnetic>{% trans "Login" %}</button>
       </form>
 
       <p class="text-center mt-3 mb-0">
-        <a href="{% url 'accounts:password_reset' %}" class="small">Parolni unutdingizmi?</a>
+        <a href="{% url 'accounts:password_reset' %}" class="small">{% trans "Forgot password?" %}</a>
       </p>
 
       <div class="auth-note">
-        Ochiq ro‘yxatdan o‘tish yo‘q. Yangi xodim uchun admin bilan bog‘laning.
+        {% trans "No public registration. Contact admin for new employees." %}
       </div>
     </div>
   </section>

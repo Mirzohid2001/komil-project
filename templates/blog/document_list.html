@@ -1,26 +1,27 @@
 {% extends 'base.html' %}
+{% load i18n %}
 
-{% block title %}Hujjatlar{% endblock %}
+{% block title %}{% trans "Documents" %}{% endblock %}
 
 {% block content %}
 <div class="zl-page-head">
   <div>
-    <h1 class="zl-section-title mb-1">Hujjatlar</h1>
-    <p class="zl-section-lead mb-0">Ruxsat berilgan yo‘riqnoma va fayllar.</p>
+    <h1 class="zl-section-title mb-1">{% trans "Documents" %}</h1>
+    <p class="zl-section-lead mb-0">{% trans "Allowed guidelines and files." %}</p>
   </div>
   {% if is_admin %}
   <div class="d-flex gap-2">
-    <a href="{% url 'blog:document_upload' %}" class="btn btn-sm btn-primary">Yuklash</a>
-    <a href="{% url 'blog:document_analytics' %}" class="btn btn-sm btn-outline-primary">Analitika</a>
+    <a href="{% url 'blog:document_upload' %}" class="btn btn-sm btn-primary">{% trans "Upload" %}</a>
+    <a href="{% url 'blog:document_analytics' %}" class="btn btn-sm btn-outline-primary">{% trans "Analytics" %}</a>
   </div>
   {% endif %}
 </div>
 
 <div class="zl-card p-3 mb-3">
   <div class="d-flex flex-wrap gap-2 align-items-center">
-    <span class="fw-semibold small text-muted me-1">Kategoriya:</span>
+    <span class="fw-semibold small text-muted me-1">{% trans "Category:" %}</span>
     <a href="{% url 'blog:document_list' %}"
-       class="btn btn-sm {% if not selected_category %}btn-primary{% else %}btn-outline-primary{% endif %}">Barchasi</a>
+       class="btn btn-sm {% if not selected_category %}btn-primary{% else %}btn-outline-primary{% endif %}">{% trans "All" %}</a>
     {% for category in categories %}
     <a href="{% url 'blog:document_list' %}?category={{ category.id }}"
        class="btn btn-sm {% if selected_category == category.id|stringformat:'s' %}btn-primary{% else %}btn-outline-primary{% endif %}">
@@ -31,8 +32,8 @@
 </div>
 
 <div class="zl-stats mb-3" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:.75rem;">
-  <div class="zl-card p-3"><div class="zl-meta">Jami</div><strong class="fs-4">{{ documents|length }}</strong></div>
-  <div class="zl-card p-3"><div class="zl-meta">Kategoriyalar</div><strong class="fs-4">{{ categories.count }}</strong></div>
+  <div class="zl-card p-3"><div class="zl-meta">{% trans "Total" %}</div><strong class="fs-4">{{ documents|length }}</strong></div>
+  <div class="zl-card p-3"><div class="zl-meta">{% trans "Categories" %}</div><strong class="fs-4">{{ categories.count }}</strong></div>
 </div>
 
 {% if documents %}
@@ -46,7 +47,7 @@
         <h3>{{ document.title }}</h3>
         <div class="zl-meta">
           {{ document.category.name }} · {{ document.get_file_size_display }}
-          {% if document.is_public %} · Ochiq{% endif %}
+          {% if document.is_public %} · {% trans "Public" %}{% endif %}
         </div>
         {% if document.description %}
         <p class="zl-meta mb-0 mt-1">{{ document.description|truncatewords:18 }}</p>
@@ -54,16 +55,16 @@
       </div>
     </div>
     <div class="d-flex gap-2 flex-shrink-0">
-      <a href="{% url 'blog:document_detail' document.id %}" class="btn btn-sm btn-outline-primary">Ko‘rish</a>
-      <a href="{% url 'blog:document_download' document.id %}" class="btn btn-sm btn-primary">Yuklash</a>
+      <a href="{% url 'blog:document_detail' document.id %}" class="btn btn-sm btn-outline-primary">{% trans "View" %}</a>
+      <a href="{% url 'blog:document_download' document.id %}" class="btn btn-sm btn-primary">{% trans "Download" %}</a>
     </div>
   </article>
   {% endfor %}
 {% else %}
   <div class="zl-empty">
     <i class="fas fa-folder-open d-block"></i>
-    <h2 class="h5 text-dark">Hujjatlar yo‘q</h2>
-    <p class="mb-0">Bu bo‘limda hali fayl yo‘q yoki sizga ruxsat berilmagan.</p>
+    <h2 class="h5 text-dark">{% trans "No documents" %}</h2>
+    <p class="mb-0">{% trans "No files here yet, or you lack access." %}</p>
   </div>
 {% endif %}
 {% endblock %}

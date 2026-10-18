@@ -762,6 +762,24 @@ def test_finish(request):
         },
         ip_address=request.META.get('REMOTE_ADDR')
     )
+
+    from accounts.audit import log_compliance_event
+    log_compliance_event(
+        event_type='test_passed' if is_passed else 'test_failed',
+        actor=request.user,
+        subject_user=request.user,
+        object_type='Test',
+        object_id=test.id,
+        message=f'Test: {test.title} — {percentage:.0f}%',
+        payload={
+            'test_id': test.id,
+            'result_id': test_result.id,
+            'score': score,
+            'percentage': percentage,
+            'is_passed': is_passed,
+        },
+        request=request,
+    )
     
     # Даем пользователю опыт в зависимости от результата
     if is_passed:
@@ -789,6 +807,24 @@ def test_finish(request):
             request.user,
             test.certificate_category,
             validity_days=test.certificate_validity_days,
+        )
+        log_compliance_event(
+            event_type='cert_issued' if created else 'cert_renewed',
+            actor=request.user,
+            subject_user=request.user,
+            object_type='Certificate',
+            object_id=getattr(cert, 'id', None) or getattr(cert, 'certificate_id', ''),
+            message=(
+                f"{'Berildi' if created else 'Yangilandi'}: "
+                f"{test.certificate_category.name}"
+            ),
+            payload={
+                'category_id': test.certificate_category_id,
+                'valid_until': (
+                    cert.valid_until.isoformat() if getattr(cert, 'valid_until', None) else None
+                ),
+            },
+            request=request,
         )
         if created:
             messages.success(
@@ -1094,7 +1130,10 @@ def weak_questions_report(request):
 def check_video_watching_achievement(user):
     """Проверяет достижение по просмотру видео"""
     # Получаем количество просмотренных видео
-    videos_watched = UserActivity.objects.filter(user=user, activity_type='view_video').count()
+    videos_watched = UserActivity.objects.filter(
+        user=user,
+        activity_type__in=['view_video', 'view_lesson_video'],
+    ).count()
     
     # Получаем достижения по просмотру видео
     achievements = Achievement.objects.filter(
@@ -1290,11 +1329,23 @@ def document_acknowledge(request, document_id):
         messages.info(request, "Bu hujjat uchun tasdiq talab qilinmaydi.")
         return redirect('blog:document_detail', document_id=document.id)
 
-    DocumentAcknowledgment.objects.get_or_create(
+    ack, created = DocumentAcknowledgment.objects.get_or_create(
         document=document,
         user=request.user,
         defaults={'ip_address': request.META.get('REMOTE_ADDR')},
     )
+    if created:
+        from accounts.audit import log_compliance_event
+        log_compliance_event(
+            event_type='doc_acknowledged',
+            actor=request.user,
+            subject_user=request.user,
+            object_type='Document',
+            object_id=document.id,
+            message=f'Hujjat tasdiqlandi: {document.title}',
+            payload={'document_id': document.id, 'title': document.title},
+            request=request,
+        )
     messages.success(request, "Hujjat bilan tanishganingiz tasdiqlandi.")
     return redirect('blog:document_detail', document_id=document.id)
 

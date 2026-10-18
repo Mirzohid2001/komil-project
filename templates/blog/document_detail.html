@@ -1,5 +1,5 @@
 {% extends 'base.html' %}
-{% load static %}
+{% load static i18n %}
 
 {% block title %}{{ document.title }}{% endblock %}
 
@@ -9,10 +9,10 @@
     <h1 class="zl-section-title mb-1">{{ document.title }}</h1>
     <p class="zl-section-lead mb-0">
       {{ document.category.name }} · {{ document.get_file_size_display }}
-      {% if document.is_public %} · Ochiq{% endif %}
+      {% if document.is_public %} · {% trans "Public" %}{% endif %}
     </p>
   </div>
-  <a href="{% url 'blog:document_list' %}" class="btn btn-sm btn-outline-primary">Hujjatlar</a>
+  <a href="{% url 'blog:document_list' %}" class="btn btn-sm btn-outline-primary">{% trans "Documents" %}</a>
 </div>
 
 <div class="row g-3">
@@ -26,7 +26,7 @@
           <h2 class="h5 mb-1">{{ document.title }}</h2>
           <div class="zl-meta">
             {{ document.get_file_type_display|default:document.file_type }} ·
-            Yuklagan: {{ document.uploaded_by.get_full_name|default:document.uploaded_by.username }} ·
+            {% trans "Uploaded by:" %} {{ document.uploaded_by.get_full_name|default:document.uploaded_by.username }} ·
             {{ document.uploaded_at|date:"d.m.Y H:i" }}
           </div>
         </div>
@@ -38,15 +38,15 @@
 
       <ul class="list-unstyled mb-4">
         <li class="d-flex justify-content-between py-2 border-bottom">
-          <span class="zl-meta">Ko‘rishlar</span><strong>{{ document.view_count }}</strong>
+          <span class="zl-meta">{% trans "Views" %}</span><strong>{{ document.view_count }}</strong>
         </li>
         <li class="d-flex justify-content-between py-2 border-bottom">
-          <span class="zl-meta">Yuklab olishlar</span><strong>{{ document.download_count }}</strong>
+          <span class="zl-meta">{% trans "Downloads" %}</span><strong>{{ document.download_count }}</strong>
         </li>
         <li class="d-flex justify-content-between py-2">
-          <span class="zl-meta">Ruxsat</span>
+          <span class="zl-meta">{% trans "Access" %}</span>
           <strong>
-            {% if document.is_public %}Barcha{% else %}Tanlangan rollar{% endif %}
+            {% if document.is_public %}{% trans "Everyone" %}{% else %}{% trans "Selected roles" %}{% endif %}
           </strong>
         </li>
       </ul>
@@ -62,27 +62,27 @@
       {% if document.requires_acknowledgment %}
       <div class="alert {% if acknowledged %}alert-success{% else %}alert-warning{% endif %} mb-3">
         {% if acknowledged %}
-          <i class="fas fa-check-circle me-1"></i> Siz bu hujjat bilan tanishganingizni tasdiqlagansiz.
+          <i class="fas fa-check-circle me-1"></i> {% trans "You have acknowledged this document." %}
         {% else %}
-          <i class="fas fa-exclamation-circle me-1"></i> Bu hujjatni o‘qib, tanishganingizni tasdiqlang.
+          <i class="fas fa-exclamation-circle me-1"></i> {% trans "Read this document and confirm acknowledgment." %}
         {% endif %}
       </div>
       {% endif %}
 
       <div class="d-flex flex-wrap gap-2">
         <a href="{% url 'blog:document_download' document.id %}" class="btn btn-primary">
-          <i class="fas fa-download me-1"></i> Yuklab olish
+          <i class="fas fa-download me-1"></i> {% trans "Download" %}
         </a>
         {% if document.requires_acknowledgment and not acknowledged %}
         <form method="post" action="{% url 'blog:document_acknowledge' document.id %}" class="d-inline">
           {% csrf_token %}
           <button type="submit" class="btn btn-outline-primary">
-            <i class="fas fa-signature me-1"></i> Tanishdim, tasdiqlayman
+            <i class="fas fa-signature me-1"></i> {% trans "I have read and confirm" %}
           </button>
         </form>
         {% endif %}
         {% if is_admin %}
-        <a href="/admin/blog/document/{{ document.id }}/change/" class="btn btn-outline-primary" target="_blank">Tahrirlash</a>
+        <a href="/admin/blog/document/{{ document.id }}/change/" class="btn btn-outline-primary" target="_blank">{% trans "Edit" %}</a>
         {% endif %}
       </div>
     </section>
@@ -90,15 +90,15 @@
 
   <aside class="col-lg-4">
     <div class="zl-card p-3 mb-3">
-      <h2 class="h6 fw-bold mb-3">Tezkor amallar</h2>
+      <h2 class="h6 fw-bold mb-3">{% trans "Quick actions" %}</h2>
       <div class="d-grid gap-2">
-        <a href="{% url 'blog:document_download' document.id %}" class="btn btn-sm btn-primary">Yuklab olish</a>
-        <a href="{% url 'blog:document_list' %}" class="btn btn-sm btn-outline-primary">Ro‘yxatga qaytish</a>
+        <a href="{% url 'blog:document_download' document.id %}" class="btn btn-sm btn-primary">{% trans "Download" %}</a>
+        <a href="{% url 'blog:document_list' %}" class="btn btn-sm btn-outline-primary">{% trans "Back to list" %}</a>
       </div>
     </div>
 
     <div class="zl-card p-3">
-      <h2 class="h6 fw-bold mb-3">Shu kategoriyada</h2>
+      <h2 class="h6 fw-bold mb-3">{% trans "In this category" %}</h2>
       {% with related_docs=document.category.documents.all|slice:":5" %}
         {% for doc in related_docs %}
           {% if doc.id != document.id %}
@@ -111,7 +111,7 @@
           </a>
           {% endif %}
         {% empty %}
-          <p class="zl-meta mb-0">Boshqa hujjat yo‘q</p>
+          <p class="zl-meta mb-0">{% trans "No other documents" %}</p>
         {% endfor %}
       {% endwith %}
     </div>

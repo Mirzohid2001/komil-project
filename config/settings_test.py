@@ -27,3 +27,14 @@ STATIC_ROOT = BASE_DIR / 'staticfiles'  # noqa: F405
 AI_PROVIDER = 'off'
 AI_API_KEY = ''
 AI_MODEL = ''
+
+# WhiteNoise optional in local venv — strip for tests
+MIDDLEWARE = [m for m in MIDDLEWARE if 'whitenoise' not in m]  # noqa: F405
+STORAGES = {
+    'default': {
+        'BACKEND': 'django.core.files.storage.FileSystemStorage',
+    },
+    'staticfiles': {
+        'BACKEND': 'django.contrib.staticfiles.storage.StaticFilesStorage',
+    },
+}

@@ -1,6 +1,7 @@
 {% extends 'base.html' %}
+{% load i18n %}
 
-{% block title %}Savol {{ current }}/{{ total }}{% endblock %}
+{% block title %}{% blocktrans with current=current total=total %}Question {{ current }} / {{ total }}{% endblocktrans %}{% endblock %}
 
 {% block extra_css %}
 <style>
@@ -129,7 +130,7 @@
 {% block content %}
 <div class="zl-quiz-top">
   <div class="zl-quiz-meta">
-    <h1>{{ test.title }} · Savol {{ current }} / {{ total }}</h1>
+    <h1>{{ test.title }} · {% blocktrans with current=current total=total %}Question {{ current }} / {{ total }}{% endblocktrans %}</h1>
     <div id="timer" class="zl-timer">
       <i class="far fa-clock me-1"></i>
       <span id="minutes">{{ time_remaining|default:0 }}</span>:<span id="seconds">00</span>
@@ -148,12 +149,12 @@
     {% csrf_token %}
 
     {% if question.question_type == 'short' %}
-      <label class="form-label small fw-semibold" for="text_answer">Javobingiz</label>
+      <label class="form-label small fw-semibold" for="text_answer">{% trans "Your answer" %}</label>
       <input class="zl-short-input" type="text" name="text_answer" id="text_answer"
-             required autocomplete="off" placeholder="Javobni yozing…">
+             required autocomplete="off" placeholder="{% trans 'Type your answer…' %}">
 
     {% elif question.question_type == 'multi' %}
-      <p class="small text-muted mb-3">Bir nechta variantni belgilashingiz mumkin.</p>
+      <p class="small text-muted mb-3">{% trans "You may select multiple options." %}</p>
       {% for option in options %}
         <input class="zl-option-input" type="checkbox" name="options" id="opt{{ option.id }}" value="{{ option.id }}">
         <label class="zl-option" for="opt{{ option.id }}">{{ option.text }}</label>
@@ -175,9 +176,9 @@
     {% endif %}
 
     <div class="zl-quiz-actions">
-      <a href="{% url 'blog:test_list' %}" class="btn btn-outline-primary">Chiqish</a>
+      <a href="{% url 'blog:test_list' %}" class="btn btn-outline-primary">{% trans "Exit" %}</a>
       <button type="submit" class="btn btn-primary" id="submitBtn">
-        {% if current == total %}Yakunlash{% else %}Keyingi{% endif %}
+        {% if current == total %}{% trans "Finish" %}{% else %}{% trans "Next" %}{% endif %}
       </button>
     </div>
   </form>
@@ -197,7 +198,7 @@
     form.addEventListener('submit', function (e) {
       if (!form.querySelector('input[name="options"]:checked')) {
         e.preventDefault();
-        alert('Kamida bitta variant tanlang.');
+        alert('{% trans "Select at least one option." %}');
       }
     });
     {% endif %}

@@ -1,12 +1,13 @@
 {% extends 'base.html' %}
+{% load i18n %}
 
-{% block title %}Materiallar{% endblock %}
+{% block title %}{% trans "Materials" %}{% endblock %}
 
 {% block content %}
 <div class="zl-page-head">
   <div>
-    <h1 class="zl-section-title mb-1">Materiallar</h1>
-    <p class="zl-section-lead mb-0">Kategoriya bo‘yicha o‘quv postlari va videolar.</p>
+    <h1 class="zl-section-title mb-1">{% trans "Materials" %}</h1>
+    <p class="zl-section-lead mb-0">{% trans "Learning posts and videos by category." %}</p>
   </div>
 </div>
 
@@ -17,11 +18,11 @@
     <article class="zl-card h-100 p-3 d-flex flex-column">
       <div class="d-flex justify-content-between align-items-start mb-2">
         <span class="zl-brand-mark" style="width:2.4rem;height:2.4rem;"><i class="fas fa-folder"></i></span>
-        <span class="zl-chip">{{ cat.post_set.count }} post</span>
+        <span class="zl-chip">{{ cat.post_set.count }}</span>
       </div>
       <h2 class="h5 mb-2">{{ cat.name }}</h2>
-      <p class="zl-meta flex-grow-1">{{ cat.description|truncatechars:120|default:"Tavsif yo‘q" }}</p>
-      <a href="{% url 'blog:post_list' cat.id %}" class="btn btn-primary btn-sm mt-2">Ochish</a>
+      <p class="zl-meta flex-grow-1">{% if cat.description %}{{ cat.description|truncatechars:120 }}{% else %}{% trans "No description" %}{% endif %}</p>
+      <a href="{% url 'blog:post_list' cat.id %}" class="btn btn-primary btn-sm mt-2">{% trans "Open" %}</a>
     </article>
   </div>
   {% endfor %}
@@ -29,8 +30,8 @@
 {% else %}
 <div class="zl-empty">
   <i class="fas fa-folder-open d-block"></i>
-  <h2 class="h5 text-dark">Kategoriya yo‘q</h2>
-  <p class="mb-0">Tez orada materiallar qo‘shiladi.</p>
+  <h2 class="h5 text-dark">{% trans "No categories" %}</h2>
+  <p class="mb-0">{% trans "Materials will be added soon." %}</p>
 </div>
 {% endif %}
 {% endblock %}

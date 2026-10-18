@@ -16,7 +16,9 @@ JAZZMIN_SETTINGS = {
         {'name': 'Sayt', 'url': '/', 'new_window': True},
         {'name': 'LMS Analitika', 'url': 'admin:lms_analytics', 'permissions': ['accounts.view_user']},
         {'name': 'HR hisobot', 'url': 'blog:hr_reports', 'permissions': ['accounts.view_user']},
-        {'name': 'Video analitika', 'url': 'blog:analytics', 'permissions': ['accounts.view_user']},
+        {'name': 'Material video', 'url': 'blog:analytics', 'permissions': ['accounts.view_user']},
+        {'name': 'Ommaviy topshiriq', 'url': 'admin:courses_courseassignment_bulk_assign', 'permissions': ['courses.add_courseassignment']},
+        {'name': 'Audit jurnal', 'url': 'admin:accounts_complianceauditlog_changelist', 'permissions': ['accounts.view_complianceauditlog']},
         {'model': 'accounts.User'},
     ],
     'usermenu_links': [
@@ -122,7 +124,9 @@ JAZZMIN_SETTINGS = {
         'courses.LessonQuizAttempt': 'fas fa-clipboard-list',
         'courses.Enrollment': 'fas fa-user-plus',
         'courses.CompletedLesson': 'fas fa-check-circle',
+        'courses.LessonVideoProgress': 'fas fa-hourglass-half',
         'courses.CourseCertificate': 'fas fa-award',
+        'accounts.ComplianceAuditLog': 'fas fa-clipboard-list',
     },
     'default_icon_parents': 'fas fa-chevron-circle-right',
     'default_icon_children': 'fas fa-circle',
@@ -138,7 +142,7 @@ JAZZMIN_SETTINGS = {
         'courses.course': 'horizontal_tabs',
         'courses.lesson': 'horizontal_tabs',
     },
-    'language_chooser': False,
+    'language_chooser': True,
 }
 
 JAZZMIN_UI_TWEAKS = {

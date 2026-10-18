@@ -7,6 +7,7 @@ from django.contrib.auth.admin import UserAdmin as BaseUserAdmin
 from .models import (
     User, FavoritePost, UserActivity, Achievement, UserAchievement,
     LearningProgress, Certificate, LevelUpEvent, Department, Notification,
+    ComplianceAuditLog,
 )
 
 class FavoritePostInline(admin.TabularInline):
@@ -226,6 +227,33 @@ class NotificationAdmin(admin.ModelAdmin):
     list_filter = ('notification_type', 'is_read', 'created_at')
     search_fields = ('user__username', 'title', 'message')
     date_hierarchy = 'created_at'
+
+
+@admin.register(ComplianceAuditLog)
+class ComplianceAuditLogAdmin(admin.ModelAdmin):
+    list_display = (
+        'created_at', 'event_type', 'actor', 'subject_user',
+        'message', 'object_type', 'object_id', 'ip_address',
+    )
+    list_filter = ('event_type', 'created_at', 'object_type')
+    search_fields = (
+        'message', 'actor__username', 'subject_user__username',
+        'object_id', 'ip_address',
+    )
+    date_hierarchy = 'created_at'
+    readonly_fields = (
+        'actor', 'subject_user', 'event_type', 'object_type', 'object_id',
+        'message', 'payload', 'ip_address', 'created_at',
+    )
+
+    def has_add_permission(self, request):
+        return False
+
+    def has_change_permission(self, request, obj=None):
+        return False
+
+    def has_delete_permission(self, request, obj=None):
+        return False
 
 
 # Регистрируем модели с кастомными админками

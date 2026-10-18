@@ -14,7 +14,7 @@ from django.shortcuts import render
 from django.utils import timezone
 
 from blog.models import Post, Test, TestResult, VideoView
-from courses.models import CompletedLesson, Enrollment
+from courses.models import CompletedLesson, Enrollment, LessonVideoProgress
 
 User = get_user_model()
 
@@ -67,20 +67,30 @@ def build_lms_analytics(year=None):
     today = timezone.localdate()
 
     results = TestResult.objects.select_related('user', 'test')
+    # Material (blog) videolari — VideoView
     videos = VideoView.objects.select_related('user', 'post')
+    # Kurs video progressi — LessonVideoProgress
+    course_video_progress = LessonVideoProgress.objects.select_related(
+        'user', 'lesson', 'lesson__module__course'
+    )
     lessons = CompletedLesson.objects.select_related('user', 'lesson', 'lesson__module__course')
 
     if year:
         results = results.filter(completed_at__year=year)
         videos = videos.filter(viewed_at__year=year)
+        course_video_progress = course_video_progress.filter(updated_at__year=year)
         lessons = lessons.filter(completed_at__year=year)
 
     total_attempts = results.count()
     passed = results.filter(is_passed=True).count()
     failed = results.filter(is_passed=False).count()
     avg_score = results.aggregate(v=Avg('percentage'))['v'] or 0
-    video_views = videos.count()
+    blog_video_views = videos.count()
+    course_video_watches = course_video_progress.count()
+    course_video_unlocked = course_video_progress.filter(percent__gte=80).count()
     unique_viewers = videos.values('user').distinct().count()
+    # Orqa moslik: video_views = material videolari
+    video_views = blog_video_views
     lesson_done = lessons.count()
     course_done = Enrollment.objects.filter(is_completed=True)
     if year:
@@ -109,9 +119,13 @@ def build_lms_analytics(year=None):
         },
     )
 
-    # Video monthly
+    # Material video monthly
     v_month_labels, v_month_series = _month_labels(
         videos, 'viewed_at', {'total': Count('id')}
+    )
+    # Kurs video progress monthly
+    cv_month_labels, cv_month_series = _month_labels(
+        course_video_progress, 'updated_at', {'total': Count('id')}
     )
     # Lesson completions monthly
     l_month_labels, l_month_series = _month_labels(
@@ -221,6 +235,9 @@ def build_lms_analytics(year=None):
             'pass_rate': round((passed / total_attempts * 100) if total_attempts else 0, 1),
             'avg_score': round(avg_score, 1),
             'video_views': video_views,
+            'blog_video_views': blog_video_views,
+            'course_video_watches': course_video_watches,
+            'course_video_unlocked': course_video_unlocked,
             'unique_viewers': unique_viewers,
             'lesson_done': lesson_done,
             'course_done': course_done_n,
@@ -243,6 +260,10 @@ def build_lms_analytics(year=None):
             'monthly_videos': {
                 'labels': v_month_labels,
                 'total': v_month_series.get('total', []),
+            },
+            'monthly_course_videos': {
+                'labels': cv_month_labels,
+                'total': cv_month_series.get('total', []),
             },
             'monthly_lessons': {
                 'labels': l_month_labels,

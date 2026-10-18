@@ -1,0 +1,858 @@
+msgid ""
+msgstr ""
+"Content-Type: text/plain; charset=UTF-8\n"
+"Language: ru\n"
+"Plural-Forms: nplurals=1; plural=0;\n"
+
+msgid "%(count)s days"
+msgstr "%(count)s дн."
+
+msgid "%(progress)s%% complete"
+msgstr "Выполнено %(progress)s%%"
+
+msgid "About me"
+msgstr "О себе"
+
+msgid "About the course"
+msgstr "О курсе"
+
+msgid "Access"
+msgstr "Доступ"
+
+msgid "Active test list"
+msgstr "Список активных тестов"
+
+msgid "Admin"
+msgstr "Админ"
+
+msgid "All"
+msgstr "Все"
+
+msgid "All clear"
+msgstr "Всё в порядке"
+
+msgid "All courses"
+msgstr "Все курсы"
+
+msgid "All roles"
+msgstr "Все роли"
+
+msgid "Allowed guidelines and files."
+msgstr "Разрешённые инструкции и файлы."
+
+msgid "Analytics"
+msgstr "Аналитика"
+
+msgid "Apply"
+msgstr "Применить"
+
+msgid "Approve"
+msgstr "Утвердить"
+
+msgid "Assignment"
+msgstr "Задание"
+
+msgid "Attachments"
+msgstr "Вложения"
+
+msgid "Available tests"
+msgstr "Доступные тесты"
+
+msgid "Available tests for your role. Questions shuffle each time."
+msgstr "Доступные тесты для вашей роли. Вопросы перемешиваются каждый раз."
+
+msgid "Average score"
+msgstr "Средний балл"
+
+msgid "Back to course"
+msgstr "К курсу"
+
+msgid "Back to list"
+msgstr "К списку"
+
+msgid "Back to login"
+msgstr "Назад ко входу"
+
+msgid "Best:"
+msgstr "Лучший:"
+
+msgid "By selected role"
+msgstr "По выбран роли"
+
+msgid "Categories"
+msgstr "Категории"
+
+msgid "Category"
+msgstr "Категория"
+
+msgid "Category materials"
+msgstr "Материалы категории"
+
+msgid "Category:"
+msgstr "Категория:"
+
+msgid "Certificate"
+msgstr "Сертификат"
+
+msgid "Certificate expired: %(date)s. Retake the test."
+msgstr "Срок сертификата истёк: %(date)s. Пройдите тест повторно."
+
+msgid "Certificate expiry"
+msgstr "Срок сертификата"
+
+msgid "Certificate on completion"
+msgstr "Сертификат по завершении"
+
+msgid "Change or clear filters."
+msgstr "Измените или сбросьте фильтры."
+
+msgid "Change the filter or come back later."
+msgstr "Измените фильтр или зайдите позже."
+
+msgid "Cleaner"
+msgstr "Уборщик"
+
+msgid "Clear"
+msgstr "Очистить"
+
+msgid "Close"
+msgstr "Закрыть"
+
+msgid "Comment (optional)"
+msgstr "Комментарий (необязательно)"
+
+msgid "Comments"
+msgstr "Комментарии"
+
+msgid "Complete"
+msgstr "Выполнить"
+
+msgid "Completed"
+msgstr "Завершено"
+
+msgid "Compliance"
+msgstr "Комплаенс"
+
+msgid "Congratulations! You passed the test."
+msgstr "Поздравляем! Тест сдан успешно."
+
+msgid "Continue"
+msgstr "Продолжить"
+
+msgid "Control panel"
+msgstr "Панель управления"
+
+msgid "Cook"
+msgstr "Повар"
+
+msgid "Correct answer:"
+msgstr "Правильный ответ:"
+
+msgid "Correct answers"
+msgstr "Правильные ответы"
+
+msgid "Course"
+msgstr "Курс"
+
+msgid "Course assignment"
+msgstr "Задание курса"
+
+msgid "Course completed."
+msgstr "Курс завершён."
+
+msgid "Course contents"
+msgstr "Содержание курса"
+
+msgid "Course deadline: %(date)s"
+msgstr "Срок курса: %(date)s"
+
+msgid "Course outline"
+msgstr "Программа курса"
+
+msgid "Courses"
+msgstr "Курсы"
+
+msgid "Date"
+msgstr "Дата"
+
+msgid "Deadline tests"
+msgstr "Тесты со сроком"
+
+msgid "Deadline: %(date)s"
+msgstr "Срок: %(date)s"
+
+msgid "Deadlines, mandatory tests and system messages."
+msgstr "Сроки, обязательные тесты и системные сообщения."
+
+msgid "Delete"
+msgstr "Удалить"
+
+msgid "Details"
+msgstr "Подробнее"
+
+msgid "Difficulty"
+msgstr "Сложность"
+
+msgid "Dispatcher"
+msgstr "Диспетчер"
+
+msgid "Document acknowledgment"
+msgstr "Подтверждение документа"
+
+msgid "Document acknowledgment confirmed."
+msgstr "Ознакомление с документом подтверждено."
+
+msgid "Document acknowledgment required"
+msgstr "Требуется подтверждение документа"
+
+msgid "Documents"
+msgstr "Документы"
+
+msgid "Done"
+msgstr "Готово"
+
+msgid "Download"
+msgstr "Скачать"
+
+msgid "Download video"
+msgstr "Скачать видео"
+
+msgid "Downloads"
+msgstr "Скачивания"
+
+msgid "Duration"
+msgstr "Длительность"
+
+msgid "Edit"
+msgstr "Редактировать"
+
+msgid "Edit profile"
+msgstr "Редактировать профиль"
+
+msgid "Electrician"
+msgstr "Электрик"
+
+msgid "Email"
+msgstr "Email"
+
+msgid "Email sent"
+msgstr "Письмо отправлено"
+
+msgid "Engineer"
+msgstr "Инженер"
+
+msgid "Enroll"
+msgstr "Записаться"
+
+msgid "Enroll to complete"
+msgstr "Записаться на курс"
+
+msgid "Enter your email — a reset link will be sent."
+msgstr "Введите email — отправим ссылку для сброса."
+
+msgid "Everyone"
+msgstr "Все"
+
+msgid "Exit"
+msgstr "Выход"
+
+msgid "Explanation"
+msgstr "Пояснение"
+
+msgid "Factory LMS"
+msgstr "Заводская СДО"
+
+msgid "Factory LMS · Employee portal"
+msgstr "Заводская СДО · Портал сотрудников"
+
+msgid "Factory LMS — training, safety tests and documents for employees."
+msgstr "Заводская СДО — обучение, тесты по безопасности и документы для сотрудников."
+
+msgid "Failed"
+msgstr "Не сдано"
+
+msgid "File"
+msgstr "Файл"
+
+msgid "Filter"
+msgstr "Фильтр"
+
+msgid "Finish"
+msgstr "Завершить"
+
+msgid "Finish the test, document acknowledgment, certificate or course assignment."
+msgstr "Завершите тест, подтверждение документа, сертификат или задание курса."
+
+msgid "Fitter"
+msgstr "Слесарь"
+
+msgid "Forgot password?"
+msgstr "Забыли пароль?"
+
+msgid "From"
+msgstr "С"
+
+msgid "Full history"
+msgstr "Вся история"
+
+msgid "Full name"
+msgstr "ФИО"
+
+msgid "Go to tests"
+msgstr "К тестам"
+
+msgid "Guidelines"
+msgstr "Инструкции"
+
+msgid "History"
+msgstr "История"
+
+msgid "Home"
+msgstr "Главная"
+
+msgid "HR compliance"
+msgstr "HR комплаенс"
+
+msgid "HR report"
+msgstr "HR отчёт"
+
+msgid "I have read and confirm"
+msgstr "Ознакомлен(а), подтверждаю"
+
+msgid "If the email is registered, a reset link was sent."
+msgstr "Если email есть в системе, ссылка для сброса отправлена."
+
+msgid "In progress"
+msgstr "В процессе"
+
+msgid "In this category"
+msgstr "В этой категории"
+
+msgid "In-progress and completed courses."
+msgstr "Курсы в процессе и завершённые."
+
+msgid "Instrumentation"
+msgstr "КИП и А"
+
+msgid "Internal training, tests and documents platform."
+msgstr "Платформа внутреннего обучения, тестов и документов."
+
+msgid "Internal use"
+msgstr "Для внутреннего пользования"
+
+msgid "Isomer Oil employees only · Access via admin"
+msgstr "Только сотрудники Isomer Oil · Доступ через администратора"
+
+msgid "Joined"
+msgstr "Дата регистрации"
+
+msgid "Knowledge check"
+msgstr "Проверка знаний"
+
+msgid "Language"
+msgstr "Язык"
+
+msgid "Last result:"
+msgstr "Последний результат:"
+
+msgid "Latest materials"
+msgstr "Последние материалы"
+
+msgid "Learning posts and videos by category."
+msgstr "Учебные посты и видео по категориям."
+
+msgid "Leave a comment..."
+msgstr "Оставьте комментарий..."
+
+msgid "Leave course"
+msgstr "Покинуть курс"
+
+msgid "Leave this course?"
+msgstr "Покинуть этот курс?"
+
+msgid "Lesson completed"
+msgstr "Урок завершён"
+
+msgid "Lessons and quizzes"
+msgstr "Уроки и тесты"
+
+msgid "Lifetime access"
+msgstr "Постоянный доступ"
+
+msgid "Link expired or invalid. Request again."
+msgstr "Ссылка устарела или неверна. Запросите снова."
+
+msgid "Locked"
+msgstr "Закрыто"
+
+msgid "Login"
+msgstr "Войти"
+
+msgid "Login required"
+msgstr "Требуется вход"
+
+msgid "Logout"
+msgstr "Выйти"
+
+msgid "Mandatory"
+msgstr "Обязательно"
+
+msgid "Mandatory and upcoming assignments."
+msgstr "Обязательные и ближайшие задания."
+
+msgid "Mandatory assignments"
+msgstr "Обязательные задания"
+
+msgid "Mandatory test"
+msgstr "Обязательный тест"
+
+msgid "Mark all as read"
+msgstr "Отметить всё прочитанным"
+
+msgid "Mark lesson complete"
+msgstr "Отметить урок завершённым"
+
+msgid "Materials"
+msgstr "Материалы"
+
+msgid "Materials will be added soon."
+msgstr "Материалы скоро появятся."
+
+msgid "Mechanic"
+msgstr "Механик"
+
+msgid "Menu"
+msgstr "Меню"
+
+msgid "My courses"
+msgstr "Мои курсы"
+
+msgid "My profile"
+msgstr "Мой профиль"
+
+msgid "Name"
+msgstr "Название"
+
+msgid "New"
+msgstr "Новое"
+
+msgid "New password"
+msgstr "Новый пароль"
+
+msgid "Newest"
+msgstr "Сначала новые"
+
+msgid "Next"
+msgstr "Далее"
+
+msgid "Next lesson"
+msgstr "Следующий урок"
+
+msgid "No activity"
+msgstr "Нет активности"
+
+msgid "No available tests"
+msgstr "Нет доступных тестов"
+
+msgid "No categories"
+msgstr "Нет категорий"
+
+msgid "No comments yet. Be the first."
+msgstr "Комментариев пока нет. Напишите первым."
+
+msgid "No courses found"
+msgstr "Курсы не найдены"
+
+msgid "No courses yet"
+msgstr "Курсов пока нет"
+
+msgid "No description"
+msgstr "Нет описания"
+
+msgid "No documents"
+msgstr "Нет документов"
+
+msgid "No files here yet, or you lack access."
+msgstr "В этом разделе пока нет файлов или у вас нет доступа."
+
+msgid "No materials yet"
+msgstr "Пока нет материалов"
+
+msgid "No modules yet"
+msgstr "Модулей пока нет"
+
+msgid "No notifications yet."
+msgstr "Уведомлений пока нет."
+
+msgid "No open mandatory requirements."
+msgstr "Открытых обязательных требований нет."
+
+msgid "No other documents"
+msgstr "Других документов нет"
+
+msgid "No posts found"
+msgstr "Посты не найдены"
+
+msgid "No public registration. Contact admin for new employees."
+msgstr "Открытой регистрации нет. Для нового сотрудника обратитесь к администратору."
+
+msgid "No quiz questions for this lesson yet."
+msgstr "Для этого урока вопросы ещё не добавлены."
+
+msgid "No tests for this role yet."
+msgstr "Для этой роли пока нет тестов."
+
+msgid "No tests taken yet"
+msgstr "Тесты ещё не сдавались"
+
+msgid "No video for this lesson"
+msgstr "Для этого урока нет видео"
+
+msgid "Not passed"
+msgstr "Не сдано"
+
+msgid "Nothing saved"
+msgstr "Ничего не сохранено"
+
+msgid "Notifications"
+msgstr "Уведомления"
+
+msgid "Office staff"
+msgstr "Офисный персонал"
+
+msgid "Oldest"
+msgstr "Сначала старые"
+
+msgid "On all devices"
+msgstr "На всех устройствах"
+
+msgid "Open"
+msgstr "Открыть"
+
+msgid "Operator"
+msgstr "Оператор"
+
+msgid "Overall statistics"
+msgstr "Общая статистика"
+
+msgid "Overdue"
+msgstr "Просрочено"
+
+msgid "Passed"
+msgstr "Сдано"
+
+msgid "Password"
+msgstr "Пароль"
+
+msgid "Password updated"
+msgstr "Пароль обновлён"
+
+msgid "Password updated. You can sign in now."
+msgstr "Пароль обновлён. Теперь можно войти."
+
+msgid "Personal info, activity and a short test overview."
+msgstr "Личные данные, активность и краткий обзор тестов."
+
+msgid "Personal information"
+msgstr "Личная информация"
+
+msgid "Phone"
+msgstr "Телефон"
+
+msgid "Pick a course from the catalog and enroll."
+msgstr "Выберите курс в каталоге и запишитесь."
+
+msgid "Popular"
+msgstr "Популярные"
+
+msgid "Posts and videos"
+msgstr "Посты и видео"
+
+msgid "Posts for your role will appear soon."
+msgstr "Скоро появятся материалы для вашей роли."
+
+msgid "Posts for your role."
+msgstr "Материалы для вашей роли."
+
+msgid "Practical assignment"
+msgstr "Практическое задание"
+
+msgid "Premium internal training and test platform."
+msgstr "Премиум-платформа внутреннего обучения и тестирования."
+
+msgid "Premium · Internal portal"
+msgstr "Premium · Внутренний портал"
+
+msgid "Preview mode cannot complete the lesson."
+msgstr "В режиме просмотра нельзя завершить урок."
+
+msgid "Previous"
+msgstr "Назад"
+
+msgid "Previous lesson"
+msgstr "Предыдущий урок"
+
+msgid "Production"
+msgstr "Производство"
+
+msgid "Profile"
+msgstr "Профиль"
+
+msgid "Public"
+msgstr "Открыто"
+
+msgid "Question %(current)s / %(total)s"
+msgstr "Вопрос %(current)s / %(total)s"
+
+msgid "Quick actions"
+msgstr "Быстрые действия"
+
+msgid "Quick links"
+msgstr "Быстрые ссылки"
+
+msgid "Quiz"
+msgstr "Тест"
+
+msgid "Railway worker"
+msgstr "Железнодорожник"
+
+msgid "Read this document and confirm acknowledgment."
+msgstr "Прочитайте документ и подтвердите ознакомление."
+
+msgid "Recent activity"
+msgstr "Недавняя активность"
+
+msgid "Recent results"
+msgstr "Последние результаты"
+
+msgid "Recommendations"
+msgstr "Рекомендации"
+
+msgid "Recommended"
+msgstr "Рекомендуемые"
+
+msgid "Reject"
+msgstr "Отклонить"
+
+msgid "Remove from saved"
+msgstr "Убрать из сохранённых"
+
+msgid "Required to finish: %(percent)s%%"
+msgstr "Для завершения: %(percent)s%%"
+
+msgid "Reset password"
+msgstr "Сброс пароля"
+
+msgid "Rest of LMS is locked until mandatory requirements are done."
+msgstr "Остальная часть СДО закрыта, пока не выполнены обязательные требования."
+
+msgid "Result"
+msgstr "Результат"
+
+msgid "Retake"
+msgstr "Пройти снова"
+
+msgid "Review again"
+msgstr "Повторить"
+
+msgid "Role"
+msgstr "Роль"
+
+msgid "Russian"
+msgstr "Русский"
+
+msgid "Save"
+msgstr "Сохранить"
+
+msgid "Save posts to return quickly."
+msgstr "Сохраняйте посты, чтобы быстро вернуться"
+
+msgid "Saved materials"
+msgstr "Сохранённые материалы"
+
+msgid "Search"
+msgstr "Поиск"
+
+msgid "Search courses..."
+msgstr "Поиск курсов..."
+
+msgid "Security guard"
+msgstr "Охранник"
+
+msgid "Select at least one option."
+msgstr "Выберите хотя бы один вариант."
+
+msgid "Selected roles"
+msgstr "Выбранные роли"
+
+msgid "Send"
+msgstr "Отправить"
+
+msgid "Show"
+msgstr "Показать"
+
+msgid "Sign in"
+msgstr "Вход в систему"
+
+msgid "Similar courses"
+msgstr "Похожие курсы"
+
+msgid "Sort"
+msgstr "Сортировка"
+
+msgid "Start"
+msgstr "Начать"
+
+msgid "Start tests to see statistics"
+msgstr "Начните тесты, чтобы увидеть статистику"
+
+msgid "Statistics"
+msgstr "Статистика"
+
+msgid "Status"
+msgstr "Статус"
+
+msgid "Submit"
+msgstr "Отправить"
+
+msgid "Submit quiz"
+msgstr "Сдать тест"
+
+msgid "Success rate"
+msgstr "Успешность"
+
+msgid "Successful"
+msgstr "Успешно"
+
+msgid "Taken"
+msgstr "Сдано"
+
+msgid "Test"
+msgstr "Тест"
+
+msgid "Test history"
+msgstr "История тестов"
+
+msgid "Test list"
+msgstr "Список тестов"
+
+msgid "Test results"
+msgstr "Результаты теста"
+
+msgid "Test statistics"
+msgstr "Статистика тестов"
+
+msgid "Tests"
+msgstr "Тесты"
+
+msgid "Text"
+msgstr "Текст"
+
+msgid "This is a free preview. Enroll to complete the lesson."
+msgstr "Это бесплатный просмотр. Чтобы завершить урок, запишитесь на курс."
+
+msgid "To"
+msgstr "По"
+
+msgid "today"
+msgstr "сегодня"
+
+msgid "Total"
+msgstr "Всего"
+
+msgid "Total tests"
+msgstr "Всего тестов"
+
+msgid "Training programs for plant employees."
+msgstr "Обучающие программы для сотрудников завода."
+
+msgid "Try again"
+msgstr "Повторить"
+
+msgid "Type your answer…"
+msgstr "Введите ответ…"
+
+msgid "Upcoming"
+msgstr "Скоро"
+
+msgid "Upcoming deadlines"
+msgstr "Ближайшие сроки"
+
+msgid "Upload"
+msgstr "Загрузить"
+
+msgid "Upload a file. Lesson completes after instructor approval."
+msgstr "Загрузите файл. Урок завершится после одобрения инструктора."
+
+msgid "Upload document"
+msgstr "Загрузить документ"
+
+msgid "Uploaded by:"
+msgstr "Загрузил:"
+
+msgid "Uploaded file"
+msgstr "Загруженный файл"
+
+msgid "Username"
+msgstr "Имя пользователя"
+
+msgid "Username and password are provided by the administrator."
+msgstr "Логин и пароль выдаёт администратор."
+
+msgid "Uzbek"
+msgstr "Узбекский"
+
+msgid "Video"
+msgstr "Видео"
+
+msgid "Video watch:"
+msgstr "Просмотр видео:"
+
+msgid "View"
+msgstr "Смотреть"
+
+msgid "View by role"
+msgstr "По роли"
+
+msgid "Views"
+msgstr "Просмотры"
+
+msgid "Warehouse"
+msgstr "Склад"
+
+msgid "Watch at least %(percent)s%% of the video to enable the button."
+msgstr "Чтобы активировать кнопку, посмотрите не менее %(percent)s%% видео."
+
+msgid "Welder"
+msgstr "Сварщик"
+
+msgid "You are enrolled — %(progress)s%% complete"
+msgstr "Вы записаны — выполнено %(progress)s%%"
+
+msgid "You do not have access to this document."
+msgstr "У вас нет доступа к этому документу"
+
+msgid "You have acknowledged this document."
+msgstr "Вы подтвердили ознакомление с этим документом."
+
+msgid "You may select multiple options."
+msgstr "Можно выбрать несколько вариантов."
+
+msgid "You must enroll in the course to view this lesson."
+msgstr "Чтобы смотреть этот урок, запишитесь на курс."
+
+msgid "You must sign in to view the lesson."
+msgstr "Чтобы смотреть урок, сначала войдите в систему."
+
+msgid "Your activity will appear here."
+msgstr "Ваши действия появятся здесь"
+
+msgid "Your answer"
+msgstr "Ваш ответ"
+
+msgid "Your answer:"
+msgstr "Ваш ответ:"
+
+msgid "Your answers"
+msgstr "Ваши ответы"
+

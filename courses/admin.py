@@ -1,10 +1,18 @@
-from django.contrib import admin
+from datetime import datetime
+
+from django.contrib import admin, messages
+from django.shortcuts import redirect, render
+from django.urls import path
+
+from accounts.models import Department, User
+from accounts.audit import log_compliance_event
+from .bulk_assign import bulk_assign_course, filter_assignees
 from .models import (
     Course, Module, Lesson, Enrollment,
     CompletedLesson, CourseCategory, CourseCertificate,
     LessonAttachment, LessonComment,
     LessonQuizQuestion, LessonQuizOption, LessonQuizAttempt,
-    CourseAssignment, LessonAssignmentSubmission,
+    CourseAssignment, LessonAssignmentSubmission, LessonVideoProgress,
 )
 
 @admin.register(CourseCategory)
@@ -68,8 +76,11 @@ class LessonQuizQuestionInline(admin.StackedInline):
 
 @admin.register(Lesson)
 class LessonAdmin(admin.ModelAdmin):
-    list_display = ('title', 'module', 'lesson_type', 'duration', 'order', 'is_free_preview', 'has_video')
-    list_filter = ('lesson_type', 'is_free_preview', 'module__course')
+    list_display = (
+        'title', 'module', 'lesson_type', 'duration', 'order',
+        'is_free_preview', 'min_watch_percent', 'has_video_display',
+    )
+    list_filter = ('lesson_type', 'is_free_preview', 'auto_complete_on_watch', 'module__course')
     search_fields = ('title', 'content', 'module__title', 'module__course__title')
     readonly_fields = ('created_at', 'updated_at')
     inlines = [LessonAttachmentInline, LessonQuizQuestionInline]
@@ -81,9 +92,14 @@ class LessonAdmin(admin.ModelAdmin):
             )
         }),
         ('Video', {
-            'fields': ('video_url', 'video_file'),
-            'classes': ('collapse',),
-            'description': 'Video fayl yuklang yoki tashqi video URL kiriting. Quiz uchun pastda savollar qo‘shing.',
+            'fields': (
+                'video_url', 'video_file',
+                'min_watch_percent', 'auto_complete_on_watch',
+            ),
+            'description': (
+                'Video fayl yoki YouTube/Vimeo URL. '
+                'Minimal ko‘rish foizi — darsni yakunlash sharti.'
+            ),
         }),
         ('Meta', {
             'fields': ('created_at', 'updated_at'),
@@ -91,10 +107,9 @@ class LessonAdmin(admin.ModelAdmin):
         }),
     )
 
-    def has_video(self, obj):
-        return bool(obj.video_url or obj.video_file)
-    has_video.short_description = "Video bor"
-    has_video.boolean = True
+    @admin.display(boolean=True, description='Video bor')
+    def has_video_display(self, obj):
+        return obj.has_video
 
 @admin.register(Enrollment)
 class EnrollmentAdmin(admin.ModelAdmin):
@@ -118,11 +133,137 @@ class CourseAssignmentAdmin(admin.ModelAdmin):
     search_fields = ('user__username', 'course__title', 'notes')
     autocomplete_fields = ('user', 'course', 'assigned_by')
     date_hierarchy = 'deadline'
+    change_list_template = 'admin/courses/courseassignment_changelist.html'
+
+    def get_urls(self):
+        urls = super().get_urls()
+        custom = [
+            path(
+                'bulk-assign/',
+                self.admin_site.admin_view(self.bulk_assign_view),
+                name='courses_courseassignment_bulk_assign',
+            ),
+        ]
+        return custom + urls
 
     def save_model(self, request, obj, form, change):
         if not obj.assigned_by_id:
             obj.assigned_by = request.user
         super().save_model(request, obj, form, change)
+        if not change:
+            log_compliance_event(
+                event_type='course_assigned',
+                actor=request.user,
+                subject_user=obj.user,
+                object_type='CourseAssignment',
+                object_id=obj.pk,
+                message=f'{obj.course.title} → {obj.user.username}',
+                payload={
+                    'course_id': obj.course_id,
+                    'deadline': obj.deadline.isoformat() if obj.deadline else None,
+                    'is_mandatory': obj.is_mandatory,
+                },
+                request=request,
+            )
+
+    def bulk_assign_view(self, request):
+        if not request.user.has_perm('courses.add_courseassignment'):
+            messages.error(request, 'Ommaviy topshiriq uchun ruxsat yo‘q.')
+            return redirect('admin:courses_courseassignment_changelist')
+
+        courses = Course.objects.filter(status='published').order_by('title')
+        departments = Department.objects.all()
+        roles = [(v, l) for v, l in User.ROLE_CHOICES if v != 'admin']
+        shifts = User.SHIFT_CHOICES
+
+        form_data = {
+            'course': request.POST.get('course', ''),
+            'deadline': request.POST.get('deadline', ''),
+            'role': request.POST.get('role', ''),
+            'department': request.POST.get('department', ''),
+            'shift': request.POST.get('shift', ''),
+            'notes': request.POST.get('notes', ''),
+            'is_mandatory': request.method != 'POST' or request.POST.get('is_mandatory') == '1',
+        }
+        preview_count = None
+
+        if request.method == 'POST':
+            course_id = request.POST.get('course')
+            deadline_raw = request.POST.get('deadline')
+            role = request.POST.get('role') or ''
+            department_raw = request.POST.get('department') or ''
+            shift = request.POST.get('shift') or ''
+            notes = request.POST.get('notes') or ''
+            is_mandatory = request.POST.get('is_mandatory') == '1'
+            department_id = int(department_raw) if department_raw.isdigit() else None
+
+            if not course_id or not deadline_raw:
+                messages.error(request, 'Kurs va muddat majburiy.')
+            elif not (role or department_id or shift):
+                messages.error(
+                    request,
+                    'Kamida bitta filtr tanlang: rol, bo‘lim yoki smena.',
+                )
+            else:
+                try:
+                    deadline = datetime.strptime(deadline_raw, '%Y-%m-%d').date()
+                    course = Course.objects.get(pk=course_id)
+                except (ValueError, Course.DoesNotExist):
+                    messages.error(request, 'Kurs yoki muddat noto‘g‘ri.')
+                else:
+                    if request.POST.get('preview'):
+                        preview_count = filter_assignees(
+                            role=role,
+                            department_id=department_id,
+                            shift=shift,
+                        ).count()
+                    elif request.POST.get('assign'):
+                        result = bulk_assign_course(
+                            course=course,
+                            deadline=deadline,
+                            assigned_by=request.user,
+                            role=role,
+                            department_id=department_id,
+                            shift=shift,
+                            is_mandatory=is_mandatory,
+                            notes=notes,
+                        )
+                        log_compliance_event(
+                            event_type='course_bulk_assigned',
+                            actor=request.user,
+                            object_type='Course',
+                            object_id=course.id,
+                            message=(
+                                f'Ommaviy: {course.title} — '
+                                f'+{result["created"]} yangi, '
+                                f'{result["updated"]} yangilandi'
+                            ),
+                            payload=result,
+                            request=request,
+                        )
+                        messages.success(
+                            request,
+                            (
+                                f'Tayinlandi: {result["created"]} yangi, '
+                                f'{result["updated"]} yangilandi, '
+                                f'{result["skipped"]} o‘tkazib yuborildi '
+                                f'(filtr: {result["total_matched"]} xodim).'
+                            ),
+                        )
+                        return redirect('admin:courses_courseassignment_changelist')
+
+        context = {
+            **self.admin_site.each_context(request),
+            'title': 'Ommaviy kurs topshirig‘i',
+            'courses': courses,
+            'departments': departments,
+            'roles': roles,
+            'shifts': shifts,
+            'form_data': form_data,
+            'preview_count': preview_count,
+            'opts': self.model._meta,
+        }
+        return render(request, 'admin/courses/bulk_assign.html', context)
 
 
 @admin.register(LessonAssignmentSubmission)
@@ -151,6 +292,16 @@ class LessonAssignmentSubmissionAdmin(admin.ModelAdmin):
                     defaults={'user': sub.user},
                 )
                 enrollment.progress()
+            log_compliance_event(
+                event_type='assignment_approved',
+                actor=request.user,
+                subject_user=sub.user,
+                object_type='LessonAssignmentSubmission',
+                object_id=sub.pk,
+                message=f'Vazifa tasdiqlandi: {sub.lesson.title}',
+                payload={'lesson_id': sub.lesson_id},
+                request=request,
+            )
             n += 1
         self.message_user(request, f'{n} ta vazifa tasdiqlandi.')
 
@@ -170,6 +321,19 @@ class CompletedLessonAdmin(admin.ModelAdmin):
     list_filter = ('lesson__module__course', 'completed_at')
     search_fields = ('user__username', 'lesson__title')
     date_hierarchy = 'completed_at'
+
+
+@admin.register(LessonVideoProgress)
+class LessonVideoProgressAdmin(admin.ModelAdmin):
+    list_display = (
+        'user', 'lesson', 'percent', 'watched_seconds',
+        'duration_seconds', 'last_position', 'watch_completed_at', 'updated_at',
+    )
+    list_filter = ('percent', 'lesson__module__course', 'updated_at')
+    search_fields = ('user__username', 'lesson__title')
+    readonly_fields = ('created_at', 'updated_at', 'watch_completed_at')
+    date_hierarchy = 'updated_at'
+    autocomplete_fields = ('user', 'lesson')
 
 @admin.register(CourseCertificate)
 class CourseCertificateAdmin(admin.ModelAdmin):

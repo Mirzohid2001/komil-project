@@ -1,23 +1,24 @@
 {% extends 'base.html' %}
+{% load i18n %}
 
-{% block title %}{{ category.name }} – Materiallar{% endblock %}
+{% block title %}{{ category.name }} – {% trans "Materials" %}{% endblock %}
 
 {% block content %}
 <div class="zl-page-head">
   <div>
     <h1 class="zl-section-title mb-1">{{ category.name }}</h1>
-    <p class="zl-section-lead mb-0">{{ category.description|truncatechars:120|default:"Kategoriya materiallari" }}</p>
+    <p class="zl-section-lead mb-0">{% if category.description %}{{ category.description|truncatechars:120 }}{% else %}{% trans "Category materials" %}{% endif %}</p>
   </div>
-  <a href="{% url 'blog:category_list' %}" class="btn btn-sm btn-outline-primary">Kategoriyalar</a>
+  <a href="{% url 'blog:category_list' %}" class="btn btn-sm btn-outline-primary">{% trans "Categories" %}</a>
 </div>
 
 <form method="get" class="zl-card p-3 mb-3">
   <div class="row g-2 align-items-end">
     {% if is_admin %}
     <div class="col-md-3">
-      <label class="form-label small fw-semibold mb-1" for="roleFilter">Rol</label>
+      <label class="form-label small fw-semibold mb-1" for="roleFilter">{% trans "Role" %}</label>
       <select id="roleFilter" name="role" class="form-select form-select-sm">
-        <option value="">Hammasi</option>
+        <option value="">{% trans "All" %}</option>
         {% for key,label in roles %}
         <option value="{{ key }}" {% if key == selected_role %}selected{% endif %}>{{ label }}</option>
         {% endfor %}
@@ -25,15 +26,15 @@
     </div>
     {% endif %}
     <div class="col-md-3">
-      <label class="form-label small fw-semibold mb-1" for="dateFrom">Dan</label>
+      <label class="form-label small fw-semibold mb-1" for="dateFrom">{% trans "From" %}</label>
       <input type="date" id="dateFrom" name="from" value="{{ from }}" class="form-control form-control-sm">
     </div>
     <div class="col-md-3">
-      <label class="form-label small fw-semibold mb-1" for="dateTo">Gacha</label>
+      <label class="form-label small fw-semibold mb-1" for="dateTo">{% trans "To" %}</label>
       <input type="date" id="dateTo" name="to" value="{{ to }}" class="form-control form-control-sm">
     </div>
     <div class="col-md-3">
-      <button type="submit" class="btn btn-primary btn-sm w-100">Filter</button>
+      <button type="submit" class="btn btn-primary btn-sm w-100">{% trans "Filter" %}</button>
     </div>
   </div>
 </form>
@@ -53,15 +54,15 @@
         <p class="zl-meta mb-0">{{ post.content|truncatechars:100 }}</p>
       </div>
     </div>
-    <a href="{% url 'blog:post_detail' post.id %}" class="btn btn-sm btn-primary flex-shrink-0">Ochish</a>
+    <a href="{% url 'blog:post_detail' post.id %}" class="btn btn-sm btn-primary flex-shrink-0">{% trans "Open" %}</a>
   </article>
   {% endfor %}
 {% else %}
   <div class="zl-empty">
     <i class="fas fa-search d-block"></i>
-    <h2 class="h5 text-dark">Post topilmadi</h2>
-    <p class="mb-3">Filtrlarni o‘zgartiring yoki tozalang.</p>
-    <a href="{% url 'blog:post_list' category.id %}" class="btn btn-sm btn-primary">Tozalash</a>
+    <h2 class="h5 text-dark">{% trans "No posts found" %}</h2>
+    <p class="mb-3">{% trans "Change or clear filters." %}</p>
+    <a href="{% url 'blog:post_list' category.id %}" class="btn btn-sm btn-primary">{% trans "Clear" %}</a>
   </div>
 {% endif %}
 {% endblock %}

@@ -2,6 +2,7 @@
 
 from django.urls import reverse
 from django.utils import timezone
+from django.utils.translation import gettext as _
 
 
 def _is_admin(user):
@@ -144,31 +145,32 @@ def get_compliance_status(user):
         items.append({
             'type': 'test',
             'title': t.title,
-            'detail': f"Muddat: {t.deadline:%d.%m.%Y}",
+            'detail': _('Deadline: %(date)s') % {'date': f'{t.deadline:%d.%m.%Y}'},
             'url': reverse('blog:test_start', args=[t.id]),
         })
     for d in documents:
         items.append({
             'type': 'document',
             'title': d.title,
-            'detail': 'Hujjat tasdiqi kerak',
+            'detail': _('Document acknowledgment required'),
             'url': reverse('blog:document_detail', args=[d.id]),
         })
     for c in certificates:
         items.append({
             'type': 'certificate',
             'title': c['title'],
-            'detail': (
-                f"Sertifikat muddati o‘tgan: {c['valid_until']:%d.%m.%Y}. "
-                f"Qayta testdan o‘ting."
-            ),
+            'detail': _('Certificate expired: %(date)s. Retake the test.') % {
+                'date': f"{c['valid_until']:%d.%m.%Y}",
+            },
             'url': c['url'],
         })
     for a in courses:
         items.append({
             'type': 'course',
             'title': a.course.title,
-            'detail': f"Kurs muddati: {a.deadline:%d.%m.%Y}",
+            'detail': _('Course deadline: %(date)s') % {
+                'date': f'{a.deadline:%d.%m.%Y}',
+            },
             'url': reverse('courses:learn', args=[a.course.slug]),
         })
 

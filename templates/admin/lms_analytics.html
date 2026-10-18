@@ -199,8 +199,10 @@
     <div class="lms-kpi danger"><span>Yiqilgan</span><strong>{{ kpis.failed }}</strong></div>
     <div class="lms-kpi"><span>O‘tish</span><strong>{{ kpis.pass_rate }}%</strong></div>
     <div class="lms-kpi"><span>O‘rtacha</span><strong>{{ kpis.avg_score }}%</strong></div>
-    <div class="lms-kpi"><span>Video</span><strong>{{ kpis.video_views }}</strong></div>
-    <div class="lms-kpi"><span>Tomoshabin</span><strong>{{ kpis.unique_viewers }}</strong></div>
+    <div class="lms-kpi"><span>Material video</span><strong>{{ kpis.blog_video_views|default:kpis.video_views }}</strong></div>
+    <div class="lms-kpi"><span>Kurs video</span><strong>{{ kpis.course_video_watches|default:0 }}</strong></div>
+    <div class="lms-kpi"><span>≥80% kurs video</span><strong>{{ kpis.course_video_unlocked|default:0 }}</strong></div>
+    <div class="lms-kpi"><span>Tomoshabin (material)</span><strong>{{ kpis.unique_viewers }}</strong></div>
     <div class="lms-kpi"><span>Dars yakun</span><strong>{{ kpis.lesson_done }}</strong></div>
     <div class="lms-kpi"><span>Kurs yakun</span><strong>{{ kpis.course_done }}</strong></div>
     <div class="lms-kpi"><span>Faol yil</span><strong>{% if selected_year %}{{ selected_year }}{% else %}Hammasi{% endif %}</strong></div>
@@ -230,12 +232,26 @@
 
   <div class="lms-grid-2">
     <div class="lms-panel">
-      <div class="lms-panel__h">Video — oylik ko‘rishlar</div>
+      <div class="lms-panel__h">Material video — oylik ko‘rishlar</div>
       <div class="lms-panel__b"><div class="lms-chart lms-chart--sm"><canvas id="chartMonthlyVideos"></canvas></div></div>
     </div>
     <div class="lms-panel">
+      <div class="lms-panel__h">Kurs video — oylik progress</div>
+      <div class="lms-panel__b"><div class="lms-chart lms-chart--sm"><canvas id="chartMonthlyCourseVideos"></canvas></div></div>
+    </div>
+  </div>
+  <div class="lms-grid-2">
+    <div class="lms-panel">
       <div class="lms-panel__h">Kurs darslari — oylik yakunlash</div>
       <div class="lms-panel__b"><div class="lms-chart lms-chart--sm"><canvas id="chartMonthlyLessons"></canvas></div></div>
+    </div>
+    <div class="lms-panel">
+      <div class="lms-panel__h">Izoh</div>
+      <div class="lms-panel__b" style="padding:1rem;font-size:.9rem;line-height:1.5;">
+        <strong>Material video</strong> — blog post videolari.<br>
+        <strong>Kurs video</strong> — dars player progressi.<br>
+        <strong>Dars yakun</strong> — CompletedLesson.
+      </div>
     </div>
   </div>
 
@@ -501,8 +517,13 @@
   }
 
   bar('chartMonthlyVideos', C.monthly_videos.labels, [
-    { label: "Ko'rishlar", data: C.monthly_videos.total, backgroundColor: teal, borderRadius: 4 }
+    { label: "Material ko'rishlar", data: C.monthly_videos.total, backgroundColor: teal, borderRadius: 4 }
   ]);
+  if (C.monthly_course_videos) {
+    bar('chartMonthlyCourseVideos', C.monthly_course_videos.labels, [
+      { label: 'Kurs video progress', data: C.monthly_course_videos.total, backgroundColor: '#2a6f4e', borderRadius: 4 }
+    ]);
+  }
   bar('chartMonthlyLessons', C.monthly_lessons.labels, [
     { label: 'Yakunlashlar', data: C.monthly_lessons.total, backgroundColor: brass, borderRadius: 4 }
   ]);

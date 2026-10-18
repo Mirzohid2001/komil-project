@@ -1,15 +1,19 @@
 import json
+from datetime import date, timedelta
 
 from django.test import TestCase, Client
 from django.urls import reverse
 from django.contrib.auth import get_user_model
 
-from accounts.models import UserActivity
+from accounts.models import Department, UserActivity
+from courses.bulk_assign import bulk_assign_course
 from courses.models import (
     CourseCategory, Course, Module, Lesson, Enrollment,
     CourseCertificate, LessonComment, CompletedLesson,
     LessonQuizQuestion, LessonQuizOption, LessonQuizAttempt,
+    LessonVideoProgress, CourseAssignment,
 )
+from courses.video_utils import extract_youtube_id, video_embed_info
 
 User = get_user_model()
 
@@ -60,9 +64,10 @@ class TrackVideoViewTests(TestCase):
         data = response.json()
         self.assertEqual(data['status'], 'success')
         activity = UserActivity.objects.filter(user=self.user).latest('timestamp')
-        self.assertEqual(activity.activity_type, 'view_video')
+        self.assertEqual(activity.activity_type, 'view_lesson_video')
         self.assertEqual(activity.duration, 120)
         self.assertEqual(activity.details.get('lesson_id'), self.lesson.id)
+        self.assertEqual(activity.details.get('source'), 'course')
 
     def test_track_video_view_requires_auth(self):
         self.client.logout()
@@ -593,3 +598,184 @@ class CourseAssignmentAndHomeworkTests(TestCase):
         self.assertFalse(
             CompletedLesson.objects.filter(user=self.worker, lesson=self.lesson).exists()
         )
+
+
+class VideoUtilsTests(TestCase):
+    def test_youtube_watch_and_short_urls(self):
+        self.assertEqual(
+            extract_youtube_id('https://www.youtube.com/watch?v=dQw4w9WgXcQ'),
+            'dQw4w9WgXcQ',
+        )
+        self.assertEqual(
+            extract_youtube_id('https://youtu.be/dQw4w9WgXcQ'),
+            'dQw4w9WgXcQ',
+        )
+        info = video_embed_info('https://www.youtube.com/watch?v=abc123XYZ_0')
+        self.assertEqual(info['provider'], 'youtube')
+        self.assertIn('embed/abc123XYZ_0', info['embed_url'])
+
+    def test_vimeo_embed(self):
+        info = video_embed_info('https://vimeo.com/123456789')
+        self.assertEqual(info['provider'], 'vimeo')
+        self.assertIn('123456789', info['embed_url'])
+
+
+class VideoLessonProgressTests(TestCase):
+    def setUp(self):
+        self.user = User.objects.create_user(
+            username='videouser',
+            password='pass12345',
+            role='офисный-персонал',
+        )
+        self.category = CourseCategory.objects.create(name='Vid', slug='vid')
+        self.course = Course.objects.create(
+            title='Video Course',
+            slug='video-course',
+            description='Full',
+            short_description='Short',
+            category=self.category,
+            duration=30,
+            status='published',
+            is_free=True,
+        )
+        self.module = Module.objects.create(
+            course=self.course, title='M1', order=1
+        )
+        self.lesson = Lesson.objects.create(
+            module=self.module,
+            title='Safety video',
+            content='Watch me',
+            lesson_type='video',
+            video_url='https://www.youtube.com/watch?v=dQw4w9WgXcQ',
+            duration=10,
+            min_watch_percent=80,
+            auto_complete_on_watch=True,
+            order=1,
+        )
+        self.enrollment = Enrollment.objects.create(
+            user=self.user, course=self.course
+        )
+        self.client.login(username='videouser', password='pass12345')
+
+    def test_track_updates_progress_and_percent(self):
+        response = self.client.post(
+            reverse('courses:track_video_view'),
+            data=json.dumps({
+                'lesson_id': self.lesson.id,
+                'watched_seconds': 480,
+                'duration_seconds': 600,
+                'position_seconds': 480,
+            }),
+            content_type='application/json',
+        )
+        self.assertEqual(response.status_code, 200, response.content)
+        data = response.json()
+        self.assertEqual(data['status'], 'success')
+        self.assertEqual(data['percent'], 80)
+        self.assertTrue(data['watch_unlocked'])
+        self.assertTrue(data['auto_completed'])
+        vp = LessonVideoProgress.objects.get(user=self.user, lesson=self.lesson)
+        self.assertEqual(vp.percent, 80)
+        self.assertTrue(
+            CompletedLesson.objects.filter(user=self.user, lesson=self.lesson).exists()
+        )
+
+    def test_mark_complete_blocked_before_watch_threshold(self):
+        self.lesson.auto_complete_on_watch = False
+        self.lesson.save(update_fields=['auto_complete_on_watch'])
+        response = self.client.post(
+            reverse(
+                'courses:mark_complete',
+                args=[self.course.slug, self.module.id, self.lesson.id],
+            )
+        )
+        self.assertEqual(response.status_code, 302)
+        self.assertFalse(
+            CompletedLesson.objects.filter(user=self.user, lesson=self.lesson).exists()
+        )
+
+    def test_free_preview_allows_unenrolled_view(self):
+        preview = Lesson.objects.create(
+            module=self.module,
+            title='Preview',
+            content='Free',
+            lesson_type='video',
+            video_url='https://youtu.be/dQw4w9WgXcQ',
+            duration=5,
+            is_free_preview=True,
+            order=2,
+        )
+        other = User.objects.create_user(
+            username='guestvid', password='pass12345', role='офисный-персонал'
+        )
+        self.client.login(username='guestvid', password='pass12345')
+        response = self.client.get(
+            reverse(
+                'courses:lesson_detail',
+                args=[self.course.slug, self.module.id, preview.id],
+            )
+        )
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, 'bepul preview')
+        self.assertTrue(response.context['is_preview_only'])
+
+
+class BulkAssignCourseTests(TestCase):
+    def setUp(self):
+        self.admin = User.objects.create_user(
+            username='bulkadmin', password='pass12345', role='admin'
+        )
+        self.dept = Department.objects.create(name='Sex A', code='A')
+        self.welder = User.objects.create_user(
+            username='welder1',
+            password='pass12345',
+            role='сварщик',
+            department=self.dept,
+            shift='A',
+        )
+        User.objects.create_user(
+            username='other',
+            password='pass12345',
+            role='электрик',
+            department=self.dept,
+        )
+        cat = CourseCategory.objects.create(name='Bulk', slug='bulk')
+        self.course = Course.objects.create(
+            title='Safety Bulk',
+            slug='safety-bulk',
+            description='d',
+            short_description='s',
+            category=cat,
+            duration=20,
+            status='published',
+            is_free=True,
+        )
+
+    def test_assign_by_role(self):
+        result = bulk_assign_course(
+            course=self.course,
+            deadline=date.today() + timedelta(days=7),
+            assigned_by=self.admin,
+            role='сварщик',
+            is_mandatory=True,
+        )
+        self.assertEqual(result['created'], 1)
+        self.assertTrue(
+            CourseAssignment.objects.filter(
+                user=self.welder, course=self.course
+            ).exists()
+        )
+        self.assertFalse(
+            CourseAssignment.objects.filter(
+                user__username='other', course=self.course
+            ).exists()
+        )
+
+    def test_assign_by_department(self):
+        result = bulk_assign_course(
+            course=self.course,
+            deadline=date.today() + timedelta(days=3),
+            assigned_by=self.admin,
+            department_id=self.dept.id,
+        )
+        self.assertEqual(result['created'], 2)

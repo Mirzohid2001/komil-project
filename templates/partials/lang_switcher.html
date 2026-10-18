@@ -1,0 +1,44 @@
+{% load i18n %}
+{% get_current_language as LANGUAGE_CODE %}
+<form action="{% url 'set_language' %}" method="post" class="zl-lang" aria-label="{% trans 'Language' %}">
+  {% csrf_token %}
+  <input name="next" type="hidden" value="{{ request.get_full_path }}">
+  <div class="zl-lang-toggle" role="group">
+    <button type="submit" name="language" value="uz"
+            class="zl-lang-btn {% if LANGUAGE_CODE == 'uz' %}is-active{% endif %}"
+            {% if LANGUAGE_CODE == 'uz' %}aria-current="true"{% endif %}>
+      UZ
+    </button>
+    <button type="submit" name="language" value="ru"
+            class="zl-lang-btn {% if LANGUAGE_CODE == 'ru' %}is-active{% endif %}"
+            {% if LANGUAGE_CODE == 'ru' %}aria-current="true"{% endif %}>
+      RU
+    </button>
+  </div>
+</form>
+<style>
+  .zl-lang { display: inline-flex; margin: 0; }
+  .zl-lang-toggle {
+    display: inline-flex;
+    border: 1px solid rgba(201,162,39,.45);
+    border-radius: 999px;
+    overflow: hidden;
+    background: rgba(7,20,14,.35);
+  }
+  .zl-lang-btn {
+    border: 0;
+    background: transparent;
+    color: rgba(247,244,236,.75);
+    font-size: .72rem;
+    font-weight: 800;
+    letter-spacing: .06em;
+    padding: .35rem .7rem;
+    line-height: 1;
+    cursor: pointer;
+  }
+  .zl-lang-btn.is-active {
+    background: linear-gradient(135deg, #c9a227, #a8841a);
+    color: #07140e;
+  }
+  .zl-lang-btn:not(.is-active):hover { color: #fff; }
+</style>

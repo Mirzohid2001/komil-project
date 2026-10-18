@@ -1,6 +1,7 @@
 {% extends 'courses/base.html' %}
+{% load i18n %}
 
-{% block title %}Kurslar{% endblock %}
+{% block title %}{% trans "Courses" %}{% endblock %}
 
 {% block breadcrumb %}{% endblock %}
 
@@ -8,45 +9,45 @@
 <div class="zl-page-head">
   <div>
     <h1 class="zl-section-title mb-1">
-      {% if current_category %}{{ current_category|title }}{% else %}Kurslar{% endif %}
+      {% if current_category %}{{ current_category|title }}{% else %}{% trans "Courses" %}{% endif %}
     </h1>
-    <p class="zl-section-lead mb-0">Zavod xodimlari uchun o‘quv dasturlari.</p>
+    <p class="zl-section-lead mb-0">{% trans "Training programs for plant employees." %}</p>
   </div>
-  <a href="{% url 'courses:my_courses' %}" class="btn btn-sm btn-outline-primary">Mening kurslarim</a>
+  <a href="{% url 'courses:my_courses' %}" class="btn btn-sm btn-outline-primary">{% trans "My courses" %}</a>
 </div>
 
 <div class="row g-3">
   <aside class="col-lg-3">
     <div class="zl-card p-3 sticky-lg-top" style="top: 88px;">
       <form method="get" action="{% url 'courses:list' %}">
-        <h2 class="h6 fw-bold mb-3">Filtr</h2>
+        <h2 class="h6 fw-bold mb-3">{% trans "Filter" %}</h2>
         <div class="mb-3">
-          <label class="form-label small fw-semibold">Qiyinlik</label>
+          <label class="form-label small fw-semibold">{% trans "Difficulty" %}</label>
           <select class="form-select form-select-sm" name="difficulty">
-            <option value="">Barchasi</option>
+            <option value="">{% trans "All" %}</option>
             {% for code, name in difficulty_choices %}
             <option value="{{ code }}" {% if current_difficulty == code %}selected{% endif %}>{{ name }}</option>
             {% endfor %}
           </select>
         </div>
         <div class="mb-3">
-          <label class="form-label small fw-semibold">Saralash</label>
+          <label class="form-label small fw-semibold">{% trans "Sort" %}</label>
           <select class="form-select form-select-sm" name="sort">
-            <option value="newest" {% if current_sort == 'newest' %}selected{% endif %}>Eng yangi</option>
-            <option value="oldest" {% if current_sort == 'oldest' %}selected{% endif %}>Eng eski</option>
-            <option value="name" {% if current_sort == 'name' %}selected{% endif %}>Nomi</option>
-            <option value="popular" {% if current_sort == 'popular' %}selected{% endif %}>Mashhur</option>
+            <option value="newest" {% if current_sort == 'newest' %}selected{% endif %}>{% trans "Newest" %}</option>
+            <option value="oldest" {% if current_sort == 'oldest' %}selected{% endif %}>{% trans "Oldest" %}</option>
+            <option value="name" {% if current_sort == 'name' %}selected{% endif %}>{% trans "Name" %}</option>
+            <option value="popular" {% if current_sort == 'popular' %}selected{% endif %}>{% trans "Popular" %}</option>
           </select>
         </div>
-        <button type="submit" class="btn btn-primary btn-sm w-100 mb-2">Qo‘llash</button>
-        <a href="{% url 'courses:list' %}" class="btn btn-outline-secondary btn-sm w-100">Tozalash</a>
+        <button type="submit" class="btn btn-primary btn-sm w-100 mb-2">{% trans "Apply" %}</button>
+        <a href="{% url 'courses:list' %}" class="btn btn-outline-secondary btn-sm w-100">{% trans "Clear" %}</a>
       </form>
 
       <hr class="my-3">
-      <h2 class="h6 fw-bold mb-2">Kategoriya</h2>
+      <h2 class="h6 fw-bold mb-2">{% trans "Category" %}</h2>
       <div class="d-flex flex-column gap-1">
         <a class="btn btn-sm {% if not current_category %}btn-primary{% else %}btn-outline-primary{% endif %} text-start"
-           href="{% url 'courses:list' %}">Barchasi</a>
+           href="{% url 'courses:list' %}">{% trans "All" %}</a>
         {% for category in categories %}
         <a class="btn btn-sm {% if current_category == category.slug %}btn-primary{% else %}btn-outline-primary{% endif %} text-start"
            href="{% url 'courses:category' category.slug %}">{{ category.name }}</a>
@@ -58,8 +59,8 @@
   <div class="col-lg-9">
     <form method="get" action="{% url 'courses:search' %}" class="mb-3">
       <div class="input-group">
-        <input type="text" name="q" class="form-control" placeholder="Kurs qidirish...">
-        <button class="btn btn-primary" type="submit">Qidirish</button>
+        <input type="text" name="q" class="form-control" placeholder="{% trans 'Search courses...' %}">
+        <button class="btn btn-primary" type="submit">{% trans "Search" %}</button>
       </div>
     </form>
 
@@ -80,8 +81,8 @@
           <h3><a href="{% url 'courses:detail' course.slug %}">{{ course.title }}</a></h3>
           <p class="zl-meta flex-grow-1 mb-3">{{ course.short_description|truncatechars:100 }}</p>
           <div class="d-flex justify-content-between zl-meta">
-            <span>{{ course.students_count }} o‘quvchi</span>
-            <span>{{ course.total_duration }} daq</span>
+            <span>{{ course.students_count }}</span>
+            <span>{{ course.total_duration }}</span>
           </div>
         </div>
       </article>
@@ -112,9 +113,9 @@
     {% else %}
     <div class="zl-empty">
       <i class="fas fa-graduation-cap d-block"></i>
-      <h2 class="h5 text-dark">Kurslar topilmadi</h2>
-      <p class="mb-3">Filtrni o‘zgartiring yoki keyinroq qayting.</p>
-      <a href="{% url 'courses:list' %}" class="btn btn-primary btn-sm">Barcha kurslar</a>
+      <h2 class="h5 text-dark">{% trans "No courses found" %}</h2>
+      <p class="mb-3">{% trans "Change the filter or come back later." %}</p>
+      <a href="{% url 'courses:list' %}" class="btn btn-primary btn-sm">{% trans "All courses" %}</a>
     </div>
     {% endif %}
   </div>

@@ -6,6 +6,7 @@ from django.conf.urls.static import static
 from accounts.views import verify_certificate
 
 urlpatterns = [
+    path('i18n/', include('django.conf.urls.i18n')),
     path('admin/', admin.site.urls),
     path('accounts/', include('accounts.urls', namespace='accounts')),
     # Public QR verification URL used in generated certificate PDFs

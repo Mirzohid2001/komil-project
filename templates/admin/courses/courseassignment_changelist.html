@@ -1,0 +1,10 @@
+{% extends "admin/change_list.html" %}
+
+{% block object-tools-items %}
+  <li>
+    <a href="{% url 'admin:courses_courseassignment_bulk_assign' %}" class="addlink">
+      Ommaviy topshiriq
+    </a>
+  </li>
+  {{ block.super }}
+{% endblock %}

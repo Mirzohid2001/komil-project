@@ -1,0 +1,92 @@
+{% extends "admin/base_site.html" %}
+{% load i18n %}
+
+{% block content %}
+<div class="container-fluid" style="max-width:720px;">
+  <h1>{{ title }}</h1>
+  <p class="help">
+    Rol, bo‘lim va/yoki smena bo‘yicha xodimlarga bitta kursni muddat bilan tayinlaydi.
+    Masalan: barcha <em>Payvandlovchi</em> yoki <em>Sex A</em>.
+  </p>
+
+  {% if preview_count is not None %}
+  <div class="alert alert-info">
+    Filtr bo‘yicha <strong>{{ preview_count }}</strong> ta xodim topildi.
+  </div>
+  {% endif %}
+
+  <form method="post" novalidate>
+    {% csrf_token %}
+    <fieldset class="module aligned">
+      <div class="form-row">
+        <div>
+          <label for="id_course">Kurs *</label>
+          <select name="course" id="id_course" required>
+            <option value="">— tanlang —</option>
+            {% for c in courses %}
+            <option value="{{ c.id }}" {% if form_data.course == c.id|stringformat:"s" %}selected{% endif %}>{{ c.title }}</option>
+            {% endfor %}
+          </select>
+        </div>
+      </div>
+      <div class="form-row">
+        <div>
+          <label for="id_deadline">Muddat *</label>
+          <input type="date" name="deadline" id="id_deadline" required value="{{ form_data.deadline }}">
+        </div>
+      </div>
+      <div class="form-row">
+        <div>
+          <label for="id_role">Rol</label>
+          <select name="role" id="id_role">
+            <option value="">— barcha rollar —</option>
+            {% for value, label in roles %}
+            <option value="{{ value }}" {% if form_data.role == value %}selected{% endif %}>{{ label }}</option>
+            {% endfor %}
+          </select>
+        </div>
+      </div>
+      <div class="form-row">
+        <div>
+          <label for="id_department">Bo‘lim / sex</label>
+          <select name="department" id="id_department">
+            <option value="">— barcha bo‘limlar —</option>
+            {% for d in departments %}
+            <option value="{{ d.id }}" {% if form_data.department == d.id|stringformat:"s" %}selected{% endif %}>{{ d.name }}</option>
+            {% endfor %}
+          </select>
+        </div>
+      </div>
+      <div class="form-row">
+        <div>
+          <label for="id_shift">Smena</label>
+          <select name="shift" id="id_shift">
+            <option value="">— barcha smenalar —</option>
+            {% for value, label in shifts %}
+            {% if value %}
+            <option value="{{ value }}" {% if form_data.shift == value %}selected{% endif %}>{{ label }}</option>
+            {% endif %}
+            {% endfor %}
+          </select>
+        </div>
+      </div>
+      <div class="form-row">
+        <div>
+          <label><input type="checkbox" name="is_mandatory" value="1" {% if form_data.is_mandatory %}checked{% endif %}> Majburiy (compliance)</label>
+        </div>
+      </div>
+      <div class="form-row">
+        <div>
+          <label for="id_notes">Izoh</label>
+          <textarea name="notes" id="id_notes" rows="3">{{ form_data.notes }}</textarea>
+        </div>
+      </div>
+    </fieldset>
+    <div class="submit-row" style="display:flex;gap:8px;flex-wrap:wrap;">
+      <button type="submit" name="preview" value="1" class="default">Oldindan ko‘rish</button>
+      <button type="submit" name="assign" value="1" class="default" style="background:#417690;">Tayinlash</button>
+      <a href="{% url 'admin:courses_courseassignment_changelist' %}" class="button cancel-link">Bekor</a>
+    </div>
+  </form>
+</div>
+{% endblock %}

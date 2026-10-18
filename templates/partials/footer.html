@@ -1,4 +1,4 @@
-{% load static %}
+{% load static i18n %}
 <footer class="zl-footer">
   <div class="zl-shell d-flex flex-column flex-md-row justify-content-between gap-3 align-items-md-center">
     <div class="d-flex align-items-center gap-3">
@@ -6,12 +6,12 @@
            style="border-radius:50%;object-fit:cover;border:1.5px solid var(--zl-brass);box-shadow:0 0 0 3px rgba(201,162,39,.2);">
       <div>
         <strong>Isomer Oil</strong>
-        <div class="mt-1">Ichki o‘quv, test va hujjatlar platformasi.</div>
+        <div class="mt-1">{% trans "Internal training, tests and documents platform." %}</div>
       </div>
     </div>
     <div class="text-md-end">
-      <div style="color:var(--zl-brass-light);letter-spacing:.12em;text-transform:uppercase;font-size:.72rem;font-weight:700;">Zavod LMS</div>
-      <div class="mt-1">© {% now "Y" %} Isomer Oil · Ichki foydalanish</div>
+      <div style="color:var(--zl-brass-light);letter-spacing:.12em;text-transform:uppercase;font-size:.72rem;font-weight:700;">{% trans "Factory LMS" %}</div>
+      <div class="mt-1">© {% now "Y" %} Isomer Oil · {% trans "Internal use" %}</div>
     </div>
   </div>
 </footer>

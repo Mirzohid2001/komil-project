@@ -11,9 +11,16 @@ from .models import (
     Course, Module, Lesson, Enrollment, CompletedLesson,
     CourseCategory, CourseCertificate, LessonComment,
     LessonQuizQuestion, LessonQuizOption, LessonQuizAttempt,
-    CourseAssignment, LessonAssignmentSubmission,
+    CourseAssignment, LessonAssignmentSubmission, LessonVideoProgress,
 )
-from .services import create_course_certificate, generate_course_certificate_pdf
+from .services import (
+    create_course_certificate,
+    generate_course_certificate_pdf,
+    upsert_video_progress,
+    maybe_auto_complete_from_watch,
+    complete_lesson_for_user,
+)
+from .video_utils import video_embed_info
 from accounts.models import UserActivity
 
 import json
@@ -317,14 +324,18 @@ def review_assignment(request, submission_id):
         submission.reviewed_at = timezone.now()
         submission.reviewer_note = note
         submission.save()
-        enrollment = Enrollment.objects.filter(user=submission.user, course=course).first()
-        if enrollment:
-            CompletedLesson.objects.get_or_create(
-                enrollment=enrollment,
-                lesson=lesson,
-                defaults={'user': submission.user},
-            )
-            enrollment.progress()
+        from accounts.audit import log_compliance_event
+        complete_lesson_for_user(user=submission.user, lesson=lesson)
+        log_compliance_event(
+            event_type='assignment_approved',
+            actor=request.user,
+            subject_user=submission.user,
+            object_type='LessonAssignmentSubmission',
+            object_id=submission.pk,
+            message=f'Vazifa tasdiqlandi: {lesson.title}',
+            payload={'lesson_id': lesson.id, 'course_id': course.id},
+            request=request,
+        )
         messages.success(request, "Vazifa tasdiqlandi — dars yakunlandi.")
     elif action == 'reject':
         submission.status = LessonAssignmentSubmission.STATUS_REJECTED
@@ -467,7 +478,9 @@ def lesson_detail(request, course_slug, module_id, lesson_id):
         return redirect('accounts:login')
     
     is_enrolled = Enrollment.objects.filter(user=request.user, course=course).exists()
-    if not is_enrolled and not request.user.is_staff:
+    is_staff_like = request.user.is_staff or getattr(request.user, 'role', None) == 'admin'
+    can_preview = lesson.is_free_preview and lesson.lesson_type == 'video'
+    if not is_enrolled and not is_staff_like and not can_preview:
         messages.warning(request, "Bu darsni ko'rish uchun kursga yozilishingiz kerak.")
         return redirect('courses:detail', course_slug=course_slug)
 
@@ -565,6 +578,26 @@ def lesson_detail(request, course_slug, module_id, lesson_id):
                 .order_by('submitted_at')
             )
 
+    video_progress = None
+    watch_percent = 0
+    watch_unlocked = True
+    if lesson.lesson_type == 'video' and lesson.has_video:
+        video_progress = LessonVideoProgress.objects.filter(
+            user=request.user, lesson=lesson
+        ).first()
+        watch_percent = video_progress.percent if video_progress else 0
+        watch_unlocked = (
+            is_staff_like
+            or lesson.watch_requirement_met(watch_percent)
+        )
+
+    embed = video_embed_info(lesson.video_url) if lesson.video_url else {
+        'provider': 'file' if lesson.video_file else '',
+        'video_id': '',
+        'embed_url': '',
+        'watchable': bool(lesson.video_file),
+    }
+
     context = {
         'course': course,
         'modules': modules,
@@ -582,13 +615,14 @@ def lesson_detail(request, course_slug, module_id, lesson_id):
         'assignment_submission': assignment_submission,
         'pending_assignment_submissions': pending_assignment_submissions,
         'can_review_assignment': can_review_assignment,
-        'debug_info': {
-            'lesson_type': lesson.lesson_type,
-            'video_url': lesson.video_url,
-            'video_file': lesson.video_file.url if lesson.video_file else None,
-            'has_video_url': bool(lesson.video_url),
-            'has_video_file': bool(lesson.video_file)
-        }
+        'is_enrolled': is_enrolled,
+        'is_preview_only': (not is_enrolled and can_preview and not is_staff_like),
+        'video_embed': embed,
+        'video_progress': video_progress,
+        'watch_percent': watch_percent,
+        'watch_unlocked': watch_unlocked,
+        'min_watch_percent': lesson.min_watch_percent,
+        'resume_position': video_progress.last_position if video_progress else 0,
     }
 
     return render(request, 'courses/lesson_detail.html', context)
@@ -647,13 +681,7 @@ def submit_quiz(request, course_slug, module_id, lesson_id):
 
     if is_passed:
         enrollment = Enrollment.objects.filter(user=request.user, course=course).first()
-        if enrollment:
-            CompletedLesson.objects.get_or_create(
-                enrollment=enrollment,
-                lesson=lesson,
-                defaults={'user': request.user},
-            )
-            enrollment.progress()
+        complete_lesson_for_user(user=request.user, lesson=lesson)
         messages.success(
             request,
             f"Quiz topshirildi: {correct}/{total} ({percentage:.0f}%). Dars yakunlandi.",
@@ -675,75 +703,71 @@ def submit_quiz(request, course_slug, module_id, lesson_id):
 @login_required
 @require_POST
 def complete_lesson(request, course_slug, lesson_id):
-    """Отметить урок как выполненный"""
+    """Eski JSON API — mark_lesson_complete bilan bir xil qoidalar."""
     course = get_object_or_404(Course, slug=course_slug)
     lesson = get_object_or_404(Lesson, id=lesson_id, module__course=course)
-    
-    # Получаем запись о зачислении
-    try:
-        enrollment = Enrollment.objects.get(user=request.user, course=course)
-    except Enrollment.DoesNotExist:
-        return JsonResponse({'status': 'error', 'message': 'Siz kursga yozilmagansiz'}, status=400)
-    
-    # Создаем или получаем запись о завершении урока
-    completed_lesson, created = CompletedLesson.objects.get_or_create(
-        enrollment=enrollment,
-        lesson=lesson,
-        defaults={'user': request.user}  # Добавляем user при создании
-    )
-    
-    # Если запись уже существовала и не содержала user_id, обновляем её
-    if not created and not hasattr(completed_lesson, 'user_id'):
-        completed_lesson.user = request.user
-        completed_lesson.save()
-    
-    # Получаем все уроки курса
-    total_lessons = Lesson.objects.filter(module__course=course).count()
-    # Получаем все завершенные уроки пользователя для этого курса
-    completed_lessons_count = CompletedLesson.objects.filter(
-        enrollment=enrollment,
-        user=request.user
-    ).count()
-    
-    # Вычисляем прогресс
-    progress = 0
-    if total_lessons > 0:
-        progress = round((completed_lessons_count / total_lessons) * 100)
-    
-    # Проверяем завершение курса
-    if progress == 100 and not enrollment.is_completed:
-        enrollment.is_completed = True
-        enrollment.completed_at = timezone.now()
-        enrollment.save()
-        enrollment.sync_course_assignments()
-        
-        # Создаем сертификат
-        certificate = create_course_certificate(enrollment)
-        
-        # Обновляем опыт пользователя
-        request.user.add_experience(200)  # Даем пользователю 200 XP за завершение курса
-        
-        # Записываем действие в активности пользователя
-        UserActivity.objects.create(
-            user=request.user,
-            activity_type='profile_update',
-            details={'action': 'course_completed', 'course_id': course.id, 'course_title': course.title}
+    is_staff_like = request.user.is_staff or getattr(request.user, 'role', None) == 'admin'
+
+    enrollment = Enrollment.objects.filter(user=request.user, course=course).first()
+    if not enrollment:
+        return JsonResponse(
+            {'status': 'error', 'message': 'Siz kursga yozilmagansiz'}, status=400
         )
-        
-        return JsonResponse({
-            'status': 'success',
-            'message': 'Dars va kurs yakunlandi!',
-            'progress': progress,
-            'course_completed': True,
-            'certificate_url': reverse('courses:view_certificate', args=[certificate.certificate_id]),
-        })
-    
-    return JsonResponse({
+
+    if lesson.lesson_type == 'assignment':
+        approved = LessonAssignmentSubmission.objects.filter(
+            lesson=lesson,
+            user=request.user,
+            status=LessonAssignmentSubmission.STATUS_APPROVED,
+        ).exists()
+        if not approved and not is_staff_like:
+            return JsonResponse(
+                {'status': 'error', 'message': 'Vazifa tasdiqlanmagan'}, status=400
+            )
+
+    if (
+        lesson.lesson_type == 'video'
+        and lesson.has_video
+        and not is_staff_like
+        and (lesson.min_watch_percent or 0) > 0
+    ):
+        vp = LessonVideoProgress.objects.filter(
+            user=request.user, lesson=lesson
+        ).first()
+        percent = vp.percent if vp else 0
+        if not lesson.watch_requirement_met(percent):
+            return JsonResponse(
+                {
+                    'status': 'error',
+                    'message': (
+                        f'Videoni kamida {lesson.min_watch_percent}% ko‘ring '
+                        f'(hozir: {percent}%).'
+                    ),
+                    'percent': percent,
+                },
+                status=400,
+            )
+
+    was_completed = enrollment.is_completed
+    complete_lesson_for_user(user=request.user, lesson=lesson)
+    enrollment.refresh_from_db()
+    progress = enrollment.progress()
+
+    payload = {
         'status': 'success',
         'message': 'Dars yakunlandi!',
         'progress': progress,
-        'course_completed': False,
-    })
+        'course_completed': bool(enrollment.is_completed),
+    }
+    if enrollment.is_completed and not was_completed:
+        cert = create_course_certificate(enrollment)
+        if hasattr(request.user, 'add_experience'):
+            request.user.add_experience(200)
+        payload['message'] = 'Dars va kurs yakunlandi!'
+        payload['certificate_url'] = reverse(
+            'courses:view_certificate', args=[cert.certificate_id]
+        )
+    return JsonResponse(payload)
 
 
 @login_required
@@ -791,13 +815,15 @@ def mark_lesson_complete(request, course_slug, module_id, lesson_id):
     module = get_object_or_404(Module, id=module_id, course=course)
     lesson = get_object_or_404(Lesson, id=lesson_id, module=module)
 
+    is_staff_like = request.user.is_staff or getattr(request.user, 'role', None) == 'admin'
+
     if lesson.lesson_type == 'assignment':
         approved = LessonAssignmentSubmission.objects.filter(
             lesson=lesson,
             user=request.user,
             status=LessonAssignmentSubmission.STATUS_APPROVED,
         ).exists()
-        if not approved and request.user.role != 'admin' and not request.user.is_staff:
+        if not approved and not is_staff_like:
             messages.error(
                 request,
                 "Amaliy vazifa uchun fayl yuklang va instruktur tasdiğini kuting.",
@@ -808,61 +834,57 @@ def mark_lesson_complete(request, course_slug, module_id, lesson_id):
                 module_id=module_id,
                 lesson_id=lesson_id,
             )
-    
-    # Получаем запись о зачислении
-    try:
-        enrollment = Enrollment.objects.get(user=request.user, course=course)
-        
-        # Создаем запись о завершении урока с указанием пользователя
-        completed_lesson, created = CompletedLesson.objects.get_or_create(
-            enrollment=enrollment,
-            lesson=lesson,
-            defaults={'user': request.user}  # Явно указываем пользователя
-        )
-        
-        # Если запись уже существовала и не содержала user_id, обновляем её
-        if not created and not hasattr(completed_lesson, 'user_id'):
-            completed_lesson.user = request.user
-            completed_lesson.save()
-        
-        # Обновляем состояние завершения курса
-        # Получаем все уроки курса
-        total_lessons = Lesson.objects.filter(module__course=course).count()
-        # Получаем все завершенные уроки пользователя для этого курса
-        completed_lessons_count = CompletedLesson.objects.filter(
-            enrollment=enrollment,
-            user=request.user
-        ).count()
-        
-        # Вычисляем прогресс
-        progress = 0
-        if total_lessons > 0:
-            progress = round((completed_lessons_count / total_lessons) * 100)
-        
-        # Если все уроки завершены (прогресс 100%), отмечаем курс как завершенный
-        if progress == 100 and not enrollment.is_completed:
-            enrollment.is_completed = True
-            enrollment.completed_at = timezone.now()
-            enrollment.save()
-            enrollment.sync_course_assignments()
-            
-            # Создаем сертификат о прохождении курса
-            certificate = create_course_certificate(enrollment)
-            messages.success(request, f"Tabriklaymiz! Siz '{course.title}' kursini muvaffaqiyatli yakunladingiz!")
-            
-            # Обновляем опыт пользователя
-            request.user.add_experience(200)  # Даем пользователю 200 XP за завершение курса
-            
-            # Записываем действие в активности пользователя
-            UserActivity.objects.create(
-                user=request.user,
-                activity_type='profile_update',
-                details={'action': 'course_completed', 'course_id': course.id, 'course_title': course.title}
+
+    if (
+        lesson.lesson_type == 'video'
+        and lesson.has_video
+        and not is_staff_like
+        and (lesson.min_watch_percent or 0) > 0
+    ):
+        vp = LessonVideoProgress.objects.filter(
+            user=request.user, lesson=lesson
+        ).first()
+        percent = vp.percent if vp else 0
+        if not lesson.watch_requirement_met(percent):
+            messages.error(
+                request,
+                f"Videoni kamida {lesson.min_watch_percent}% ko‘ring "
+                f"(hozir: {percent}%).",
             )
-    except Enrollment.DoesNotExist:
-        # Если пользователь каким-то образом не записан на курс, просто игнорируем
-        pass
-    
+            return redirect(
+                'courses:lesson_detail',
+                course_slug=course_slug,
+                module_id=module_id,
+                lesson_id=lesson_id,
+            )
+
+    enrollment = Enrollment.objects.filter(user=request.user, course=course).first()
+    if not enrollment:
+        messages.error(request, "Darsni yakunlash uchun kursga yozilishingiz kerak.")
+        return redirect('courses:detail', course_slug=course_slug)
+
+    was_completed = enrollment.is_completed
+    complete_lesson_for_user(user=request.user, lesson=lesson)
+    enrollment.refresh_from_db()
+
+    if enrollment.is_completed and not was_completed:
+        create_course_certificate(enrollment)
+        messages.success(
+            request,
+            f"Tabriklaymiz! Siz '{course.title}' kursini muvaffaqiyatli yakunladingiz!",
+        )
+        if hasattr(request.user, 'add_experience'):
+            request.user.add_experience(200)
+        UserActivity.objects.create(
+            user=request.user,
+            activity_type='profile_update',
+            details={
+                'action': 'course_completed',
+                'course_id': course.id,
+                'course_title': course.title,
+            },
+        )
+
     messages.success(request, "Dars muvaffaqiyatli tugallandi")
     return redirect('courses:lesson_detail', course_slug=course_slug, module_id=module_id, lesson_id=lesson_id)
 
@@ -1057,28 +1079,100 @@ def delete_comment(request, comment_id):
 @login_required
 @require_POST
 def track_video_view(request):
-    """Track video view duration and save it to UserActivity"""
+    """Video progress + UserActivity yozish."""
     try:
         data = json.loads(request.body)
-        duration = data.get('duration', 0)
         lesson_id = data.get('lesson_id')
-        
         if not lesson_id:
-            return JsonResponse({'status': 'error', 'message': 'ID урока не указан'}, status=400)
-        
+            return JsonResponse(
+                {'status': 'error', 'message': 'lesson_id kerak'}, status=400
+            )
+
         lesson = get_object_or_404(Lesson, id=lesson_id)
-        
-        UserActivity.objects.create(
-            user=request.user,
-            activity_type='view_video',
-            duration=duration,
-            details={
-                'lesson_id': lesson.id,
-                'lesson_title': lesson.title,
-                'course_slug': lesson.module.course.slug,
-            },
+        course = lesson.module.course
+        is_staff_like = (
+            request.user.is_staff or getattr(request.user, 'role', None) == 'admin'
         )
-        
-        return JsonResponse({'status': 'success', 'message': 'Просмотр видео записан'})
+        enrolled = Enrollment.objects.filter(user=request.user, course=course).exists()
+
+        watched_seconds = data.get('watched_seconds')
+        duration_seconds = int(data.get('duration_seconds') or 0)
+        position_seconds = int(data.get('position_seconds') or 0)
+        legacy_duration = data.get('duration')
+
+        # Eski klient: duration daqiqada — lesson.duration bilan cheklanadi
+        if watched_seconds is None and legacy_duration is not None:
+            legacy = int(legacy_duration or 0)
+            raw = legacy * 60 if legacy < 1000 else legacy
+            cap = lesson.expected_duration_seconds() or duration_seconds or raw
+            watched_seconds = min(raw, cap)
+        watched_seconds = int(watched_seconds or 0)
+        if duration_seconds <= 0:
+            duration_seconds = lesson.expected_duration_seconds()
+        if duration_seconds > 0:
+            watched_seconds = min(watched_seconds, duration_seconds)
+            position_seconds = min(position_seconds, duration_seconds)
+
+        prev_percent = (
+            LessonVideoProgress.objects.filter(user=request.user, lesson=lesson)
+            .values_list('percent', flat=True)
+            .first()
+        ) or 0
+
+        progress = upsert_video_progress(
+            user=request.user,
+            lesson=lesson,
+            watched_seconds=watched_seconds,
+            duration_seconds=duration_seconds,
+            position_seconds=position_seconds,
+        )
+
+        # Activity — faqat sezilarli progress yoki birinchi yozuv
+        should_log = (
+            legacy_duration is not None
+            or prev_percent == 0
+            or progress.percent >= prev_percent + 10
+            or (
+                lesson.watch_requirement_met(progress.percent)
+                and not lesson.watch_requirement_met(prev_percent)
+            )
+        )
+        if should_log and progress.watched_seconds > 0:
+            activity_minutes = max(
+                1, int(round(progress.watched_seconds / 60))
+            )
+            UserActivity.objects.create(
+                user=request.user,
+                activity_type='view_lesson_video',
+                duration=(
+                    int(legacy_duration)
+                    if legacy_duration is not None
+                    else activity_minutes
+                ),
+                details={
+                    'source': 'course',
+                    'lesson_id': lesson.id,
+                    'lesson_title': lesson.title,
+                    'course_slug': course.slug,
+                    'percent': progress.percent,
+                    'watched_seconds': progress.watched_seconds,
+                },
+            )
+
+        auto_completed = False
+        if enrolled or is_staff_like:
+            auto_completed = maybe_auto_complete_from_watch(
+                user=request.user, lesson=lesson, progress=progress
+            )
+
+        return JsonResponse({
+            'status': 'success',
+            'percent': progress.percent,
+            'watched_seconds': progress.watched_seconds,
+            'duration_seconds': progress.duration_seconds,
+            'watch_unlocked': lesson.watch_requirement_met(progress.percent) or is_staff_like,
+            'auto_completed': auto_completed,
+            'min_watch_percent': lesson.min_watch_percent,
+        })
     except Exception as e:
         return JsonResponse({'status': 'error', 'message': str(e)}, status=500)

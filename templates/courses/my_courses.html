@@ -1,40 +1,40 @@
 {% extends 'courses/base.html' %}
-{% load static %}
+{% load static i18n %}
 
-{% block title %}Mening kurslarim{% endblock %}
+{% block title %}{% trans "My courses" %}{% endblock %}
 
 {% block breadcrumb_items %}
-<li class="breadcrumb-item active" aria-current="page">Mening kurslarim</li>
+<li class="breadcrumb-item active" aria-current="page">{% trans "My courses" %}</li>
 {% endblock %}
 
 {% block courses_content %}
 <div class="zl-page-head">
   <div>
-    <h1 class="zl-section-title mb-1">Mening kurslarim</h1>
-    <p class="zl-section-lead mb-0">Davom etayotgan va yakunlangan kurslar.</p>
+    <h1 class="zl-section-title mb-1">{% trans "My courses" %}</h1>
+    <p class="zl-section-lead mb-0">{% trans "In-progress and completed courses." %}</p>
   </div>
-  <a href="{% url 'courses:list' %}" class="btn btn-sm btn-outline-primary">Barcha kurslar</a>
+  <a href="{% url 'courses:list' %}" class="btn btn-sm btn-outline-primary">{% trans "All courses" %}</a>
 </div>
 
 {% if assignments %}
 <section class="mb-4">
-  <h2 class="h5 fw-bold mb-3">Majburiy topshiriqlar</h2>
+  <h2 class="h5 fw-bold mb-3">{% trans "Mandatory assignments" %}</h2>
   <div class="zl-test-list">
     {% for a in assignments %}
     <article class="zl-test zl-card">
       <div>
         <h2>{{ a.course.title }}</h2>
-        <p class="mb-0">Muddat: {{ a.deadline|date:"d.m.Y" }}{% if a.notes %} · {{ a.notes|truncatechars:80 }}{% endif %}</p>
+        <p class="mb-0">{% blocktrans with date=a.deadline|date:"d.m.Y" %}Deadline: {{ date }}{% endblocktrans %}{% if a.notes %} · {{ a.notes|truncatechars:80 }}{% endif %}</p>
         <div class="zl-chips mt-2">
-          {% if a.completed_at %}<span class="zl-chip ok">Yakunlangan</span>
-          {% elif a.is_overdue %}<span class="zl-chip danger">Muddati o‘tgan</span>
-          {% else %}<span class="zl-chip warn">Jarayonda</span>{% endif %}
-          {% if a.is_mandatory %}<span class="zl-chip danger">Majburiy</span>{% endif %}
+          {% if a.completed_at %}<span class="zl-chip ok">{% trans "Completed" %}</span>
+          {% elif a.is_overdue %}<span class="zl-chip danger">{% trans "Overdue" %}</span>
+          {% else %}<span class="zl-chip warn">{% trans "In progress" %}</span>{% endif %}
+          {% if a.is_mandatory %}<span class="zl-chip danger">{% trans "Mandatory" %}</span>{% endif %}
         </div>
       </div>
       <div class="zl-test-side">
         <a href="{% url 'courses:learn' a.course.slug %}" class="btn btn-primary">
-          {% if a.completed_at %}Ko‘rish{% else %}Boshlash{% endif %}
+          {% if a.completed_at %}{% trans "View" %}{% else %}{% trans "Start" %}{% endif %}
         </a>
       </div>
     </article>
@@ -45,7 +45,7 @@
 
 <div class="row g-3">
   <div class="col-lg-9">
-    <h2 class="h5 fw-bold mb-3">Davom etayotgan</h2>
+    <h2 class="h5 fw-bold mb-3">{% trans "In progress" %}</h2>
     {% if active_enrollments %}
     <div class="zl-course-grid mb-4">
       {% for enrollment in active_enrollments %}
@@ -63,7 +63,7 @@
           </div>
           <div class="d-flex justify-content-between align-items-center">
             <span class="zl-meta">{{ enrollment.progress_percent }}%</span>
-            <a href="{% url 'courses:learn' enrollment.course.slug %}" class="btn btn-sm btn-primary">Davom</a>
+            <a href="{% url 'courses:learn' enrollment.course.slug %}" class="btn btn-sm btn-primary">{% trans "Continue" %}</a>
           </div>
         </div>
       </article>
@@ -72,14 +72,14 @@
     {% else %}
     <div class="zl-empty mb-4">
       <i class="fas fa-book d-block"></i>
-      <h2 class="h5 text-dark">Hali kurs yo‘q</h2>
-      <p class="mb-3">Katalogdan kurs tanlab yoziling.</p>
-      <a href="{% url 'courses:list' %}" class="btn btn-primary btn-sm">Kurslar</a>
+      <h2 class="h5 text-dark">{% trans "No courses yet" %}</h2>
+      <p class="mb-3">{% trans "Pick a course from the catalog and enroll." %}</p>
+      <a href="{% url 'courses:list' %}" class="btn btn-primary btn-sm">{% trans "Courses" %}</a>
     </div>
     {% endif %}
 
     {% if completed_enrollments %}
-    <h2 class="h5 fw-bold mb-3">Yakunlangan</h2>
+    <h2 class="h5 fw-bold mb-3">{% trans "Completed" %}</h2>
     <div class="zl-course-grid mb-4">
       {% for enrollment in completed_enrollments %}
       <article class="zl-course-card position-relative">
@@ -88,15 +88,15 @@
         {% else %}
           <div class="course-cover-ph"><i class="fas fa-book-open fa-2x"></i></div>
         {% endif %}
-        <span class="zl-chip ok position-absolute" style="top:.75rem;right:.75rem;">Yakunlangan</span>
+        <span class="zl-chip ok position-absolute" style="top:.75rem;right:.75rem;">{% trans "Completed" %}</span>
         <div class="body">
           <h3>{{ enrollment.course.title }}</h3>
-          <p class="zl-meta">{{ enrollment.completed_at|date:"d.m.Y" }} da tugagan</p>
+          <p class="zl-meta">{{ enrollment.completed_at|date:"d.m.Y" }}</p>
           <div class="d-flex gap-2 mt-auto">
             {% if enrollment.certificate %}
-            <a href="{% url 'courses:view_certificate' enrollment.certificate.certificate_id %}" class="btn btn-sm btn-outline-primary">Sertifikat</a>
+            <a href="{% url 'courses:view_certificate' enrollment.certificate.certificate_id %}" class="btn btn-sm btn-outline-primary">{% trans "Certificate" %}</a>
             {% endif %}
-            <a href="{% url 'courses:detail' enrollment.course.slug %}" class="btn btn-sm btn-primary">Qayta o‘qish</a>
+            <a href="{% url 'courses:detail' enrollment.course.slug %}" class="btn btn-sm btn-primary">{% trans "Review again" %}</a>
           </div>
         </div>
       </article>
@@ -105,7 +105,7 @@
     {% endif %}
 
     {% if recommended_courses %}
-    <h2 class="h5 fw-bold mb-3">Tavsiya etilgan</h2>
+    <h2 class="h5 fw-bold mb-3">{% trans "Recommended" %}</h2>
     <div class="zl-course-grid">
       {% for course in recommended_courses %}
       <article class="zl-course-card">
@@ -118,7 +118,7 @@
           <span class="badge difficulty-{{ course.difficulty }}">{{ course.get_difficulty_display }}</span>
           <h3 class="mt-2">{{ course.title }}</h3>
           <p class="zl-meta flex-grow-1">{{ course.short_description|truncatechars:80 }}</p>
-          <a href="{% url 'courses:detail' course.slug %}" class="btn btn-sm btn-outline-primary mt-auto">Batafsil</a>
+          <a href="{% url 'courses:detail' course.slug %}" class="btn btn-sm btn-outline-primary mt-auto">{% trans "Details" %}</a>
         </div>
       </article>
       {% endfor %}
@@ -128,27 +128,27 @@
 
   <aside class="col-lg-3">
     <div class="zl-card p-3 mb-3">
-      <h2 class="h6 fw-bold mb-3">Statistika</h2>
+      <h2 class="h6 fw-bold mb-3">{% trans "Statistics" %}</h2>
       <ul class="list-unstyled mb-0">
         <li class="d-flex justify-content-between py-2 border-bottom">
-          <span class="zl-meta">Jami</span>
+          <span class="zl-meta">{% trans "Total" %}</span>
           <strong>{{ active_enrollments|length|add:completed_enrollments|length }}</strong>
         </li>
         <li class="d-flex justify-content-between py-2 border-bottom">
-          <span class="zl-meta">Davom etayotgan</span>
+          <span class="zl-meta">{% trans "In progress" %}</span>
           <strong>{{ active_enrollments|length }}</strong>
         </li>
         <li class="d-flex justify-content-between py-2">
-          <span class="zl-meta">Yakunlangan</span>
+          <span class="zl-meta">{% trans "Completed" %}</span>
           <strong>{{ completed_enrollments|length }}</strong>
         </li>
       </ul>
     </div>
     <div class="zl-card p-3">
-      <h2 class="h6 fw-bold mb-3">Tez havolalar</h2>
+      <h2 class="h6 fw-bold mb-3">{% trans "Quick links" %}</h2>
       <div class="d-grid gap-2">
-        <a href="{% url 'courses:list' %}" class="btn btn-sm btn-outline-primary">Barcha kurslar</a>
-        <a href="{% url 'accounts:profile' %}" class="btn btn-sm btn-outline-primary">Profil</a>
+        <a href="{% url 'courses:list' %}" class="btn btn-sm btn-outline-primary">{% trans "All courses" %}</a>
+        <a href="{% url 'accounts:profile' %}" class="btn btn-sm btn-outline-primary">{% trans "Profile" %}</a>
       </div>
     </div>
   </aside>

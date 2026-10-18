@@ -1,10 +1,11 @@
-{% load static %}
+{% load static i18n %}
+{% get_current_language as LANGUAGE_CODE %}
 <!DOCTYPE html>
-<html lang="uz">
+<html lang="{{ LANGUAGE_CODE|default:'uz' }}">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-  <title>{% block title %}Bosh sahifa{% endblock %} · Isomer Oil</title>
+  <title>{% block title %}{% trans "Home" %}{% endblock %} · Isomer Oil</title>
 
   <link rel="icon" href="{% static 'favicon.ico' %}" sizes="any">
   <link rel="icon" type="image/png" sizes="32x32" href="{% static 'favicon/favicon-32.png' %}">
@@ -45,7 +46,7 @@
         {% for message in messages %}
           <div class="alert alert-{{ message.tags|default:'info' }} alert-dismissible fade show" role="alert">
             {{ message }}
-            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Yopish"></button>
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="{% trans 'Close' %}"></button>
           </div>
         {% endfor %}
       </div>
@@ -53,10 +54,10 @@
       {% if compliance_status.blocked %}
       <div class="alert alert-danger d-flex flex-wrap justify-content-between align-items-center gap-2 mb-3" role="alert">
         <div>
-          <strong>Compliance: {{ compliance_status.items|length }} ta talab ochiq.</strong>
-          Test, hujjat tasdiqi, sertifikat yoki kurs topshirig‘ini yakunlang.
+          <strong>{% trans "Compliance" %}: {{ compliance_status.items|length }}</strong>
+          {% trans "Finish the test, document acknowledgment, certificate or course assignment." %}
         </div>
-        <a href="{% url 'blog:compliance_hub' %}" class="btn btn-sm btn-danger">Ko‘rish</a>
+        <a href="{% url 'blog:compliance_hub' %}" class="btn btn-sm btn-danger">{% trans "View" %}</a>
       </div>
       {% endif %}
       {% block content %}{% endblock %}

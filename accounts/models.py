@@ -1,7 +1,9 @@
+from datetime import timedelta
+
 from django.contrib.auth.models import AbstractUser
 from django.db import models
 from django.utils import timezone
-from datetime import timedelta
+from django.utils.translation import gettext_lazy as _
 
 
 class Department(models.Model):
@@ -29,22 +31,22 @@ class User(AbstractUser):
     ]
 
     ROLE_CHOICES = [
-        ('admin', 'Admin'),
-        ('офисный-персонал', 'ofis-xodimlari'),
-        ('естокада', 'Ishlab-chiqarish'),
-        ('Оператор', 'Operator'),
-        ('Диспетчер', 'Dispatcher'),
-        ('охраник', 'Qorovul'),
-        ('уборщик', 'Tozalovchi'),
-        ('повар', 'Oshpaz'),
-        ('технолог', 'Muhandis'),
-        ('сварщик', 'Payvandlovchi'),
-        ('электрик', 'Elektromontyor'),
-        ('механик', 'Mexanik'),
-        ('КИП и А', 'KIP i A'),
-        ('склад', 'Sklad'),
-        ('слесарь', 'Chilangar'),
-        ('temiryo`lchi', 'Temiryo`lchi'),
+        ('admin', _('Admin')),
+        ('офисный-персонал', _('Office staff')),
+        ('естокада', _('Production')),
+        ('Оператор', _('Operator')),
+        ('Диспетчер', _('Dispatcher')),
+        ('охраник', _('Security guard')),
+        ('уборщик', _('Cleaner')),
+        ('повар', _('Cook')),
+        ('технолог', _('Engineer')),
+        ('сварщик', _('Welder')),
+        ('электрик', _('Electrician')),
+        ('механик', _('Mechanic')),
+        ('КИП и А', _('Instrumentation')),
+        ('склад', _('Warehouse')),
+        ('слесарь', _('Fitter')),
+        ('temiryo`lchi', _('Railway worker')),
     ]
     role = models.CharField(
         max_length=20,
@@ -113,7 +115,8 @@ class UserActivity(models.Model):
         ('login', 'Tizimga kirish'),
         ('logout', 'Tizimdan chiqish'),
         ('view_post', 'Postni ko‘rish'),
-        ('view_video', 'Videoni ko‘rish'),
+        ('view_video', 'Material videosi'),
+        ('view_lesson_video', 'Kurs videosi'),
         ('view_course', 'Kursni ko‘rish'),
         ('course_enrollment', 'Kursga yozilish'),
         ('profile_update', 'Profilni yangilash'),
@@ -296,3 +299,57 @@ class LevelUpEvent(models.Model):
         if not self.pk:
             self.previous_level = self.new_level - 1
         super().save(*args, **kwargs)
+
+
+class ComplianceAuditLog(models.Model):
+    """Tekshiruv uchun compliance hodisalari jurnali."""
+    EVENT_CHOICES = [
+        ('course_assigned', 'Kurs tayinlandi'),
+        ('course_bulk_assigned', 'Ommaviy kurs tayinlandi'),
+        ('course_completed', 'Kurs yakunlandi'),
+        ('doc_acknowledged', 'Hujjat tasdiqlandi'),
+        ('test_passed', 'Test o‘tdi'),
+        ('test_failed', 'Test yiqildi'),
+        ('cert_issued', 'Sertifikat berildi'),
+        ('cert_renewed', 'Sertifikat yangilandi'),
+        ('lesson_completed', 'Dars yakunlandi'),
+        ('assignment_approved', 'Vazifa tasdiqlandi'),
+    ]
+
+    actor = models.ForeignKey(
+        User,
+        null=True,
+        blank=True,
+        on_delete=models.SET_NULL,
+        related_name='audit_actions',
+        verbose_name="Amal qilgan",
+    )
+    subject_user = models.ForeignKey(
+        User,
+        null=True,
+        blank=True,
+        on_delete=models.SET_NULL,
+        related_name='audit_subjects',
+        verbose_name="Xodim",
+    )
+    event_type = models.CharField(
+        max_length=40, choices=EVENT_CHOICES, db_index=True, verbose_name="Hodisa"
+    )
+    object_type = models.CharField(max_length=60, blank=True, verbose_name="Obyekt turi")
+    object_id = models.CharField(max_length=64, blank=True, verbose_name="Obyekt ID")
+    message = models.CharField(max_length=500, blank=True, verbose_name="Izoh")
+    payload = models.JSONField(default=dict, blank=True, verbose_name="Tafsilotlar")
+    ip_address = models.GenericIPAddressField(null=True, blank=True, verbose_name="IP")
+    created_at = models.DateTimeField(auto_now_add=True, db_index=True, verbose_name="Vaqt")
+
+    class Meta:
+        ordering = ['-created_at']
+        verbose_name = "Audit jurnal"
+        verbose_name_plural = "Audit jurnal"
+        indexes = [
+            models.Index(fields=['event_type', '-created_at']),
+            models.Index(fields=['subject_user', '-created_at']),
+        ]
+
+    def __str__(self):
+        return f"{self.get_event_type_display()} · {self.created_at:%Y-%m-%d %H:%M}"

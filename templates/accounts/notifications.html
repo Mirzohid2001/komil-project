@@ -1,16 +1,17 @@
 {% extends 'base.html' %}
+{% load i18n %}
 
-{% block title %}Bildirishnomalar{% endblock %}
+{% block title %}{% trans "Notifications" %}{% endblock %}
 
 {% block content %}
 <div class="zl-page-head">
   <div>
-    <h1 class="zl-section-title mb-1">Bildirishnomalar</h1>
-    <p class="zl-section-lead mb-0">Muddatlar, majburiy testlar va tizim xabarlari.</p>
+    <h1 class="zl-section-title mb-1">{% trans "Notifications" %}</h1>
+    <p class="zl-section-lead mb-0">{% trans "Deadlines, mandatory tests and system messages." %}</p>
   </div>
   <form method="post" action="{% url 'accounts:notifications_read_all' %}">
     {% csrf_token %}
-    <button type="submit" class="btn btn-sm btn-outline-primary">Barchasini o‘qildi</button>
+    <button type="submit" class="btn btn-sm btn-outline-primary">{% trans "Mark all as read" %}</button>
   </form>
 </div>
 
@@ -24,11 +25,11 @@
       <span class="zl-meta">{{ n.created_at|date:"d.m.Y H:i" }}</span>
     </div>
     <p class="mb-0 mt-1 zl-meta">{{ n.message }}</p>
-    {% if not n.is_read %}<span class="badge text-bg-primary mt-2">Yangi</span>{% endif %}
+    {% if not n.is_read %}<span class="badge text-bg-primary mt-2">{% trans "New" %}</span>{% endif %}
   </a>
   {% empty %}
   <div class="zl-empty text-center text-muted p-4">
-    Hozircha bildirishnoma yo‘q.
+    {% trans "No notifications yet." %}
   </div>
   {% endfor %}
 </div>

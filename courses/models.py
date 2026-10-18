@@ -137,6 +137,16 @@ class Lesson(models.Model):
     video_url = models.URLField(blank=True, verbose_name="Video havolasi")
     video_file = models.FileField(upload_to='courses/videos/', blank=True, null=True, verbose_name="Video fayl")
     duration = models.PositiveIntegerField(default=0, help_text="Daqiqalardagi davomiyligi", verbose_name="Davomiyligi")
+    min_watch_percent = models.PositiveSmallIntegerField(
+        default=80,
+        verbose_name="Minimal ko‘rish foizi",
+        help_text="Video darsni yakunlash uchun kerakli foiz (0–100). 0 = cheklov yo‘q.",
+    )
+    auto_complete_on_watch = models.BooleanField(
+        default=True,
+        verbose_name="Yetarli ko‘rilganda avto-yakunlash",
+        help_text="Minimal foizga yetganda dars avtomatik yakunlanadi.",
+    )
     order = models.PositiveIntegerField(default=0, verbose_name="Tartib raqami")
     is_free_preview = models.BooleanField(default=False, verbose_name="Yozilmasdan ko'rish mumkin")
     allow_comments = models.BooleanField(default=True, verbose_name="Izohlar ruxsat etilgan")
@@ -162,6 +172,24 @@ class Lesson(models.Model):
     def has_attachments(self):
         """Проверяет, есть ли у урока прикрепленные файлы"""
         return self.attachments.exists()
+
+    @property
+    def has_video(self) -> bool:
+        return bool(self.video_url or self.video_file)
+
+    def expected_duration_seconds(self) -> int:
+        """Video davomiyligi (soniya). duration maydoni daqiqada."""
+        if self.duration and self.duration > 0:
+            return int(self.duration) * 60
+        return 0
+
+    def watch_requirement_met(self, percent: int) -> bool:
+        if self.lesson_type != 'video' or not self.has_video:
+            return True
+        required = int(self.min_watch_percent or 0)
+        if required <= 0:
+            return True
+        return int(percent or 0) >= required
 
 
 class LessonAttachment(models.Model):
@@ -323,6 +351,50 @@ class Enrollment(models.Model):
             CourseAssignment.objects.filter(
                 user=self.user, course=self.course
             ).update(completed_at=None)
+
+
+class LessonVideoProgress(models.Model):
+    """Kurs video darsi bo‘yicha ko‘rish progressi."""
+    user = models.ForeignKey(
+        User,
+        on_delete=models.CASCADE,
+        related_name='lesson_video_progress',
+        verbose_name='Foydalanuvchi',
+    )
+    lesson = models.ForeignKey(
+        Lesson,
+        on_delete=models.CASCADE,
+        related_name='video_progress',
+        verbose_name='Dars',
+    )
+    watched_seconds = models.PositiveIntegerField(default=0, verbose_name='Ko‘rilgan soniya')
+    duration_seconds = models.PositiveIntegerField(default=0, verbose_name='Video davomiyligi (s)')
+    percent = models.PositiveSmallIntegerField(default=0, verbose_name='Foiz')
+    last_position = models.PositiveIntegerField(default=0, verbose_name='Oxirgi pozitsiya (s)')
+    watch_completed_at = models.DateTimeField(
+        blank=True, null=True, verbose_name='Yetarli ko‘rilgan vaqt'
+    )
+    updated_at = models.DateTimeField(auto_now=True, verbose_name='Yangilangan')
+    created_at = models.DateTimeField(auto_now_add=True, verbose_name='Yaratilgan')
+
+    class Meta:
+        verbose_name = 'Video ko‘rish progressi'
+        verbose_name_plural = 'Video ko‘rish progresslari'
+        unique_together = ('user', 'lesson')
+        ordering = ['-updated_at']
+
+    def __str__(self):
+        return f'{self.user_id}:{self.lesson_id} {self.percent}%'
+
+    def refresh_percent(self) -> int:
+        duration = self.duration_seconds or self.lesson.expected_duration_seconds()
+        if duration <= 0:
+            # Davomiylik noma'lum — foizni sun'iy 100% qilmaymiz
+            self.percent = 0
+        else:
+            capped = min(self.watched_seconds, duration)
+            self.percent = min(100, int(round((capped / duration) * 100)))
+        return self.percent
 
 
 class CompletedLesson(models.Model):
