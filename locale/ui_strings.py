@@ -51,6 +51,18 @@ UI = {
         "uz": "Ochiq ro‘yxatdan o‘tish yo‘q. Yangi xodim uchun admin bilan bog‘laning.",
         "ru": "Открытой регистрации нет. Для нового сотрудника обратитесь к администратору.",
     },
+    "Register via Telegram": {
+        "uz": "Telegram orqali so‘rov yuborish",
+        "ru": "Заявка через Telegram",
+    },
+    "Send a request in the bot — admin approves, then you get login and password.": {
+        "uz": "Botda so‘rov yuboring — admin tasdiqlagach login va parol keladi.",
+        "ru": "Отправьте заявку в боте — после одобрения админа придут логин и пароль.",
+    },
+    "No open signup. New employees request access via Telegram; admin approves.": {
+        "uz": "Ochiq ro‘yxatdan o‘tish yo‘q. Yangi xodim Telegram orqali so‘rov yuboradi, admin tasdiqlaydi.",
+        "ru": "Открытой регистрации нет. Новый сотрудник подаёт заявку в Telegram, админ одобряет.",
+    },
     "Premium · Internal portal": {
         "uz": "Premium · Ichki portal",
         "ru": "Premium · Внутренний портал",

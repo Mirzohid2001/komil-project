@@ -19,6 +19,7 @@ JAZZMIN_SETTINGS = {
         {'name': 'Material video', 'url': 'blog:analytics', 'permissions': ['accounts.view_user']},
         {'name': 'Ommaviy topshiriq', 'url': 'admin:courses_courseassignment_bulk_assign', 'permissions': ['courses.add_courseassignment']},
         {'name': 'Audit jurnal', 'url': 'admin:accounts_complianceauditlog_changelist', 'permissions': ['accounts.view_complianceauditlog']},
+        {'name': 'Telegram', 'url': 'admin:accounts_telegrambotsettings_changelist', 'permissions': ['accounts.change_telegrambotsettings']},
         {'model': 'accounts.User'},
     ],
     'usermenu_links': [
@@ -72,6 +73,8 @@ JAZZMIN_SETTINGS = {
     'order_with_respect_to': [
         'accounts',
         'accounts.User',
+        'accounts.TelegramBotSettings',
+        'accounts.RegistrationRequest',
         'blog',
         'blog.Test',
         'blog.Question',
@@ -93,6 +96,8 @@ JAZZMIN_SETTINGS = {
         'auth.Group': 'fas fa-users-cog',
         'accounts': 'fas fa-user-friends',
         'accounts.User': 'fas fa-user',
+        'accounts.TelegramBotSettings': 'fab fa-telegram-plane',
+        'accounts.RegistrationRequest': 'fas fa-user-plus',
         'accounts.FavoritePost': 'fas fa-heart',
         'accounts.UserActivity': 'fas fa-chart-line',
         'accounts.Achievement': 'fas fa-trophy',

@@ -22,9 +22,20 @@ def zavod_extras(request):
             compliance = get_compliance_status(user)
         except Exception:
             pass
+
+    telegram_bot_url = ''
+    try:
+        from accounts.telegram_bot import bot_deep_link, bot_configured, bot_username
+        # Token + yoqilgan + username (login tugmasi uchun username shart)
+        if bot_configured() and bot_username():
+            telegram_bot_url = bot_deep_link()
+    except Exception:
+        telegram_bot_url = ''
+
     return {
         'unread_notifications': unread,
         'compliance_status': compliance,
         # backwards-compatible alias
         'compliance_overdue_tests': compliance.get('tests') or [],
+        'telegram_bot_url': telegram_bot_url,
     }

@@ -116,6 +116,247 @@ class SignUpSecurityTests(TestCase):
         self.assertNotIn('admin', role_values)
 
 
+class TelegramRegistrationTests(TestCase):
+    def setUp(self):
+        from accounts.models import TelegramBotSettings
+
+        self.admin = User.objects.create_superuser(
+            username='tgadmin', email='tg@example.com', password='pass12345', role='admin',
+        )
+        TelegramBotSettings.objects.update_or_create(
+            pk=1,
+            defaults={
+                'is_enabled': True,
+                'bot_token': 'test-token',
+                'bot_username': 'IsomerOilBot',
+                'webhook_secret': 'secret123',
+                'admin_chat_ids': '999001',
+            },
+        )
+
+    def test_login_shows_telegram_cta(self):
+        response = self.client.get(reverse('accounts:login'))
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, 't.me/IsomerOilBot')
+
+    def test_login_hides_cta_when_disabled(self):
+        from accounts.models import TelegramBotSettings
+
+        TelegramBotSettings.objects.filter(pk=1).update(is_enabled=False)
+        response = self.client.get(reverse('accounts:login'))
+        self.assertEqual(response.status_code, 200)
+        self.assertNotContains(response, 't.me/IsomerOilBot')
+
+    def test_webhook_disabled_returns_503(self):
+        from accounts.models import TelegramBotSettings
+
+        TelegramBotSettings.objects.filter(pk=1).update(is_enabled=False)
+        response = self.client.post(
+            reverse('accounts:telegram_webhook'),
+            data='{}',
+            content_type='application/json',
+            HTTP_X_TELEGRAM_BOT_API_SECRET_TOKEN='secret123',
+        )
+        self.assertEqual(response.status_code, 503)
+
+    def test_admin_settings_page_loads(self):
+        self.client.login(username='tgadmin', password='pass12345')
+        response = self.client.get(reverse('admin:accounts_telegrambotsettings_changelist'))
+        self.assertEqual(response.status_code, 302)
+        follow = self.client.get(response.url)
+        self.assertEqual(follow.status_code, 200)
+        self.assertContains(follow, 'Webhook o‘rnatish')
+
+    def test_admin_webhook_action_requires_post(self):
+        self.client.login(username='tgadmin', password='pass12345')
+        response = self.client.get(reverse('admin:telegram_set_webhook'))
+        self.assertEqual(response.status_code, 302)
+
+    def test_ensure_webhook_secret_on_enable(self):
+        from accounts.models import TelegramBotSettings
+
+        cfg = TelegramBotSettings.load()
+        cfg.webhook_secret = ''
+        cfg.is_enabled = True
+        cfg.bot_token = 'tok'
+        cfg.save()
+        cfg.refresh_from_db()
+        self.assertTrue(len(cfg.webhook_secret) >= 16)
+
+    def test_webhook_rejects_bad_secret(self):
+        response = self.client.post(
+            reverse('accounts:telegram_webhook'),
+            data='{}',
+            content_type='application/json',
+            HTTP_X_TELEGRAM_BOT_API_SECRET_TOKEN='wrong',
+        )
+        self.assertEqual(response.status_code, 403)
+
+    def test_webhook_start_creates_dialog(self):
+        from unittest.mock import patch
+        from accounts.models import TelegramDialog
+
+        update = {
+            'message': {
+                'chat': {'id': 555001},
+                'from': {'id': 555001, 'username': 'ali_worker'},
+                'text': '/start',
+            }
+        }
+        with patch('accounts.telegram_bot.send_message', return_value={'ok': True}):
+            response = self.client.post(
+                reverse('accounts:telegram_webhook'),
+                data=__import__('json').dumps(update),
+                content_type='application/json',
+                HTTP_X_TELEGRAM_BOT_API_SECRET_TOKEN='secret123',
+            )
+        self.assertEqual(response.status_code, 200)
+        dialog = TelegramDialog.objects.get(chat_id=555001)
+        self.assertEqual(dialog.step, 'full_name')
+
+    def test_approve_creates_user_and_sends_credentials(self):
+        from unittest.mock import patch
+        from accounts.models import RegistrationRequest
+        from accounts.telegram_bot import approve_registration
+
+        req = RegistrationRequest.objects.create(
+            telegram_id=777001,
+            telegram_username='worker1',
+            full_name='Karimov Ali',
+            employee_id='T-100',
+            role='Оператор',
+            phone_number='+998901112233',
+            status='pending',
+        )
+        with patch('accounts.telegram_bot.send_message', return_value={'ok': True}) as mock_send:
+            user = approve_registration(req, actor=self.admin, notify=True)
+        self.assertEqual(user.first_name, 'Ali')
+        self.assertEqual(user.last_name, 'Karimov')
+        self.assertEqual(user.telegram_id, 777001)
+        self.assertEqual(user.role, 'Оператор')
+        self.assertEqual(user.employee_id, 'T-100')
+        self.assertEqual(user.username, 't100')
+        req.refresh_from_db()
+        self.assertEqual(req.status, 'approved')
+        self.assertEqual(req.created_user_id, user.pk)
+        self.assertTrue(mock_send.called)
+        first_call_text = mock_send.call_args_list[0][0][1]
+        self.assertIn(user.username, first_call_text)
+        self.assertIn('Parol:', first_call_text)
+
+    def test_cyrillic_name_uses_telegram_id_username(self):
+        from unittest.mock import patch
+        from accounts.models import RegistrationRequest
+        from accounts.telegram_bot import approve_registration
+
+        req = RegistrationRequest.objects.create(
+            telegram_id=888001,
+            full_name='Каримов Али',
+            role='Оператор',
+            phone_number='+998901112233',
+            status='pending',
+        )
+        with patch('accounts.telegram_bot.send_message', return_value={'ok': True}):
+            user = approve_registration(req, actor=self.admin, notify=False)
+        self.assertEqual(user.username, 'tg888001')
+        self.assertEqual(user.last_name, 'Каримов')
+        self.assertEqual(user.first_name, 'Али')
+
+    def test_stranger_cannot_approve_via_callback(self):
+        from unittest.mock import patch
+        from accounts.models import RegistrationRequest
+        from accounts.telegram_bot import process_update
+
+        req = RegistrationRequest.objects.create(
+            telegram_id=777002,
+            full_name='Test User',
+            role='Оператор',
+            phone_number='+998901112233',
+            status='pending',
+        )
+        update = {
+            'callback_query': {
+                'id': 'cb1',
+                'data': f'approve:{req.pk}',
+                'from': {'id': 111222, 'username': 'hacker'},
+                'message': {'chat': {'id': 111222}},
+            }
+        }
+        with patch('accounts.telegram_bot.send_message', return_value={'ok': True}):
+            with patch('accounts.telegram_bot.answer_callback', return_value={'ok': True}) as mock_ans:
+                process_update(update)
+        req.refresh_from_db()
+        self.assertEqual(req.status, 'pending')
+        self.assertTrue(any('Faqat admin' in str(c) for c in mock_ans.call_args_list))
+
+    def test_admin_can_approve_via_callback(self):
+        from unittest.mock import patch
+        from accounts.models import RegistrationRequest
+        from accounts.telegram_bot import process_update
+
+        req = RegistrationRequest.objects.create(
+            telegram_id=777003,
+            full_name='Worker Two',
+            employee_id='W2',
+            role='Оператор',
+            phone_number='+998901112233',
+            status='pending',
+        )
+        update = {
+            'callback_query': {
+                'id': 'cb2',
+                'data': f'approve:{req.pk}',
+                'from': {'id': 999001, 'username': 'realadmin'},
+                'message': {'chat': {'id': 999001}},
+            }
+        }
+        with patch('accounts.telegram_bot.send_message', return_value={'ok': True}):
+            with patch('accounts.telegram_bot.answer_callback', return_value={'ok': True}):
+                process_update(update)
+        req.refresh_from_db()
+        self.assertEqual(req.status, 'approved')
+        self.assertTrue(User.objects.filter(telegram_id=777003).exists())
+
+    def test_full_wizard_creates_pending_request(self):
+        from unittest.mock import patch
+        from accounts.models import RegistrationRequest, TelegramDialog
+        from accounts.telegram_bot import process_update, SIGNUP_ROLES
+
+        chat_id = 555100
+        role_index = next(i for i, (v, _) in enumerate(SIGNUP_ROLES) if v == 'Оператор')
+
+        def msg(text):
+            return {
+                'message': {
+                    'chat': {'id': chat_id},
+                    'from': {'id': chat_id, 'username': 'op_new'},
+                    'text': text,
+                }
+            }
+
+        with patch('accounts.telegram_bot.send_message', return_value={'ok': True}):
+            with patch('accounts.telegram_bot.answer_callback', return_value={'ok': True}):
+                process_update(msg('/start'))
+                process_update(msg('Karimov Ali'))
+                process_update(msg('EMP99'))
+                process_update({
+                    'callback_query': {
+                        'id': 'r1',
+                        'data': f'role:{role_index}',
+                        'from': {'id': chat_id, 'username': 'op_new'},
+                        'message': {'chat': {'id': chat_id}},
+                    }
+                })
+                process_update(msg('+998901112233'))
+
+        req = RegistrationRequest.objects.get(telegram_id=chat_id, status='pending')
+        self.assertEqual(req.full_name, 'Karimov Ali')
+        self.assertEqual(req.employee_id, 'EMP99')
+        self.assertEqual(req.role, 'Оператор')
+        self.assertEqual(req.phone_number, '+998901112233')
+        self.assertEqual(TelegramDialog.objects.get(chat_id=chat_id).step, 'idle')
+
+
 class CertificateVerifyTests(TestCase):
     def setUp(self):
         self.user = User.objects.create_user(

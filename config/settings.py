@@ -222,6 +222,9 @@ AI_API_KEY = (
 )
 AI_MODEL = os.environ.get('AI_MODEL', '')  # bo‘sh bo‘lsa provider default
 
+# Telegram bot sozlamalari Admin paneldan: Accounts → Telegram sozlamalar
+# (TELEGRAM_* env endi ishlatilmaydi)
+
 _LOG_DIR = BASE_DIR / 'logs'
 _LOG_DIR.mkdir(exist_ok=True)
 

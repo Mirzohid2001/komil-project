@@ -72,7 +72,14 @@ class User(AbstractUser):
     profile_image = models.ImageField(upload_to='profile_images/', null=True, blank=True, verbose_name="Profil rasmi")
     bio = models.TextField(max_length=500, blank=True, verbose_name="Qisqacha ma'lumot")
     phone_number = models.CharField(max_length=20, blank=True, verbose_name="Telefon raqami")
-    
+    telegram_id = models.BigIntegerField(
+        null=True, blank=True, unique=True, db_index=True,
+        verbose_name="Telegram ID",
+    )
+    telegram_username = models.CharField(
+        max_length=64, blank=True, verbose_name="Telegram username",
+    )
+
     experience_points = models.IntegerField(default=0, verbose_name="Tajriba ballari")
     level = models.IntegerField(default=1, verbose_name="Daraja")
 
@@ -301,6 +308,146 @@ class LevelUpEvent(models.Model):
         super().save(*args, **kwargs)
 
 
+class TelegramBotSettings(models.Model):
+    """Singleton — Telegram bot sozlamalari (Admin paneldan)."""
+    is_enabled = models.BooleanField(
+        default=False,
+        verbose_name="Yoqilgan",
+        help_text="Login sahifada Telegram tugmasi va webhook ishlashi uchun yoqing.",
+    )
+    bot_token = models.CharField(
+        max_length=255, blank=True, verbose_name="Bot token",
+        help_text="@BotFather dan /newbot → token.",
+    )
+    bot_username = models.CharField(
+        max_length=64, blank=True, verbose_name="Bot username",
+        help_text="Masalan: IsomerOilBot (@ siz).",
+    )
+    webhook_secret = models.CharField(
+        max_length=128, blank=True, verbose_name="Webhook secret",
+        help_text="Tasodifiy maxfiy so‘z. Bo‘sh qoldirsangiz saqlashda avtomatik yaratiladi.",
+    )
+    admin_chat_ids = models.CharField(
+        max_length=500, blank=True, verbose_name="Admin Telegram ID lar",
+        help_text="Vergul bilan. Masalan: 123456789,987654321. @userinfobot orqali oling.",
+    )
+    updated_at = models.DateTimeField(auto_now=True, verbose_name="Yangilangan")
+
+    class Meta:
+        verbose_name = "Telegram sozlamalar"
+        verbose_name_plural = "Telegram sozlamalar"
+
+    def __str__(self):
+        status = 'yoqilgan' if self.is_enabled and self.bot_token else 'o‘chiq'
+        name = self.bot_username or '—'
+        return f'Telegram bot (@{name}) · {status}'
+
+    def save(self, *args, **kwargs):
+        self.pk = 1
+        if self.bot_username:
+            self.bot_username = self.bot_username.lstrip('@').strip()
+        if self.bot_token:
+            self.bot_token = self.bot_token.strip()
+        if self.admin_chat_ids:
+            self.admin_chat_ids = ','.join(
+                p.strip() for p in self.admin_chat_ids.split(',') if p.strip()
+            )
+        generated_secret = False
+        if self.is_enabled and self.bot_token and not (self.webhook_secret or '').strip():
+            import secrets as _secrets
+            self.webhook_secret = _secrets.token_urlsafe(24)
+            generated_secret = True
+        update_fields = kwargs.get('update_fields')
+        if generated_secret and update_fields is not None:
+            kwargs['update_fields'] = list(set(list(update_fields) + ['webhook_secret']))
+        super().save(*args, **kwargs)
+
+    def ensure_webhook_secret(self) -> str:
+        """Webhook uchun secret borligini kafolatlaydi."""
+        if (self.webhook_secret or '').strip():
+            return self.webhook_secret.strip()
+        import secrets as _secrets
+        self.webhook_secret = _secrets.token_urlsafe(24)
+        self.save(update_fields=['webhook_secret', 'updated_at'])
+        return self.webhook_secret
+
+    def delete(self, *args, **kwargs):
+        # Singleton — o‘chirishga ruxsat bermaymiz
+        return
+
+    @classmethod
+    def load(cls) -> 'TelegramBotSettings':
+        obj, _ = cls.objects.get_or_create(pk=1)
+        return obj
+
+
+class TelegramDialog(models.Model):
+    """Telegram bot suhbat holati (registratsiya wizard)."""
+    STEP_CHOICES = [
+        ('idle', 'Idle'),
+        ('full_name', 'FIO'),
+        ('employee_id', 'Tabel'),
+        ('role', 'Rol'),
+        ('phone', 'Telefon'),
+    ]
+
+    chat_id = models.BigIntegerField(unique=True, db_index=True)
+    telegram_username = models.CharField(max_length=64, blank=True)
+    step = models.CharField(max_length=20, choices=STEP_CHOICES, default='idle')
+    draft = models.JSONField(default=dict, blank=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        verbose_name = "Telegram dialog"
+        verbose_name_plural = "Telegram dialoglar"
+
+    def __str__(self):
+        return f"chat:{self.chat_id} · {self.step}"
+
+
+class RegistrationRequest(models.Model):
+    """Telegram orqali kelgan ro‘yxatdan o‘tish so‘rovi — admin tasdiqlaydi."""
+    STATUS_CHOICES = [
+        ('pending', 'Kutilmoqda'),
+        ('approved', 'Tasdiqlangan'),
+        ('rejected', 'Rad etilgan'),
+    ]
+
+    telegram_id = models.BigIntegerField(db_index=True, verbose_name="Telegram ID")
+    telegram_username = models.CharField(max_length=64, blank=True, verbose_name="Telegram")
+    full_name = models.CharField(max_length=200, verbose_name="F.I.O.")
+    employee_id = models.CharField(max_length=40, blank=True, verbose_name="Tabel raqami")
+    role = models.CharField(max_length=20, choices=User.ROLE_CHOICES, verbose_name="Rol")
+    phone_number = models.CharField(max_length=20, blank=True, verbose_name="Telefon")
+    status = models.CharField(
+        max_length=20, choices=STATUS_CHOICES, default='pending',
+        db_index=True, verbose_name="Holat",
+    )
+    created_user = models.ForeignKey(
+        User, null=True, blank=True, on_delete=models.SET_NULL,
+        related_name='registration_source', verbose_name="Yaratilgan foydalanuvchi",
+    )
+    reviewed_by = models.ForeignKey(
+        User, null=True, blank=True, on_delete=models.SET_NULL,
+        related_name='reviewed_registrations', verbose_name="Ko‘rib chiqqan",
+    )
+    review_note = models.CharField(max_length=255, blank=True, verbose_name="Izoh")
+    created_at = models.DateTimeField(auto_now_add=True, verbose_name="Yaratilgan")
+    reviewed_at = models.DateTimeField(null=True, blank=True, verbose_name="Ko‘rib chiqilgan")
+
+    class Meta:
+        ordering = ['-created_at']
+        verbose_name = "Ro‘yxatdan o‘tish so‘rovi"
+        verbose_name_plural = "Ro‘yxatdan o‘tish so‘rovlari"
+        indexes = [
+            models.Index(fields=['status', '-created_at']),
+            models.Index(fields=['telegram_id', 'status']),
+        ]
+
+    def __str__(self):
+        return f"{self.full_name} · {self.get_status_display()}"
+
+
 class ComplianceAuditLog(models.Model):
     """Tekshiruv uchun compliance hodisalari jurnali."""
     EVENT_CHOICES = [
@@ -314,6 +461,9 @@ class ComplianceAuditLog(models.Model):
         ('cert_renewed', 'Sertifikat yangilandi'),
         ('lesson_completed', 'Dars yakunlandi'),
         ('assignment_approved', 'Vazifa tasdiqlandi'),
+        ('registration_requested', 'Registratsiya so‘rovi'),
+        ('registration_approved', 'Registratsiya tasdiqlandi'),
+        ('registration_rejected', 'Registratsiya rad etildi'),
     ]
 
     actor = models.ForeignKey(

@@ -7,6 +7,7 @@ from .views import (
     learning_progress, user_achievements, user_certificates,
     download_certificate, user_statistics, verify_certificate,
     notifications_list, notification_mark_read, notifications_mark_all_read,
+    telegram_webhook,
 )
 
 app_name = 'accounts'
@@ -15,6 +16,7 @@ urlpatterns = [
     path('signup/', signup, name='signup'),
     path('login/',  MyLoginView.as_view(), name='login'),
     path('logout/', logout_view, name='logout'),
+    path('telegram/webhook/', telegram_webhook, name='telegram_webhook'),
     path('verify-certificate/', verify_certificate, name='verify_certificate'),
     path(
         'verify-certificate/<str:certificate_id>/',

@@ -236,6 +236,34 @@
     color: #6b5424;
     font-size: 0.86rem;
   }
+  .auth-tg-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.55rem;
+    width: 100%;
+    margin-top: 1rem;
+    padding: 0.85rem 1rem;
+    border-radius: 12px;
+    background: #229ED9;
+    color: #fff !important;
+    font-weight: 600;
+    font-size: 0.95rem;
+    text-decoration: none !important;
+    transition: background .2s ease, transform .15s ease;
+  }
+  .auth-tg-btn:hover {
+    background: #1b8bc0;
+    color: #fff !important;
+    transform: translateY(-1px);
+  }
+  .auth-tg-hint {
+    margin: 0.55rem 0 0;
+    text-align: center;
+    font-size: 0.78rem;
+    color: #7a6a4e;
+    line-height: 1.35;
+  }
 </style>
 {% endblock %}
 
@@ -304,8 +332,19 @@
         <a href="{% url 'accounts:password_reset' %}" class="small">{% trans "Forgot password?" %}</a>
       </p>
 
+      {% if telegram_bot_url %}
+      <a class="auth-tg-btn" href="{{ telegram_bot_url }}" target="_blank" rel="noopener">
+        {% trans "Register via Telegram" %}
+      </a>
+      <p class="auth-tg-hint">{% trans "Send a request in the bot — admin approves, then you get login and password." %}</p>
+      {% endif %}
+
       <div class="auth-note">
-        {% trans "No public registration. Contact admin for new employees." %}
+        {% if telegram_bot_url %}
+          {% trans "No open signup. New employees request access via Telegram; admin approves." %}
+        {% else %}
+          {% trans "No public registration. Contact admin for new employees." %}
+        {% endif %}
       </div>
     </div>
   </section>

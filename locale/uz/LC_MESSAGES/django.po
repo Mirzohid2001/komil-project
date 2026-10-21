@@ -487,6 +487,9 @@ msgstr "Hozircha bildirishnoma yo‘q."
 msgid "No open mandatory requirements."
 msgstr "Hozircha ochiq majburiy talab yo‘q."
 
+msgid "No open signup. New employees request access via Telegram; admin approves."
+msgstr "Ochiq ro‘yxatdan o‘tish yo‘q. Yangi xodim Telegram orqali so‘rov yuboradi, admin tasdiqlaydi."
+
 msgid "No other documents"
 msgstr "Boshqa hujjat yo‘q"
 
@@ -631,6 +634,9 @@ msgstr "Tavsiyalar"
 msgid "Recommended"
 msgstr "Tavsiya etilgan"
 
+msgid "Register via Telegram"
+msgstr "Telegram orqali so‘rov yuborish"
+
 msgid "Reject"
 msgstr "Rad etish"
 
@@ -687,6 +693,9 @@ msgstr "Tanlangan rollar"
 
 msgid "Send"
 msgstr "Yuborish"
+
+msgid "Send a request in the bot — admin approves, then you get login and password."
+msgstr "Botda so‘rov yuboring — admin tasdiqlagach login va parol keladi."
 
 msgid "Show"
 msgstr "Ko‘rsatish"

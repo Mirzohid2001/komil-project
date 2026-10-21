@@ -1,13 +1,15 @@
-from django.contrib import admin
+from django.contrib import admin, messages
 from django.utils.html import format_html
 from django.db.models import Count
 from django.utils.safestring import mark_safe
 from django.contrib.auth.admin import UserAdmin as BaseUserAdmin
+from django.shortcuts import redirect
+from django.urls import path, reverse
 
 from .models import (
     User, FavoritePost, UserActivity, Achievement, UserAchievement,
     LearningProgress, Certificate, LevelUpEvent, Department, Notification,
-    ComplianceAuditLog,
+    ComplianceAuditLog, RegistrationRequest, TelegramDialog, TelegramBotSettings,
 )
 
 class FavoritePostInline(admin.TabularInline):
@@ -36,6 +38,7 @@ class CustomUserAdmin(BaseUserAdmin):
             'fields': (
                 'role', 'employee_id', 'department', 'shift',
                 'profile_image', 'bio', 'phone_number',
+                'telegram_id', 'telegram_username',
                 'experience_points', 'level',
             ),
             'description': 'Xodimlarni faqat admin yaratadi. Rol zavod bo‘limiga mos tanlanadi.',
@@ -227,6 +230,227 @@ class NotificationAdmin(admin.ModelAdmin):
     list_filter = ('notification_type', 'is_read', 'created_at')
     search_fields = ('user__username', 'title', 'message')
     date_hierarchy = 'created_at'
+
+
+@admin.register(TelegramBotSettings)
+class TelegramBotSettingsAdmin(admin.ModelAdmin):
+    fieldsets = (
+        (None, {
+            'fields': ('is_enabled', 'bot_token', 'bot_username'),
+            'description': (
+                '1) @BotFather da bot yarating → tokenni yozing. '
+                '2) Admin Telegram ID ni @userinfobot dan oling. '
+                '3) Saqlang → «Webhook o‘rnatish» bosing. '
+                'Webhook uchun serverda DJANGO_BASE_URL=https://edu-isomer.uz bo‘lishi kerak.'
+            ),
+        }),
+        ('Xavfsizlik va adminlar', {
+            'fields': ('webhook_secret', 'admin_chat_ids'),
+        }),
+        ('Holat', {
+            'fields': ('updated_at', 'status_preview'),
+        }),
+    )
+    readonly_fields = ('updated_at', 'status_preview')
+
+    def has_add_permission(self, request):
+        return not TelegramBotSettings.objects.exists()
+
+    def has_delete_permission(self, request, obj=None):
+        return False
+
+    def changelist_view(self, request, extra_context=None):
+        obj = TelegramBotSettings.load()
+        return redirect(
+            reverse('admin:accounts_telegrambotsettings_change', args=[obj.pk])
+        )
+
+    def changeform_view(self, request, object_id=None, form_url='', extra_context=None):
+        self._preview_request = request
+        return super().changeform_view(request, object_id, form_url, extra_context)
+
+    def status_preview(self, obj):
+        from django.middleware.csrf import get_token
+        from accounts.telegram_bot import bot_configured, bot_deep_link, bot_username
+
+        ok = bot_configured()
+        uname = bot_username()
+        link = bot_deep_link()
+        color = '#15803d' if ok and uname else '#b45309'
+        if ok and uname:
+            text = 'Ishlashga tayyor'
+        elif ok and not uname:
+            text = 'Token bor, lekin username yo‘q — «Botni tekshirish» yoki webhook bosing'
+        else:
+            text = 'Yoqilmagan yoki token yo‘q'
+        html = f'<p style="color:{color};font-weight:600;">{text}</p>'
+        if not (obj.admin_chat_ids or '').strip():
+            html += (
+                '<p style="color:#b45309;">Admin Telegram ID bo‘sh — '
+                'Telegramdan tasdiqlash ishlamaydi (faqat shu Admin panel).</p>'
+            )
+        if link:
+            html += f'<p>Login tugmasi: <a href="{link}" target="_blank" rel="noopener">{link}</a></p>'
+
+        req = getattr(self, '_preview_request', None)
+        csrf = get_token(req) if req is not None else ''
+        csrf_input = f'<input type="hidden" name="csrfmiddlewaretoken" value="{csrf}">'
+
+        def action_form(url_name, label):
+            return (
+                f'<form method="post" action="{reverse(url_name)}" '
+                f'style="display:inline;margin-right:0.4rem;">'
+                f'{csrf_input}'
+                f'<button type="submit" class="button">{label}</button>'
+                f'</form>'
+            )
+
+        html += (
+            '<p style="margin-top:1rem;">'
+            + action_form('admin:telegram_set_webhook', 'Webhook o‘rnatish')
+            + action_form('admin:telegram_test_bot', 'Botni tekshirish (getMe)')
+            + action_form('admin:telegram_delete_webhook', 'Webhook o‘chirish')
+            + '</p>'
+        )
+        return mark_safe(html)
+    status_preview.short_description = 'Holat / amallar'
+
+    def get_urls(self):
+        urls = super().get_urls()
+        custom = [
+            path(
+                'actions/set-webhook/',
+                self.admin_site.admin_view(self.set_webhook_view),
+                name='telegram_set_webhook',
+            ),
+            path(
+                'actions/delete-webhook/',
+                self.admin_site.admin_view(self.delete_webhook_view),
+                name='telegram_delete_webhook',
+            ),
+            path(
+                'actions/test-bot/',
+                self.admin_site.admin_view(self.test_bot_view),
+                name='telegram_test_bot',
+            ),
+        ]
+        return custom + urls
+
+    def _settings_redirect(self):
+        obj = TelegramBotSettings.load()
+        return redirect(
+            reverse('admin:accounts_telegrambotsettings_change', args=[obj.pk])
+        )
+
+    def _require_change(self, request):
+        if request.method != 'POST':
+            messages.error(request, 'Faqat POST orqali.')
+            return False
+        if not request.user.has_perm('accounts.change_telegrambotsettings'):
+            messages.error(request, 'Ruxsat yo‘q.')
+            return False
+        return True
+
+    def set_webhook_view(self, request):
+        from accounts.telegram_bot import bot_configured, fetch_bot_username, set_webhook
+
+        if not self._require_change(request):
+            return self._settings_redirect()
+        if not bot_configured():
+            messages.error(request, 'Avval «Yoqilgan» ni belgilang va bot tokenini saqlang.')
+            return self._settings_redirect()
+        data = set_webhook()
+        if data.get('ok'):
+            uname = fetch_bot_username()
+            messages.success(
+                request,
+                f'Webhook o‘rnatildi. Bot: @{uname or "—"}',
+            )
+        else:
+            messages.error(request, f'Webhook xato: {data}')
+        return self._settings_redirect()
+
+    def delete_webhook_view(self, request):
+        from accounts.telegram_bot import delete_webhook
+
+        if not self._require_change(request):
+            return self._settings_redirect()
+        data = delete_webhook()
+        if data.get('ok'):
+            messages.success(request, 'Webhook o‘chirildi.')
+        else:
+            messages.error(request, f'Xato: {data}')
+        return self._settings_redirect()
+
+    def test_bot_view(self, request):
+        from accounts.telegram_bot import _api, fetch_bot_username
+
+        if not self._require_change(request):
+            return self._settings_redirect()
+        data = _api('getMe')
+        if data.get('ok'):
+            uname = fetch_bot_username()
+            messages.success(request, f'Bot ishlayapti: @{uname}')
+        else:
+            messages.error(request, f'getMe xato: {data}')
+        return self._settings_redirect()
+
+
+@admin.register(RegistrationRequest)
+class RegistrationRequestAdmin(admin.ModelAdmin):
+    list_display = (
+        'id', 'full_name', 'role', 'employee_id', 'phone_number',
+        'telegram_username', 'status', 'created_user', 'created_at', 'reviewed_at',
+    )
+    list_filter = ('status', 'role', 'created_at')
+    search_fields = ('full_name', 'employee_id', 'phone_number', 'telegram_username', 'telegram_id')
+    readonly_fields = (
+        'telegram_id', 'telegram_username', 'full_name', 'employee_id', 'role',
+        'phone_number', 'status', 'created_user', 'reviewed_by', 'review_note',
+        'created_at', 'reviewed_at',
+    )
+    actions = ('approve_selected', 'reject_selected')
+    date_hierarchy = 'created_at'
+
+    @admin.action(description='Tanlanganlarni tasdiqlash (login Telegramga)')
+    def approve_selected(self, request, queryset):
+        from accounts.telegram_bot import approve_registration
+
+        ok = 0
+        for req in queryset.filter(status='pending'):
+            try:
+                approve_registration(req, actor=request.user, notify=True)
+                ok += 1
+            except Exception as exc:
+                self.message_user(request, f'#{req.pk}: {exc}', level='error')
+        self.message_user(request, f'{ok} ta so‘rov tasdiqlandi.')
+
+    @admin.action(description='Tanlanganlarni rad etish')
+    def reject_selected(self, request, queryset):
+        from accounts.telegram_bot import reject_registration
+
+        ok = 0
+        for req in queryset.filter(status='pending'):
+            try:
+                reject_registration(req, actor=request.user, notify=True)
+                ok += 1
+            except Exception as exc:
+                self.message_user(request, f'#{req.pk}: {exc}', level='error')
+        self.message_user(request, f'{ok} ta so‘rov rad etildi.')
+
+    def has_add_permission(self, request):
+        return False
+
+
+@admin.register(TelegramDialog)
+class TelegramDialogAdmin(admin.ModelAdmin):
+    list_display = ('chat_id', 'telegram_username', 'step', 'updated_at')
+    list_filter = ('step',)
+    search_fields = ('chat_id', 'telegram_username')
+    readonly_fields = ('chat_id', 'telegram_username', 'step', 'draft', 'updated_at')
+
+    def has_add_permission(self, request):
+        return False
 
 
 @admin.register(ComplianceAuditLog)

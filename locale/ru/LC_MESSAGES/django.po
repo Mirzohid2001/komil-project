@@ -487,6 +487,9 @@ msgstr "Уведомлений пока нет."
 msgid "No open mandatory requirements."
 msgstr "Открытых обязательных требований нет."
 
+msgid "No open signup. New employees request access via Telegram; admin approves."
+msgstr "Открытой регистрации нет. Новый сотрудник подаёт заявку в Telegram, админ одобряет."
+
 msgid "No other documents"
 msgstr "Других документов нет"
 
@@ -631,6 +634,9 @@ msgstr "Рекомендации"
 msgid "Recommended"
 msgstr "Рекомендуемые"
 
+msgid "Register via Telegram"
+msgstr "Заявка через Telegram"
+
 msgid "Reject"
 msgstr "Отклонить"
 
@@ -687,6 +693,9 @@ msgstr "Выбранные роли"
 
 msgid "Send"
 msgstr "Отправить"
+
+msgid "Send a request in the bot — admin approves, then you get login and password."
+msgstr "Отправьте заявку в боте — после одобрения админа придут логин и пароль."
 
 msgid "Show"
 msgstr "Показать"

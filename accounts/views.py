@@ -6,6 +6,8 @@ from django.contrib import messages
 from django.contrib.auth.forms import PasswordChangeForm
 from django.core.paginator import Paginator
 from django.http import JsonResponse, HttpResponse, FileResponse, Http404
+from django.views.decorators.csrf import csrf_exempt
+from django.views.decorators.http import require_POST
 from .models import User, FavoritePost, UserActivity, Achievement, UserAchievement, LearningProgress, Certificate, LevelUpEvent
 from blog.models import Post, Category, Test, TestResult
 from django.db.models import Count, Q, Sum, Avg
@@ -972,3 +974,35 @@ def notifications_mark_all_read(request):
         Notification.objects.filter(user=request.user, is_read=False).update(is_read=True)
         messages.success(request, "Barcha bildirishnomalar o‘qildi.")
     return redirect('accounts:notifications')
+
+
+@csrf_exempt
+@require_POST
+def telegram_webhook(request):
+    """Telegram Bot webhook — secret Admin sozlamalaridan."""
+    from accounts.telegram_bot import bot_configured, process_update, webhook_secret
+
+    if not bot_configured():
+        return JsonResponse({'ok': False, 'error': 'bot_not_configured'}, status=503)
+
+    expected = webhook_secret()
+    if not expected and not settings.DEBUG:
+        return JsonResponse({'ok': False, 'error': 'webhook_secret_required'}, status=503)
+
+    if expected:
+        got = request.headers.get('X-Telegram-Bot-Api-Secret-Token', '')
+        if got != expected:
+            return JsonResponse({'ok': False}, status=403)
+
+    try:
+        payload = json.loads(request.body.decode('utf-8') or '{}')
+    except (json.JSONDecodeError, UnicodeDecodeError):
+        return JsonResponse({'ok': False, 'error': 'bad_json'}, status=400)
+
+    try:
+        process_update(payload)
+    except Exception:
+        import logging
+        logging.getLogger(__name__).exception('telegram webhook handler failed')
+
+    return JsonResponse({'ok': True})
