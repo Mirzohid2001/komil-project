@@ -384,6 +384,14 @@ UI = {
 
     # Profile / notifications
     "My profile": {"uz": "Mening profilim", "ru": "Мой профиль"},
+    "Login attendance": {"uz": "Kirish kalendari", "ru": "Календарь входов"},
+    "Green = logged in that day. Red = did not log in.": {
+        "uz": "Yashil — shu kuni kirgan. Qizil — kirmagan.",
+        "ru": "Зелёный — вошёл в этот день. Красный — не вошёл.",
+    },
+    "Present": {"uz": "Kirgan", "ru": "Был"},
+    "Absent": {"uz": "Kirmagan", "ru": "Не был"},
+    "Tracked days": {"uz": "Hisoblangan kunlar", "ru": "Учтённые дни"},
     "Personal info, activity and a short test overview.": {
         "uz": "Shaxsiy ma’lumotlar, faollik va testlar bo‘yicha qisqa ko‘rinish.",
         "ru": "Личные данные, активность и краткий обзор тестов.",

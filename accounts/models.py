@@ -148,6 +148,30 @@ class UserActivity(models.Model):
         return f"{self.user.username} - {self.get_activity_type_display()} - {self.timestamp}"
 
 
+class LoginDay(models.Model):
+    """Foydalanuvchi tizimga kirgan kunlar (attendance)."""
+    user = models.ForeignKey(
+        User, on_delete=models.CASCADE, related_name='login_days', verbose_name="Foydalanuvchi",
+    )
+    date = models.DateField(db_index=True, verbose_name="Sana")
+    first_login_at = models.DateTimeField(verbose_name="Birinchi kirish")
+    login_count = models.PositiveIntegerField(default=1, verbose_name="Kirishlar soni")
+
+    class Meta:
+        ordering = ['-date']
+        verbose_name = "Kirish kuni"
+        verbose_name_plural = "Kirish kunlari"
+        constraints = [
+            models.UniqueConstraint(fields=['user', 'date'], name='uniq_user_login_day'),
+        ]
+        indexes = [
+            models.Index(fields=['date', 'user']),
+        ]
+
+    def __str__(self):
+        return f"{self.user.username} · {self.date}"
+
+
 class Achievement(models.Model):
     ACHIEVEMENT_TYPES = [
         ('videos_watched', 'Videolarni tomosha qilish'),

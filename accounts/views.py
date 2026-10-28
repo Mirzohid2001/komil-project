@@ -87,14 +87,14 @@ class MyLoginView(LoginView):
     
     def form_valid(self, form):
         response = super().form_valid(form)
-        
-        # Записываем активность пользователя
+
         UserActivity.objects.create(
             user=self.request.user,
             activity_type='login',
-            ip_address=self.request.META.get('REMOTE_ADDR')
+            ip_address=self.request.META.get('REMOTE_ADDR'),
         )
-        
+        # LoginDay — user_logged_in signal orqali (accounts.signals)
+
         return response
 
 
@@ -114,24 +114,32 @@ def logout_view(request):
 @login_required
 def profile_view(request):
     """Просмотр профиля пользователя"""
+    from accounts.attendance import build_month_calendar
+
     user = request.user
-    
-    # Получаем избранные посты
+
     favorites = FavoritePost.objects.filter(user=user)
-    
-    # Получаем историю активности
-    activities = UserActivity.objects.filter(user=user)[:10]  # последние 10 активностей
-    
-    # Рассчитываем статистику по тестам
+    activities = UserActivity.objects.filter(user=user)[:10]
+
     test_results = user.test_results.all()
     passed_tests_count = test_results.filter(is_passed=True).count()
     failed_tests_count = test_results.filter(is_passed=False).count()
-    
-    # Рассчитываем средний балл по тестам
+
     avg_score = 0
     if test_results.exists():
         avg_score = round(sum(result.percentage for result in test_results) / test_results.count(), 1)
-    
+
+    today = timezone.localdate()
+    try:
+        year = int(request.GET.get('att_y') or today.year)
+        month = int(request.GET.get('att_m') or today.month)
+        if not (1 <= month <= 12):
+            month = today.month
+    except (TypeError, ValueError):
+        year, month = today.year, today.month
+
+    attendance = build_month_calendar(user, year, month)
+
     return render(request, 'accounts/profile.html', {
         'user': user,
         'favorites': favorites,
@@ -139,6 +147,7 @@ def profile_view(request):
         'avg_score': avg_score,
         'passed_tests_count': passed_tests_count,
         'failed_tests_count': failed_tests_count,
+        'attendance': attendance,
     })
 
 

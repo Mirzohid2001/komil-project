@@ -16,6 +16,9 @@ msgstr "O‘zim haqimda"
 msgid "About the course"
 msgstr "Kurs haqida"
 
+msgid "Absent"
+msgstr "Kirmagan"
+
 msgid "Access"
 msgstr "Ruxsat"
 
@@ -301,6 +304,9 @@ msgstr "To‘liq ism"
 msgid "Go to tests"
 msgstr "Testlarga o‘tish"
 
+msgid "Green = logged in that day. Red = did not log in."
+msgstr "Yashil — shu kuni kirgan. Qizil — kirmagan."
+
 msgid "Guidelines"
 msgstr "Yo‘riqnomalar"
 
@@ -387,6 +393,9 @@ msgstr "Yopiq"
 
 msgid "Login"
 msgstr "Kirish"
+
+msgid "Login attendance"
+msgstr "Kirish kalendari"
 
 msgid "Login required"
 msgstr "Kirish kerak"
@@ -586,6 +595,9 @@ msgstr "Premium ichki o‘quv va test platformasi."
 msgid "Premium · Internal portal"
 msgstr "Premium · Ichki portal"
 
+msgid "Present"
+msgstr "Kirgan"
+
 msgid "Preview mode cannot complete the lesson."
 msgstr "Preview rejimida dars yakunlanmaydi."
 
@@ -771,6 +783,9 @@ msgstr "Jami"
 
 msgid "Total tests"
 msgstr "Jami testlar"
+
+msgid "Tracked days"
+msgstr "Hisoblangan kunlar"
 
 msgid "Training programs for plant employees."
 msgstr "Zavod xodimlari uchun o‘quv dasturlari."

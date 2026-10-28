@@ -98,6 +98,48 @@
   <div class="col-12">
     <section class="zl-card overflow-hidden">
       <div class="zl-page-head p-3 pb-0 mb-0 border-bottom">
+        <h3 class="zl-section-title h5 mb-0"><i class="fas fa-calendar-check me-2 text-gradient"></i> {% trans "Login attendance" %}</h3>
+        <div class="d-flex flex-wrap gap-2 align-items-center">
+          <a class="btn btn-sm btn-outline-primary" href="?att_y={{ attendance.prev_year }}&amp;att_m={{ attendance.prev_month }}">←</a>
+          <span class="fw-semibold small">{{ attendance.month_title|date:"F Y" }}</span>
+          {% if attendance.can_go_next %}
+          <a class="btn btn-sm btn-outline-primary" href="?att_y={{ attendance.next_year }}&amp;att_m={{ attendance.next_month }}">→</a>
+          {% else %}
+          <span class="btn btn-sm btn-outline-secondary disabled">→</span>
+          {% endif %}
+        </div>
+      </div>
+      <div class="p-3 p-md-4">
+        <p class="zl-meta mb-3 mb-md-4">{% trans "Green = logged in that day. Red = did not log in." %}</p>
+        <div class="att-cal" role="grid" aria-label="{% trans "Login attendance" %}">
+          <div class="att-cal-head">
+            {% for label in attendance.weekday_labels %}
+              <div class="att-cal-dow">{{ label }}</div>
+            {% endfor %}
+          </div>
+          {% for week in attendance.weeks %}
+            <div class="att-cal-week">
+              {% for cell in week %}
+                <div class="att-cal-day att-{{ cell.status }}{% if cell.is_today %} att-today{% endif %}"
+                     title="{{ cell.date|date:'d.m.Y' }}">
+                  {% if cell.in_month %}{{ cell.day }}{% endif %}
+                </div>
+              {% endfor %}
+            </div>
+          {% endfor %}
+        </div>
+        <div class="d-flex flex-wrap gap-3 mt-3 small">
+          <span><span class="att-dot present"></span> {% trans "Present" %}: <strong class="text-success">{{ attendance.present_count }}</strong></span>
+          <span><span class="att-dot absent"></span> {% trans "Absent" %}: <strong class="text-danger">{{ attendance.absent_count }}</strong></span>
+          <span class="zl-meta">{% trans "Tracked days" %}: {{ attendance.tracked_days }}</span>
+        </div>
+      </div>
+    </section>
+  </div>
+
+  <div class="col-12">
+    <section class="zl-card overflow-hidden">
+      <div class="zl-page-head p-3 pb-0 mb-0 border-bottom">
         <h3 class="zl-section-title h5 mb-0"><i class="fas fa-tasks me-2 text-gradient"></i> {% trans "Test statistics" %}</h3>
         <div class="d-flex flex-wrap gap-2">
           <a href="{% url 'blog:test_list' %}" class="btn btn-sm btn-outline-primary">

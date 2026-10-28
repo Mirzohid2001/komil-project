@@ -20,6 +20,7 @@ JAZZMIN_SETTINGS = {
         {'name': 'Ommaviy topshiriq', 'url': 'admin:courses_courseassignment_bulk_assign', 'permissions': ['courses.add_courseassignment']},
         {'name': 'Audit jurnal', 'url': 'admin:accounts_complianceauditlog_changelist', 'permissions': ['accounts.view_complianceauditlog']},
         {'name': 'Telegram', 'url': 'admin:accounts_telegrambotsettings_changelist', 'permissions': ['accounts.change_telegrambotsettings']},
+        {'name': 'Kirishlar', 'url': 'admin:login_attendance', 'permissions': ['accounts.view_user']},
         {'model': 'accounts.User'},
     ],
     'usermenu_links': [
@@ -98,6 +99,7 @@ JAZZMIN_SETTINGS = {
         'accounts.User': 'fas fa-user',
         'accounts.TelegramBotSettings': 'fab fa-telegram-plane',
         'accounts.RegistrationRequest': 'fas fa-user-plus',
+        'accounts.LoginDay': 'fas fa-calendar-check',
         'accounts.FavoritePost': 'fas fa-heart',
         'accounts.UserActivity': 'fas fa-chart-line',
         'accounts.Achievement': 'fas fa-trophy',

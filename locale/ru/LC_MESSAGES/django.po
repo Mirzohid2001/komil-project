@@ -16,6 +16,9 @@ msgstr "О себе"
 msgid "About the course"
 msgstr "О курсе"
 
+msgid "Absent"
+msgstr "Не был"
+
 msgid "Access"
 msgstr "Доступ"
 
@@ -301,6 +304,9 @@ msgstr "ФИО"
 msgid "Go to tests"
 msgstr "К тестам"
 
+msgid "Green = logged in that day. Red = did not log in."
+msgstr "Зелёный — вошёл в этот день. Красный — не вошёл."
+
 msgid "Guidelines"
 msgstr "Инструкции"
 
@@ -387,6 +393,9 @@ msgstr "Закрыто"
 
 msgid "Login"
 msgstr "Войти"
+
+msgid "Login attendance"
+msgstr "Календарь входов"
 
 msgid "Login required"
 msgstr "Требуется вход"
@@ -586,6 +595,9 @@ msgstr "Премиум-платформа внутреннего обучени�
 msgid "Premium · Internal portal"
 msgstr "Premium · Внутренний портал"
 
+msgid "Present"
+msgstr "Был"
+
 msgid "Preview mode cannot complete the lesson."
 msgstr "В режиме просмотра нельзя завершить урок."
 
@@ -771,6 +783,9 @@ msgstr "Всего"
 
 msgid "Total tests"
 msgstr "Всего тестов"
+
+msgid "Tracked days"
+msgstr "Учтённые дни"
 
 msgid "Training programs for plant employees."
 msgstr "Обучающие программы для сотрудников завода."

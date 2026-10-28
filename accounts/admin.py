@@ -10,6 +10,7 @@ from .models import (
     User, FavoritePost, UserActivity, Achievement, UserAchievement,
     LearningProgress, Certificate, LevelUpEvent, Department, Notification,
     ComplianceAuditLog, RegistrationRequest, TelegramDialog, TelegramBotSettings,
+    LoginDay,
 )
 
 class FavoritePostInline(admin.TabularInline):
@@ -43,7 +44,12 @@ class CustomUserAdmin(BaseUserAdmin):
             ),
             'description': 'Xodimlarni faqat admin yaratadi. Rol zavod bo‘limiga mos tanlanadi.',
         }),
+        ('Kunlik kirish', {
+            'fields': ('attendance_calendar',),
+            'description': 'Yashil — kirgan, qizil — kirmagan (ro‘yxatdan o‘tgan kundan bugungacha).',
+        }),
     )
+    readonly_fields = BaseUserAdmin.readonly_fields + ('attendance_calendar',)
     add_fieldsets = (
         (None, {
             'classes': ('wide',),
@@ -57,12 +63,44 @@ class CustomUserAdmin(BaseUserAdmin):
     )
     list_display = (
         'username', 'employee_id', 'get_full_name', 'email', 'role',
-        'department', 'shift', 'level', 'is_staff', 'is_active',
+        'department', 'shift', 'level', 'today_login_badge', 'is_staff', 'is_active',
     )
     list_filter = BaseUserAdmin.list_filter + ('role', 'department', 'shift', 'level')
     search_fields = BaseUserAdmin.search_fields + ('bio', 'phone_number', 'employee_id')
     list_editable = ('role', 'is_active')
     ordering = ('username',)
+
+    def attendance_calendar(self, obj):
+        if not obj or not obj.pk:
+            return '—'
+        from accounts.attendance import render_attendance_html
+        return render_attendance_html(obj)
+    attendance_calendar.short_description = 'Kirish kalendari'
+
+    def get_queryset(self, request):
+        from django.db.models import Exists, OuterRef
+        from django.utils import timezone
+
+        qs = super().get_queryset(request)
+        today = timezone.localdate()
+        return qs.annotate(
+            _logged_today=Exists(
+                LoginDay.objects.filter(user_id=OuterRef('pk'), date=today)
+            )
+        )
+
+    @admin.display(description='Bugun', boolean=False)
+    def today_login_badge(self, obj):
+        ok = bool(getattr(obj, '_logged_today', False))
+        if ok:
+            return format_html(
+                '<span style="background:#16a34a;color:#fff;padding:2px 8px;'
+                'border-radius:999px;font-size:11px;font-weight:700;">Kirgan</span>'
+            )
+        return format_html(
+            '<span style="background:#dc2626;color:#fff;padding:2px 8px;'
+            'border-radius:999px;font-size:11px;font-weight:700;">Yo‘q</span>'
+        )
     
     def profile_preview(self, obj):
         if obj.profile_image:
@@ -453,6 +491,22 @@ class TelegramDialogAdmin(admin.ModelAdmin):
         return False
 
 
+@admin.register(LoginDay)
+class LoginDayAdmin(admin.ModelAdmin):
+    list_display = ('date', 'user', 'login_count', 'first_login_at')
+    list_filter = ('date',)
+    search_fields = ('user__username', 'user__first_name', 'user__last_name', 'user__employee_id')
+    date_hierarchy = 'date'
+    readonly_fields = ('user', 'date', 'first_login_at', 'login_count')
+    ordering = ('-date', 'user__username')
+
+    def has_add_permission(self, request):
+        return False
+
+    def has_change_permission(self, request, obj=None):
+        return False
+
+
 @admin.register(ComplianceAuditLog)
 class ComplianceAuditLogAdmin(admin.ModelAdmin):
     list_display = (
@@ -489,3 +543,22 @@ admin.site.register(UserAchievement, UserAchievementAdmin)
 admin.site.register(LearningProgress, LearningProgressAdmin)
 admin.site.register(Certificate, CertificateAdmin)
 admin.site.register(LevelUpEvent, LevelUpEventAdmin)
+
+# Admin URL: /admin/login-attendance/
+from accounts.admin_attendance import login_attendance_view
+
+_prev_admin_get_urls = admin.site.get_urls
+
+
+def _admin_urls_with_attendance():
+    custom = [
+        path(
+            'login-attendance/',
+            admin.site.admin_view(login_attendance_view),
+            name='login_attendance',
+        ),
+    ]
+    return custom + _prev_admin_get_urls()
+
+
+admin.site.get_urls = _admin_urls_with_attendance

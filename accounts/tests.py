@@ -471,3 +471,98 @@ class FavoritesListTests(TestCase):
         response = self.client.get(reverse('accounts:favorites'))
         self.assertEqual(response.status_code, 200)
         self.assertEqual(len(response.context['favorites']), 1)
+
+
+class LoginAttendanceTests(TestCase):
+    def setUp(self):
+        self.user = User.objects.create_user(
+            username='attuser', password='pass12345', role='офисный-персонал',
+        )
+        self.admin = User.objects.create_superuser(
+            username='attadmin', email='a@ex.com', password='pass12345', role='admin',
+        )
+
+    def test_login_records_login_day(self):
+        from accounts.models import LoginDay
+        from django.utils import timezone
+
+        self.client.login(username='attuser', password='pass12345')
+        # LoginView form_valid only on POST to login URL
+        self.client.logout()
+        response = self.client.post(reverse('accounts:login'), {
+            'username': 'attuser',
+            'password': 'pass12345',
+        })
+        self.assertIn(response.status_code, (302, 303))
+        self.assertTrue(
+            LoginDay.objects.filter(user=self.user, date=timezone.localdate()).exists()
+        )
+
+    def test_calendar_marks_present_and_absent(self):
+        from datetime import timedelta
+        from accounts.attendance import build_month_calendar, record_login_day
+        from django.utils import timezone
+
+        today = timezone.localdate()
+        record_login_day(self.user)
+        cal = build_month_calendar(self.user, today.year, today.month)
+        statuses = {
+            cell['date']: cell['status']
+            for week in cal['weeks']
+            for cell in week
+            if cell['in_month']
+        }
+        self.assertEqual(statuses[today], 'present')
+        if today.day > 1:
+            yesterday = today - timedelta(days=1)
+            if yesterday.month == today.month and yesterday >= timezone.localtime(self.user.date_joined).date():
+                self.assertEqual(statuses[yesterday], 'absent')
+
+    def test_profile_shows_attendance(self):
+        self.client.login(username='attuser', password='pass12345')
+        response = self.client.get(reverse('accounts:profile'))
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, 'att-cal')
+        self.assertIn('attendance', response.context)
+
+    def test_admin_attendance_page(self):
+        self.client.login(username='attadmin', password='pass12345')
+        response = self.client.get(reverse('admin:login_attendance'))
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, 'Kunlik kirish')
+
+    def test_admin_login_also_records_day(self):
+        """Admin panel login ham LoginDay yozadi (signal)."""
+        from accounts.models import LoginDay
+        from django.utils import timezone
+
+        LoginDay.objects.filter(user=self.admin).delete()
+        self.client.post('/admin/login/', {
+            'username': 'attadmin',
+            'password': 'pass12345',
+            'next': '/admin/',
+        })
+        self.assertTrue(
+            LoginDay.objects.filter(user=self.admin, date=timezone.localdate()).exists()
+        )
+
+    def test_month_summary_respects_join_date(self):
+        from datetime import timedelta
+        from accounts.attendance import month_summary_for_users, record_login_day
+        from accounts.models import LoginDay
+        from django.utils import timezone
+
+        today = timezone.localdate()
+        self.user.date_joined = timezone.now() - timedelta(days=2)
+        self.user.save(update_fields=['date_joined'])
+        LoginDay.objects.filter(user=self.user).delete()
+        # Sun'iy: join dan oldingi kun (hisobga olinmasligi kerak)
+        old = today - timedelta(days=10)
+        LoginDay.objects.create(
+            user=self.user, date=old, first_login_at=timezone.now(), login_count=1,
+        )
+        record_login_day(self.user)
+        data = month_summary_for_users(today.year, today.month)
+        row = next(r for r in data['rows'] if r['user'].pk == self.user.pk)
+        self.assertEqual(row['present'], 1)
+        self.assertEqual(row['tracked'], 3)  # join..today ≈ 3 kun

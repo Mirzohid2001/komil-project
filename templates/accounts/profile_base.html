@@ -127,6 +127,47 @@
   .empty-state { text-align: center; padding: 2.5rem 1.5rem; color: var(--zl-muted); }
   .empty-state i { font-size: 2.5rem; margin-bottom: 1rem; color: var(--zl-brass-dark); opacity: 0.55; }
 
+  .att-cal { max-width: 420px; }
+  .att-cal-head, .att-cal-week {
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+    gap: 0.35rem;
+    margin-bottom: 0.35rem;
+  }
+  .att-cal-dow {
+    text-align: center;
+    font-size: 0.72rem;
+    font-weight: 700;
+    color: var(--zl-muted);
+    text-transform: uppercase;
+  }
+  .att-cal-day {
+    aspect-ratio: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 8px;
+    font-size: 0.85rem;
+    font-weight: 700;
+    min-height: 36px;
+  }
+  .att-present { background: #16a34a; color: #fff; }
+  .att-absent { background: #dc2626; color: #fff; }
+  .att-future { background: #f3f4f6; color: #9ca3af; }
+  .att-before { background: #f9fafb; color: #d1d5db; }
+  .att-empty { background: transparent; }
+  .att-today { outline: 2px solid var(--zl-forest-deep); outline-offset: 1px; }
+  .att-dot {
+    display: inline-block;
+    width: 0.65rem;
+    height: 0.65rem;
+    border-radius: 50%;
+    margin-right: 0.25rem;
+    vertical-align: middle;
+  }
+  .att-dot.present { background: #16a34a; }
+  .att-dot.absent { background: #dc2626; }
+
   @media (max-width: 991.98px) {
     .profile-sidebar { margin-bottom: 0.25rem; }
     .profile-info { padding: 1.25rem 1rem 1rem; }
