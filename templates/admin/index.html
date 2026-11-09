@@ -29,12 +29,12 @@
     <a class="zlms-quick-card" href="{% url 'admin:blog_test_changelist' %}">
       <i class="fas fa-clipboard-check"></i>
       <strong>Testlar</strong>
-      <span>Qo‘lda yoki AI bilan yaratish</span>
+      <span>Qo‘lda yoki avtomatik yaratish</span>
     </a>
     {% if user.is_superuser or user.role == 'admin' %}
     <a class="zlms-quick-card" href="{% url 'admin:ai_generate_tests' %}">
-      <i class="fas fa-robot"></i>
-      <strong>AI test yaratish</strong>
+      <i class="fas fa-clipboard-list"></i>
+      <strong>Testlar yaratish</strong>
       <span>Rol + son → avtomatik testlar</span>
     </a>
     <a class="zlms-quick-card" href="{% url 'admin:auto_update_dashboard' %}">

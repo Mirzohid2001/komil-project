@@ -463,11 +463,15 @@ class AITestGenerateAdminTests(TestCase):
             },
         )
         self.assertEqual(response.status_code, 302)
-        tests = Test.objects.filter(role='Оператор', title__startswith='AI test')
+        tests = Test.objects.filter(role='Оператор', title__startswith='Kasbiy test')
         self.assertEqual(tests.count(), 3)
         for t in tests:
             self.assertEqual(t.questions.count(), 10)
             self.assertEqual(t.questions.first().options.count(), 4)
+            self.assertNotIn('AI', t.title)
+            self.assertNotIn('AI', t.description)
+            self.assertNotIn('Groq', t.description)
+            self.assertNotIn('Gemini', t.description)
 
     def test_ai_questions_pass_consistency_and_start_full(self):
         """AI savollari filtrga tushmasligi kerak — start to‘liq savollarni bersin."""
@@ -500,7 +504,7 @@ class AITestGenerateAdminTests(TestCase):
         self.client.login(username='staffonly', password='pass12345')
         response = self.client.get(reverse('admin:ai_generate_tests'))
         self.assertEqual(response.status_code, 302)
-        self.assertEqual(Test.objects.filter(title__startswith='AI test').count(), 0)
+        self.assertEqual(Test.objects.filter(title__startswith='Kasbiy test').count(), 0)
 
 
 class FreeAIClientTests(TestCase):

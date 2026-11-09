@@ -78,11 +78,11 @@ class AITestGenerateForm(forms.Form):
         help_text='5 dan 50 gacha (odatiy: 30)',
     )
     use_ai = forms.BooleanField(
-        label='Bepul AI ishlatilsin (Groq/Gemini)',
+        label='Kengaytirilgan generator',
         required=False,
         initial=True,
         help_text=(
-            'Kalit sozlangan bo‘lsa haqiqiy AI savollar yaratadi. '
-            'Kalit bo‘lmasa yoki xato bo‘lsa — shablon generator ishlaydi.'
+            'Yoqilsa — sifatliroq savollar yaratiladi. '
+            'O‘chirilsa — oddiy shablon ishlatiladi.'
         ),
     )

@@ -69,32 +69,25 @@
   <a href="{% url 'admin:index' %}">{% trans 'Home' %}</a>
   &rsaquo; <a href="{% url 'admin:app_list' app_label=app_label %}">{{ opts.app_config.verbose_name }}</a>
   &rsaquo; <a href="{% url 'admin:blog_test_changelist' %}">Testlar</a>
-  &rsaquo; AI test yaratish
+  &rsaquo; Testlar yaratish
 </div>
 {% endblock %}
 
 {% block content %}
 <div class="ai-gen-card">
-  <h1><i class="fas fa-robot"></i> {{ title }}</h1>
+  <h1><i class="fas fa-clipboard-list"></i> {{ title }}</h1>
   <p class="help">
     Rolni tanlang va nechta test kerakligini kiriting — tizim shuncha ta to‘liq test
-    (savollar + 4 ta variant) avtomatik yaratadi.
+    (savollar + 4 ta variant) yaratadi.
     Qo‘lda test qo‘shish uchun oddiy <strong>«Test qo‘shish»</strong> tugmasidan foydalaning.
   </p>
 
   <div class="ai-gen-note" style="margin-bottom:1.25rem;">
     {% if ai_status.configured %}
-      <strong>AI ulangan:</strong> {{ ai_status.label }}
-      {% if ai_status.model %} · model: <code>{{ ai_status.model }}</code>{% endif %}
+      <strong>Generator tayyor</strong> — savollar avtomatik yaratiladi.
     {% else %}
-      <strong>AI kaliti yo‘q</strong> — hozir shablon generator ishlaydi (ham bepul).
-      Haqiqiy AI uchun bepul kalit oling:
-      <a href="https://console.groq.com/keys" target="_blank" rel="noopener">Groq</a>
-      yoki
-      <a href="https://aistudio.google.com/apikey" target="_blank" rel="noopener">Gemini</a>,
-      keyin muhit o‘zgaruvchisini qo‘ying:
-      <code>GROQ_API_KEY=...</code> yoki <code>GEMINI_API_KEY=...</code>
-      (<code>AI_PROVIDER=groq</code> yoki <code>gemini</code>).
+      <strong>Oddiy rejim</strong> — shablon asosida savollar yaratiladi.
+      Kengaytirilgan generator uchun server sozlamalarini tekshiring.
     {% endif %}
   </div>
 
@@ -115,7 +108,7 @@
 
     <div class="ai-gen-actions">
       <button type="submit" class="default" style="padding: 0.55rem 1.1rem;">
-        AI testlarni yaratish
+        Testlarni yaratish
       </button>
       <a href="{% url 'admin:blog_test_changelist' %}" class="button cancel-link">Bekor qilish</a>
     </div>

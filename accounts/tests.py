@@ -88,7 +88,7 @@ class AdminPanelSmokeTests(TestCase):
         response = self.client.get('/admin/blog/test/')
         self.assertEqual(response.status_code, 200)
         self.assertContains(response, 'Savollarni tekshirish')
-        self.assertContains(response, 'AI test yaratish')
+        self.assertContains(response, 'Testlar yaratish')
 
 
 class SignUpSecurityTests(TestCase):

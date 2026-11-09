@@ -172,11 +172,10 @@ def ai_generate_tests_view(request):
         )
     )
     if not can_generate:
-        messages.error(request, "Faqat admin AI test yarata oladi.")
+        messages.error(request, "Faqat admin test yarata oladi.")
         return redirect('admin:blog_test_changelist')
 
     from blog.ai_client import ai_status
-    from blog.test_generator import build_question_payloads
 
     form = AITestGenerateForm(request.POST or None)
     status = ai_status()
@@ -193,20 +192,18 @@ def ai_generate_tests_view(request):
                 questions_per_test=questions_per_test,
                 use_ai=use_ai,
             )
-            source = getattr(build_question_payloads, 'last_source', 'template')
             messages.success(
                 request,
                 f"{len(created_tests)} ta test yaratildi "
                 f"({dict(User.ROLE_CHOICES).get(role, role)}, "
-                f"har birida {questions_per_test} ta savol). "
-                f"Manba: {source}.",
+                f"har birida {questions_per_test} ta savol).",
             )
             return redirect('admin:blog_test_changelist')
         except ValueError as exc:
             messages.error(request, str(exc))
 
     context = {
-        'title': 'AI orqali test yaratish',
+        'title': 'Testlar yaratish',
         'form': form,
         'ai_status': status,
         'app_label': 'blog',
@@ -922,7 +919,7 @@ class TestAdmin(admin.ModelAdmin):
         urls = super().get_urls()
         custom_urls = [
             path('validate-questions/', validate_questions_view, name='question_validation'),
-            path('ai-generate/', ai_generate_tests_view, name='ai_generate_tests'),
+            path('bulk-generate/', ai_generate_tests_view, name='ai_generate_tests'),
             path('auto-update/', auto_update_dashboard_view, name='auto_update_dashboard'),
         ]
         return custom_urls + urls

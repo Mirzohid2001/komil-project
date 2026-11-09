@@ -1,9 +1,9 @@
 """
-Role-based automatic test generation (AI-style template engine).
+Role-based automatic test generation.
 
 Used by:
 - management command generate_daily_tests
-- admin "AI test yaratish" action
+- admin "Testlar yaratish" action
 """
 from __future__ import annotations
 
@@ -441,16 +441,13 @@ def create_test_with_questions(
     role_display = dict(User.ROLE_CHOICES).get(role, role)
     today = timezone.localdate()
     date_str = today.strftime('%d.%m.%Y')
-    title = title or f"AI test: {role_display} ({date_str})"
+    # Nom/tavsifda AI izi bo‘lmasin — xodimlar oddiy kasbiy test deb ko‘radi
+    title = title or f"Kasbiy test: {role_display} ({date_str})"
     description = description or (
-        f"Rol bo‘yicha avtomatik yaratilgan test ({role_display}). "
-        f"Sana: {date_str}."
+        f"{role_display} uchun bilimlarni tekshirish testi. Sana: {date_str}."
     )
 
     payloads = build_question_payloads(role, num_questions, use_ai=use_ai)
-    source = getattr(build_question_payloads, 'last_source', 'template')
-    if source.startswith('ai') and 'Groq' not in description and 'Gemini' not in description:
-        description = f"{description} Manba: {source}."
 
     with transaction.atomic():
         test = Test.objects.create(
@@ -477,7 +474,7 @@ def generate_tests_for_role(
     count: int,
     *,
     questions_per_test: int = 30,
-    title_prefix: str = 'AI test',
+    title_prefix: str = 'Kasbiy test',
     use_ai: bool = True,
 ) -> list[Test]:
     """Create `count` tests for one role. Returns created Test list."""
@@ -494,8 +491,8 @@ def generate_tests_for_role(
             role,
             title=f"{title_prefix}: {role_display} #{i} ({stamp})",
             description=(
-                f"Avtomatik (AI) yaratilgan test. Rol: {role_display}. "
-                f"Partiya: {stamp}."
+                f"{role_display} uchun bilimlarni tekshirish testi. "
+                f"Yaratilgan: {stamp}."
             ),
             num_questions=questions_per_test,
             use_ai=use_ai,
@@ -529,8 +526,8 @@ def generate_daily_tests_for_roles(
                 role,
                 title=f"Kunlik test: {role_display} ({date_str})",
                 description=(
-                    f"Bilimlarni tekshirish uchun avtomatik yaratilgan test. "
-                    f"Sana: {date_str}"
+                    f"{role_display} uchun kunlik bilimlarni tekshirish. "
+                    f"Sana: {date_str}."
                 ),
                 num_questions=30,
             )

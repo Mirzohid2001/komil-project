@@ -52,9 +52,9 @@ JAZZMIN_SETTINGS = {
                 'permissions': ['blog.view_testresult'],
             },
             {
-                'name': 'AI test yaratish',
+                'name': 'Testlar yaratish',
                 'url': 'admin:ai_generate_tests',
-                'icon': 'fas fa-robot',
+                'icon': 'fas fa-clipboard-list',
                 'permissions': ['blog.add_test'],
             },
             {

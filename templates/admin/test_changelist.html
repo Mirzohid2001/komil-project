@@ -6,7 +6,7 @@
   {% if user.is_superuser or user.role == 'admin' %}
   <li>
     <a href="{% url 'admin:ai_generate_tests' %}" class="btn btn-high btn-success" style="background:#c9a227;border-color:#c9a227;">
-      AI test yaratish
+      Testlar yaratish
     </a>
   </li>
   {% endif %}
