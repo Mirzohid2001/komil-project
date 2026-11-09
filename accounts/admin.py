@@ -10,7 +10,7 @@ from .models import (
     User, FavoritePost, UserActivity, Achievement, UserAchievement,
     LearningProgress, Certificate, LevelUpEvent, Department, Notification,
     ComplianceAuditLog, RegistrationRequest, TelegramDialog, TelegramBotSettings,
-    LoginDay,
+    LoginDay, RealtimeAdminAlert,
 )
 
 class FavoritePostInline(admin.TabularInline):
@@ -42,7 +42,10 @@ class CustomUserAdmin(BaseUserAdmin):
                 'telegram_id', 'telegram_username',
                 'experience_points', 'level',
             ),
-            'description': 'Xodimlarni faqat admin yaratadi. Rol zavod bo‘limiga mos tanlanadi.',
+            'description': (
+                'Yangi xodim Telegram bot orqali so‘rov yuboradi — '
+                'Accounts → Ro‘yxatdan o‘tish so‘rovlari dan tasdiqlang.'
+            ),
         }),
         ('Kunlik kirish', {
             'fields': ('attendance_calendar',),
@@ -58,7 +61,10 @@ class CustomUserAdmin(BaseUserAdmin):
                 'role', 'employee_id', 'department', 'shift',
                 'first_name', 'last_name', 'email',
             ),
-            'description': 'Yangi xodim — ochiq ro‘yxatdan o‘tish o‘chirilgan.',
+            'description': (
+                'Oddiy xodimlarni qo‘lda yaratmang: Telegram so‘rovini tasdiqlang. '
+                'Faqat superuser favqulodda hisob ochishi mumkin.'
+            ),
         }),
     )
     list_display = (
@@ -201,6 +207,10 @@ class CustomUserAdmin(BaseUserAdmin):
         
         return mark_safe(html)
     activity_summary.short_description = 'Сводка активности'
+
+    def has_add_permission(self, request):
+        # Yangi xodim — Telegram so‘rovi → tasdiqlash. Faqat superuser qo‘lda ochadi.
+        return bool(request.user.is_superuser)
 
 
 class FavoritePostAdmin(admin.ModelAdmin):
@@ -449,6 +459,55 @@ class RegistrationRequestAdmin(admin.ModelAdmin):
     )
     actions = ('approve_selected', 'reject_selected')
     date_hierarchy = 'created_at'
+
+    def get_urls(self):
+        urls = super().get_urls()
+        custom = [
+            path(
+                'pending-alerts/',
+                self.admin_site.admin_view(self.pending_alerts_api),
+                name='accounts_registrationrequest_pending_alerts',
+            ),
+        ]
+        return custom + urls
+
+    def pending_alerts_api(self, request):
+        """Admin JS polling: yangi Telegram registratsiya alertlari."""
+        from django.http import JsonResponse, HttpResponseForbidden
+        from accounts.admin_alerts import alerts_since
+
+        if not request.user.is_staff:
+            return HttpResponseForbidden('forbidden')
+        if not (
+            request.user.is_superuser
+            or request.user.has_perm('accounts.view_registrationrequest')
+            or request.user.has_perm('accounts.change_registrationrequest')
+        ):
+            return HttpResponseForbidden('forbidden')
+
+        try:
+            since_id = int(request.GET.get('since_id') or 0)
+        except (TypeError, ValueError):
+            since_id = 0
+
+        rows = alerts_since(since_id, limit=30)
+        latest = RealtimeAdminAlert.objects.order_by('-id').values_list('id', flat=True).first() or 0
+        pending_count = RegistrationRequest.objects.filter(status='pending').count()
+        return JsonResponse({
+            'latest_id': latest,
+            'pending_count': pending_count,
+            'alerts': [
+                {
+                    'id': a.id,
+                    'kind': a.kind,
+                    'title': a.title,
+                    'body': a.body,
+                    'link': a.link,
+                    'created_at': a.created_at.isoformat(),
+                }
+                for a in rows
+            ],
+        })
 
     @admin.action(description='Tanlanganlarni tasdiqlash (login Telegramga)')
     def approve_selected(self, request, queryset):

@@ -365,6 +365,10 @@ def _start_registration(chat_id: int, username: str) -> None:
     dialog.step = 'full_name'
     dialog.draft = {}
     dialog.save(update_fields=['step', 'draft', 'updated_at'])
+
+    from accounts.admin_alerts import push_registration_started
+    push_registration_started(telegram_id=chat_id, username=username or '')
+
     send_message(
         chat_id,
         (
@@ -463,6 +467,8 @@ def _handle_text(chat_id: int, username: str, text: str) -> None:
             message=f'Telegram so‘rov: {req.full_name}',
             payload={'telegram_id': chat_id, 'role': role},
         )
+        from accounts.admin_alerts import push_registration_pending
+        push_registration_pending(req)
         send_message(
             chat_id,
             (

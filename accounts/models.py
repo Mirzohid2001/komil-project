@@ -472,6 +472,30 @@ class RegistrationRequest(models.Model):
         return f"{self.full_name} · {self.get_status_display()}"
 
 
+class RealtimeAdminAlert(models.Model):
+    """Admin panel uchun real-time ovozli bildirishnomalar (polling)."""
+    KIND_REG_STARTED = 'reg_started'
+    KIND_REG_PENDING = 'reg_pending'
+    KIND_CHOICES = [
+        (KIND_REG_STARTED, 'Bot registratsiya boshlandi'),
+        (KIND_REG_PENDING, 'Tasdiqlash kutilmoqda'),
+    ]
+
+    kind = models.CharField(max_length=32, choices=KIND_CHOICES, db_index=True)
+    title = models.CharField(max_length=200)
+    body = models.CharField(max_length=500, blank=True)
+    link = models.CharField(max_length=255, blank=True)
+    created_at = models.DateTimeField(auto_now_add=True, db_index=True)
+
+    class Meta:
+        ordering = ['-id']
+        verbose_name = "Admin bildirishnoma"
+        verbose_name_plural = "Admin bildirishnomalar"
+
+    def __str__(self):
+        return f"{self.title} · {self.created_at:%H:%M}"
+
+
 class ComplianceAuditLog(models.Model):
     """Tekshiruv uchun compliance hodisalari jurnali."""
     EVENT_CHOICES = [

@@ -74,10 +74,10 @@ def verify_certificate(request, certificate_id=None):
 
 
 def signup(request):
-    """Public signup is disabled — users are created by admins only."""
+    """Public signup is disabled — Telegram bot so‘rovi + admin tasdiq."""
     messages.info(
         request,
-        "Ochiq ro'yxatdan o'tish yopilgan. Hisobni administrator yaratadi.",
+        "Ochiq ro'yxatdan o'tish yopilgan. Telegram bot orqali so‘rov yuboring — admin tasdiqlaydi.",
     )
     return redirect('accounts:login')
 
