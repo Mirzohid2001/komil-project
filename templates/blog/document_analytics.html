@@ -1,7 +1,8 @@
 {% extends 'base.html' %}
+{% load i18n %}
 {% load static %}
 
-{% block title %}Hujjatlar analitikasi{% endblock %}
+{% block title %}{% trans "Document analytics" %}{% endblock %}
 
 {% block extra_css %}
 <style>
@@ -36,29 +37,28 @@
 {% block content %}
 <div class="zl-page-head">
   <div>
-    <h1 class="zl-section-title mb-1">Hujjatlar analitikasi</h1>
-    <p class="zl-section-lead mb-0">Ko‘rishlar, yuklab olishlar va kategoriyalar bo‘yicha tahlil.</p>
+    <h1 class="zl-section-title mb-1">{% trans "Document analytics" %}</h1>
+    <p class="zl-section-lead mb-0">{% trans "Views, downloads and category breakdown." %}</p>
   </div>
   <a href="{% url 'blog:document_upload' %}" class="btn btn-sm btn-primary">
-    <i class="fas fa-upload me-1"></i> Yangi hujjat
-  </a>
+    <i class="fas fa-upload me-1"></i>{% trans "New document" %}</a>
 </div>
 
 <div class="zl-stat-grid mb-3">
   <div class="zl-card p-3">
-    <div class="zl-meta">Jami hujjatlar</div>
+    <div class="zl-meta">{% trans "Total documents" %}</div>
     <strong class="fs-4">{{ total_documents }}</strong>
   </div>
   <div class="zl-card p-3">
-    <div class="zl-meta">Jami ko‘rishlar</div>
+    <div class="zl-meta">{% trans "Total views" %}</div>
     <strong class="fs-4">{{ total_views }}</strong>
   </div>
   <div class="zl-card p-3">
-    <div class="zl-meta">Jami yuklab olishlar</div>
+    <div class="zl-meta">{% trans "Total downloads" %}</div>
     <strong class="fs-4">{{ total_downloads }}</strong>
   </div>
   <div class="zl-card p-3">
-    <div class="zl-meta">Faol rollar</div>
+    <div class="zl-meta">{% trans "Active roles" %}</div>
     <strong class="fs-4">{{ views_by_role|length }}</strong>
   </div>
 </div>
@@ -66,14 +66,14 @@
 <div class="row g-3">
   <div class="col-lg-8">
     <section class="zl-card p-4 mb-3">
-      <h2 class="h5 fw-bold mb-3">Kategoriyalar bo‘yicha ko‘rishlar</h2>
+      <h2 class="h5 fw-bold mb-3">{% trans "Views by category" %}</h2>
       <div class="zl-chart-wrap">
         <canvas id="viewsByCategoryChart"></canvas>
       </div>
     </section>
 
     <section class="zl-card p-4">
-      <h2 class="h5 fw-bold mb-3">Kategoriyalar bo‘yicha yuklab olishlar</h2>
+      <h2 class="h5 fw-bold mb-3">{% trans "Downloads by category" %}</h2>
       <div class="zl-chart-wrap">
         <canvas id="downloadsByCategoryChart"></canvas>
       </div>
@@ -82,7 +82,7 @@
 
   <div class="col-lg-4">
     <section class="zl-card p-3 mb-3">
-      <h2 class="h6 fw-bold mb-3">Eng ko‘p ko‘rilgan</h2>
+      <h2 class="h6 fw-bold mb-3">{% trans "Most viewed" %}</h2>
       {% if most_viewed %}
         {% for document in most_viewed %}
         <div class="zl-row-card py-2 px-0 border-0 shadow-none mb-0" style="border-radius:0;border-bottom:1px solid var(--zl-line)!important;">
@@ -113,17 +113,17 @@
           </div>
           <div class="text-end">
             <strong style="color: var(--zl-forest);">{{ document.view_count }}</strong>
-            <div class="zl-meta">ko‘rish</div>
+            <div class="zl-meta">{% trans "view" %}</div>
           </div>
         </div>
         {% endfor %}
       {% else %}
-        <p class="zl-meta mb-0">Hali ko‘rishlar yo‘q</p>
+        <p class="zl-meta mb-0">{% trans "No views yet" %}</p>
       {% endif %}
     </section>
 
     <section class="zl-card p-3 mb-3">
-      <h2 class="h6 fw-bold mb-3">Eng ko‘p yuklab olingan</h2>
+      <h2 class="h6 fw-bold mb-3">{% trans "Most downloaded" %}</h2>
       {% if most_downloaded %}
         {% for document in most_downloaded %}
         <div class="zl-row-card py-2 px-0 border-0 shadow-none mb-0" style="border-radius:0;border-bottom:1px solid var(--zl-line)!important;">
@@ -138,17 +138,17 @@
           </div>
           <div class="text-end">
             <strong class="text-success">{{ document.download_count }}</strong>
-            <div class="zl-meta">yuklab olish</div>
+            <div class="zl-meta">{% trans "download" %}</div>
           </div>
         </div>
         {% endfor %}
       {% else %}
-        <p class="zl-meta mb-0">Hali yuklab olishlar yo‘q</p>
+        <p class="zl-meta mb-0">{% trans "No downloads yet" %}</p>
       {% endif %}
     </section>
 
     <section class="zl-card p-3">
-      <h2 class="h6 fw-bold mb-3">Rollar bo‘yicha ko‘rishlar</h2>
+      <h2 class="h6 fw-bold mb-3">{% trans "Views by role" %}</h2>
       {% if views_by_role %}
         {% for role_data in views_by_role %}
         <div class="d-flex justify-content-between align-items-center py-2 border-bottom">
@@ -157,7 +157,7 @@
         </div>
         {% endfor %}
       {% else %}
-        <p class="zl-meta mb-0">Hali ko‘rishlar yo‘q</p>
+        <p class="zl-meta mb-0">{% trans "No views yet" %}</p>
       {% endif %}
     </section>
   </div>

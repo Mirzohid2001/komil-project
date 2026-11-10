@@ -1,11 +1,12 @@
 {% extends 'courses/base.html' %}
+{% load i18n %}
 {% load static %}
 
 {% block title %}Sertifikat - {{ certificate.title }}{% endblock %}
 
 {% block breadcrumb_items %}
 <li class="breadcrumb-item"><a href="{% url 'courses:detail' course.slug %}">{{ course.title }}</a></li>
-<li class="breadcrumb-item active" aria-current="page">Sertifikat</li>
+<li class="breadcrumb-item active" aria-current="page">{% trans "Certificate" %}</li>
 {% endblock %}
 
 {% block courses_content %}
@@ -13,13 +14,12 @@
   <div class="zl-card overflow-hidden">
     <div class="zl-page-head p-3 p-md-4 border-bottom">
       <div>
-        <h1 class="zl-section-title mb-1 text-gradient">Sertifikat</h1>
+        <h1 class="zl-section-title mb-1 text-gradient">{% trans "Certificate" %}</h1>
         <p class="zl-meta mb-0">{{ certificate.issue_date|date:"d.m.Y" }}</p>
       </div>
       <div class="d-flex flex-wrap gap-2">
         <a href="{% url 'courses:download_certificate' certificate.certificate_id %}" class="btn btn-outline-primary btn-sm">
-          <i class="fas fa-download me-2"></i> Yuklash
-        </a>
+          <i class="fas fa-download me-2"></i>{% trans "Upload" %}</a>
         <a href="{{ request.build_absolute_uri }}" class="btn btn-outline-secondary btn-sm">
           <i class="fas fa-link me-2"></i> Havola
         </a>
@@ -53,14 +53,14 @@
                 <img src="{% static 'img/signature.png' %}" alt="Imzo" class="img-fluid" style="height: 60px;">
               </div>
               <div style="width: 150px; height: 1px; background-color: var(--zl-ink);"></div>
-              <p class="mt-2 mb-0">Administrator</p>
-              <p class="zl-meta small mb-0">O‘qituvchi</p>
+              <p class="mt-2 mb-0">{% trans "Administrator" %}</p>
+              <p class="zl-meta small mb-0">{% trans "Instructor" %}</p>
             </div>
             <div class="text-md-end">
               <div style="height: 60px;"></div>
               <div style="width: 150px; height: 1px; background-color: var(--zl-ink); margin-left: auto;"></div>
               <p class="mt-2 mb-0">{{ certificate.issue_date|date:"d.m.Y" }}</p>
-              <p class="zl-meta small mb-0">Sana</p>
+              <p class="zl-meta small mb-0">{% trans "Date" %}</p>
             </div>
           </div>
         </div>
@@ -77,10 +77,10 @@
             </ul>
           </div>
           <div class="col-md-6">
-            <h3 class="h6 fw-bold mb-3">Kurs ma’lumotlari</h3>
+            <h3 class="h6 fw-bold mb-3">{% trans "Course info" %}</h3>
             <ul class="list-unstyled small mb-0">
               <li class="mb-2"><span class="zl-meta">Kurs nomi:</span> <strong>{{ course.title }}</strong></li>
-              <li class="mb-2"><span class="zl-meta">O‘qituvchi:</span> <strong>Administrator</strong></li>
+              <li class="mb-2"><span class="zl-meta">{% trans "Instructor:" %}</span> <strong>{% trans "Administrator" %}</strong></li>
               <li><span class="zl-meta">Davomiyligi:</span> <strong>{{ course.duration }} daqiqa</strong></li>
             </ul>
           </div>
@@ -89,7 +89,7 @@
     </div>
 
     <div class="p-3 p-md-4 border-top text-center">
-      <h2 class="h5 fw-bold mb-2">Sertifikatni tekshirish</h2>
+      <h2 class="h5 fw-bold mb-2">{% trans "Verify certificate" %}</h2>
       <p class="zl-meta mb-3">Haqiqiylikni quyidagi havola orqali tekshiring</p>
       <div class="input-group mb-3 mx-auto" style="max-width: 600px;">
         <input type="text" class="form-control" value="{{ request.build_absolute_uri }}" id="certificateUrl" readonly>

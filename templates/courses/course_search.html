@@ -1,5 +1,6 @@
 {% extends 'courses/base.html' %}
 
+{% load i18n %}
 {% block title %}Kurs qidiruv{% endblock %}
 
 {% block breadcrumb_items %}
@@ -14,7 +15,7 @@
         <h1 class="zl-section-title mb-1">
           {% if query %}"{{ query }}" natijalari{% else %}Kurs qidiruv{% endif %}
         </h1>
-        <p class="zl-section-lead mb-0">Nom yoki kalit so‘z bo‘yicha qidiring.</p>
+        <p class="zl-section-lead mb-0">{% trans "Search by name or keyword." %}</p>
       </div>
     </div>
 
@@ -22,7 +23,7 @@
       <form method="get" action="{% url 'courses:search' %}" class="input-group">
         <input type="text" name="q" class="form-control" placeholder="Kurs nomini kiriting..."
                value="{{ query }}" aria-label="Kurs qidirish">
-        <button class="btn btn-primary" type="submit">Qidirish</button>
+        <button class="btn btn-primary" type="submit">{% trans "Search" %}</button>
       </form>
     </div>
 
@@ -41,7 +42,7 @@
           <p class="zl-meta flex-grow-1 mb-3">{{ course.short_description|truncatechars:80 }}</p>
           <div class="d-flex justify-content-between align-items-center zl-meta">
             <span><i class="fas fa-users me-1"></i>{{ course.enrollments.count }} o'quvchi</span>
-            <a href="{% url 'courses:detail' course.slug %}" class="btn btn-sm btn-primary">Batafsil</a>
+            <a href="{% url 'courses:detail' course.slug %}" class="btn btn-sm btn-primary">{% trans "Details" %}</a>
           </div>
         </div>
       </article>
@@ -83,11 +84,11 @@
       <i class="fas fa-search d-block"></i>
       {% if query %}
       <h2 class="h5 text-dark">"{{ query }}" bo'yicha kurslar topilmadi</h2>
-      <p class="mb-3">Boshqa so‘zlarni sinab ko‘ring yoki kategoriyalardan tanlang.</p>
-      <a href="{% url 'courses:list' %}" class="btn btn-primary btn-sm"><i class="fas fa-list me-1"></i> Barcha kurslar</a>
+      <p class="mb-3">{% trans "Try other words or pick a category." %}</p>
+      <a href="{% url 'courses:list' %}" class="btn btn-primary btn-sm"><i class="fas fa-list me-1"></i>{% trans "All courses" %}</a>
       {% else %}
-      <h2 class="h5 text-dark">Qidiruv so'zini kiriting</h2>
-      <p class="mb-0">Kurs nomi yoki kalit so‘zlarini yozing.</p>
+      <h2 class="h5 text-dark">{% trans "Enter a search term" %}</h2>
+      <p class="mb-0">{% trans "Enter course name or keywords." %}</p>
       {% endif %}
     </div>
     {% endif %}
@@ -96,12 +97,10 @@
   <aside class="col-lg-3">
     <div class="zl-card overflow-hidden mb-3 sticky-lg-top" style="top: 88px;">
       <div class="p-3 border-bottom">
-        <h2 class="h6 fw-bold mb-0">Kategoriyalar</h2>
+        <h2 class="h6 fw-bold mb-0">{% trans "Categories" %}</h2>
       </div>
       <div class="list-group list-group-flush">
-        <a href="{% url 'courses:list' %}" class="list-group-item list-group-item-action d-flex justify-content-between align-items-center">
-          Barchasi
-          <span class="zl-chip">{{ categories.count }}</span>
+        <a href="{% url 'courses:list' %}" class="list-group-item list-group-item-action d-flex justify-content-between align-items-center">{% trans "All" %}<span class="zl-chip">{{ categories.count }}</span>
         </a>
         {% for category in categories %}
         <a href="{% url 'courses:category' category.slug %}" class="list-group-item list-group-item-action d-flex justify-content-between align-items-center">
@@ -114,11 +113,10 @@
 
     <div class="zl-card p-3">
       <h2 class="h6 fw-bold mb-2">Qidiruvga yordam</h2>
-      <p class="zl-meta mb-2">Kurs nomi, mavzu yoki kalit so‘zlar bo‘yicha qidirish mumkin.</p>
-      <p class="zl-meta mb-3">Natijani ko‘rish uchun so‘zni kiriting va «Qidirish»ni bosing.</p>
+      <p class="zl-meta mb-2">{% trans "You can search by course name, topic or keywords." %}</p>
+      <p class="zl-meta mb-3">{% trans "Enter a term and press Search to see results." %}</p>
       <a href="{% url 'courses:list' %}" class="btn btn-outline-primary btn-sm w-100">
-        <i class="fas fa-th-large me-1"></i> Barcha kurslar
-      </a>
+        <i class="fas fa-th-large me-1"></i>{% trans "All courses" %}</a>
     </div>
   </aside>
 </div>

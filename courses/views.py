@@ -25,6 +25,7 @@ from accounts.models import UserActivity
 
 import json
 from django.conf import settings
+from django.utils.translation import gettext as _
 
 def course_list(request, category_slug=None):
     """Отображение списка курсов с фильтрацией по категории"""
@@ -122,9 +123,9 @@ def course_detail(request, course_slug):
 
     if not course.can_user_access(request.user):
         if request.user.is_authenticated:
-            messages.error(request, "Bu kurs sizning rolingiz uchun ochiq emas.")
+            messages.error(request, _("This course is not available for your role."))
             return redirect('courses:list')
-        messages.info(request, "Bu kursga kirish uchun tizimga kiring.")
+        messages.info(request, _("Sign in to access this course."))
         return redirect('accounts:login')
 
     enrollment = None
@@ -189,9 +190,9 @@ def course_unenroll(request, course_slug):
     course = get_object_or_404(Course, slug=course_slug)
     deleted, _ = Enrollment.objects.filter(user=request.user, course=course).delete()
     if deleted:
-        messages.success(request, f"Siz '{course.title}' kursidan chiqdingiz.")
+        messages.success(request, _("You left the course '%(title)s'.") % {"title": course.title})
     else:
-        messages.info(request, "Siz bu kursga yozilmagansiz.")
+        messages.info(request, _("You are not enrolled in this course."))
     return redirect('courses:detail', course_slug=course.slug)
 
 
@@ -202,12 +203,12 @@ def course_enroll(request, course_slug):
     course = get_object_or_404(Course, slug=course_slug, status='published')
 
     if not course.can_user_access(request.user):
-        messages.error(request, "Bu kurs sizning rolingiz uchun ochiq emas.")
+        messages.error(request, _("This course is not available for your role."))
         return redirect('courses:list')
     
     # Проверка, не записан ли пользователь уже
     if Enrollment.objects.filter(user=request.user, course=course).exists():
-        messages.info(request, f"Siz allaqachon '{course.title}' kursiga yozilgansiz.")
+        messages.info(request, _("You are already enrolled in '%(title)s'.") % {"title": course.title})
         return redirect('courses:learn', course_slug=course.slug)
     
     # Ichki zavod loyihasi — barcha kurslar bepul, to'lov yo'q.
@@ -224,7 +225,7 @@ def course_enroll(request, course_slug):
         ip_address=request.META.get('REMOTE_ADDR')
     )
     
-    messages.success(request, f"Siz muvaffaqiyatli ravishda '{course.title}' kursiga yozildingiz!")
+    messages.success(request, _("You successfully enrolled in '%(title)s'!") % {"title": course.title})
     return redirect('courses:learn', course_slug=course.slug)
 
 
@@ -277,16 +278,16 @@ def submit_assignment(request, course_slug, module_id, lesson_id):
     lesson = get_object_or_404(Lesson, id=lesson_id, module=module)
 
     if lesson.lesson_type != 'assignment':
-        messages.error(request, "Bu dars amaliy vazifa emas.")
+        messages.error(request, _("This lesson is not a practical assignment."))
         return redirect('courses:lesson_detail', course_slug, module_id, lesson_id)
 
     if not Enrollment.objects.filter(user=request.user, course=course).exists():
-        messages.error(request, "Avval kursga yoziling.")
+        messages.error(request, _("Enroll in the course first."))
         return redirect('courses:detail', course_slug=course_slug)
 
     uploaded = request.FILES.get('file')
     if not uploaded:
-        messages.error(request, "Fayl tanlang.")
+        messages.error(request, _("Select a file."))
         return redirect('courses:lesson_detail', course_slug, module_id, lesson_id)
 
     comment = (request.POST.get('comment') or '').strip()
@@ -297,7 +298,7 @@ def submit_assignment(request, course_slug, module_id, lesson_id):
         comment=comment,
         status=LessonAssignmentSubmission.STATUS_PENDING,
     )
-    messages.success(request, "Vazifa yuborildi. Instruktur tasdiğini kuting.")
+    messages.success(request, _("Assignment submitted. Wait for instructor approval."))
     return redirect('courses:lesson_detail', course_slug, module_id, lesson_id)
 
 
@@ -306,7 +307,7 @@ def submit_assignment(request, course_slug, module_id, lesson_id):
 def review_assignment(request, submission_id):
     """Admin/staff: vazifani tasdiqlash yoki rad etish."""
     if request.user.role != 'admin' and not request.user.is_staff:
-        messages.error(request, "Ruxsat yo‘q.")
+        messages.error(request, _("Permission denied."))
         return redirect('courses:list')
 
     submission = get_object_or_404(
@@ -336,16 +337,16 @@ def review_assignment(request, submission_id):
             payload={'lesson_id': lesson.id, 'course_id': course.id},
             request=request,
         )
-        messages.success(request, "Vazifa tasdiqlandi — dars yakunlandi.")
+        messages.success(request, _("Assignment approved — lesson completed."))
     elif action == 'reject':
         submission.status = LessonAssignmentSubmission.STATUS_REJECTED
         submission.reviewed_by = request.user
         submission.reviewed_at = timezone.now()
         submission.reviewer_note = note
         submission.save()
-        messages.warning(request, "Vazifa rad etildi.")
+        messages.warning(request, _("Assignment rejected."))
     else:
-        messages.error(request, "Noto‘g‘ri amal.")
+        messages.error(request, _("Invalid action."))
 
     return redirect(
         'courses:lesson_detail',
@@ -366,7 +367,7 @@ def course_learn(request, course_slug):
             user=request.user, course=course
         )
     except Enrollment.DoesNotExist:
-        messages.error(request, "Kursni ko'rish uchun avval ro'yxatdan o'ting")
+        messages.error(request, _("Enroll first to view the course"))
         return redirect('courses:detail', course_slug=course.slug)
     
     # Получаем все модули и уроки курса
@@ -402,7 +403,7 @@ def course_learn(request, course_slug):
         # Создаем сертификат о прохождении курса
         certificate = create_course_certificate(enrollment)
         
-        messages.success(request, f"Tabriklaymiz! Siz '{course.title}' kursini muvaffaqiyatli yakunladingiz!")
+        messages.success(request, _("Congratulations! You completed '%(title)s'!") % {"title": course.title})
     
     context = {
         'course': course,
@@ -428,7 +429,7 @@ def module_detail(request, course_slug, module_id):
     try:
         enrollment = Enrollment.objects.get(user=request.user, course=course)
     except Enrollment.DoesNotExist:
-        messages.error(request, "Kursni ko'rish uchun avval ro'yxatdan o'ting")
+        messages.error(request, _("Enroll first to view the course"))
         return redirect('courses:detail', course_slug=course.slug)
     
     # Получаем уроки модуля
@@ -474,14 +475,14 @@ def lesson_detail(request, course_slug, module_id, lesson_id):
     
     # Проверяем, записан ли пользователь на курс
     if not request.user.is_authenticated:
-        messages.warning(request, "Darsni ko'rish uchun avval tizimga kirishingiz kerak.")
+        messages.warning(request, _("You must sign in to view the lesson."))
         return redirect('accounts:login')
     
     is_enrolled = Enrollment.objects.filter(user=request.user, course=course).exists()
     is_staff_like = request.user.is_staff or getattr(request.user, 'role', None) == 'admin'
     can_preview = lesson.is_free_preview and lesson.lesson_type == 'video'
     if not is_enrolled and not is_staff_like and not can_preview:
-        messages.warning(request, "Bu darsni ko'rish uchun kursga yozilishingiz kerak.")
+        messages.warning(request, _("You must enroll to view this lesson."))
         return redirect('courses:detail', course_slug=course_slug)
 
     # Получаем список модулей и уроков для навигации
@@ -640,14 +641,14 @@ def submit_quiz(request, course_slug, module_id, lesson_id):
         or request.user.role == 'admin'
         or Enrollment.objects.filter(user=request.user, course=course).exists()
     ):
-        messages.error(request, "Quiz topshirish uchun kursga yozilishingiz kerak.")
+        messages.error(request, _("Enroll to submit the quiz."))
         return redirect('courses:detail', course_slug=course_slug)
 
     questions = list(
         LessonQuizQuestion.objects.filter(lesson=lesson).prefetch_related('answers')
     )
     if not questions:
-        messages.warning(request, "Bu darsda quiz savollari yo‘q.")
+        messages.warning(request, _("This lesson has no quiz questions."))
         return redirect(
             'courses:lesson_detail',
             course_slug=course_slug,
@@ -684,12 +685,20 @@ def submit_quiz(request, course_slug, module_id, lesson_id):
         complete_lesson_for_user(user=request.user, lesson=lesson)
         messages.success(
             request,
-            f"Quiz topshirildi: {correct}/{total} ({percentage:.0f}%). Dars yakunlandi.",
+            _("Quiz submitted: %(correct)s/%(total)s (%(pct)s%%). Lesson completed.") % {
+                "correct": correct,
+                "total": total,
+                "pct": f"{percentage:.0f}",
+            },
         )
     else:
         messages.warning(
             request,
-            f"Quiz natijasi: {correct}/{total} ({percentage:.0f}%). O‘tish uchun kamida 70% kerak.",
+            _("Quiz result: %(correct)s/%(total)s (%(pct)s%%). Need at least 70%% to pass.") % {
+                "correct": correct,
+                "total": total,
+                "pct": f"{percentage:.0f}",
+            },
         )
 
     return redirect(
@@ -803,7 +812,7 @@ def mark_lesson_incomplete(request, course_slug, module_id, lesson_id):
         # Если пользователь каким-то образом не записан на курс, просто игнорируем
         pass
     
-    messages.success(request, "Dars tugallanmagan deb belgilandi")
+    messages.success(request, _("Lesson marked incomplete"))
     return redirect('courses:lesson_detail', course_slug=course_slug, module_id=module_id, lesson_id=lesson_id)
 
 
@@ -826,7 +835,7 @@ def mark_lesson_complete(request, course_slug, module_id, lesson_id):
         if not approved and not is_staff_like:
             messages.error(
                 request,
-                "Amaliy vazifa uchun fayl yuklang va instruktur tasdiğini kuting.",
+                _("Upload a file for the assignment and wait for instructor approval."),
             )
             return redirect(
                 'courses:lesson_detail',
@@ -848,8 +857,10 @@ def mark_lesson_complete(request, course_slug, module_id, lesson_id):
         if not lesson.watch_requirement_met(percent):
             messages.error(
                 request,
-                f"Videoni kamida {lesson.min_watch_percent}% ko‘ring "
-                f"(hozir: {percent}%).",
+                _("Watch at least %(required)s%% of the video (now: %(current)s%%).") % {
+                    "required": lesson.min_watch_percent,
+                    "current": percent,
+                },
             )
             return redirect(
                 'courses:lesson_detail',
@@ -860,7 +871,7 @@ def mark_lesson_complete(request, course_slug, module_id, lesson_id):
 
     enrollment = Enrollment.objects.filter(user=request.user, course=course).first()
     if not enrollment:
-        messages.error(request, "Darsni yakunlash uchun kursga yozilishingiz kerak.")
+        messages.error(request, _("Enroll to complete the lesson."))
         return redirect('courses:detail', course_slug=course_slug)
 
     was_completed = enrollment.is_completed
@@ -871,7 +882,7 @@ def mark_lesson_complete(request, course_slug, module_id, lesson_id):
         create_course_certificate(enrollment)
         messages.success(
             request,
-            f"Tabriklaymiz! Siz '{course.title}' kursini muvaffaqiyatli yakunladingiz!",
+            _("Congratulations! You completed '%(title)s'!") % {"title": course.title},
         )
         if hasattr(request.user, 'add_experience'):
             request.user.add_experience(200)
@@ -885,7 +896,7 @@ def mark_lesson_complete(request, course_slug, module_id, lesson_id):
             },
         )
 
-    messages.success(request, "Dars muvaffaqiyatli tugallandi")
+    messages.success(request, _("Lesson completed successfully"))
     return redirect('courses:lesson_detail', course_slug=course_slug, module_id=module_id, lesson_id=lesson_id)
 
 
@@ -932,12 +943,12 @@ def view_certificate(request, certificate_id):
         and not request.user.is_staff
         and request.user.role != 'admin'
     ):
-        messages.error(request, "Sizda bu sertifikatni ko'rish huquqi yo'q")
+        messages.error(request, _("You do not have permission to view this certificate"))
         return redirect('accounts:profile')
     
     # Проверяем возможно устаревший сертификат
     if not certificate.enrollment.is_completed:
-        messages.warning(request, "Bu sertifikat faol emas, chunki kurs tugallanmagan")
+        messages.warning(request, _("This certificate is inactive because the course is not completed"))
     
     context = {
         'certificate': certificate,
@@ -990,7 +1001,7 @@ def add_comment(request, course_slug, module_id, lesson_id):
     lesson = get_object_or_404(Lesson, id=lesson_id, module=module)
 
     if not lesson.allow_comments:
-        messages.error(request, "Bu dars uchun izohlar o‘chirilgan.")
+        messages.error(request, _("Comments are disabled for this lesson."))
         return redirect('courses:lesson_detail', course_slug=course_slug, module_id=module_id, lesson_id=lesson_id)
 
     if not (
@@ -998,17 +1009,17 @@ def add_comment(request, course_slug, module_id, lesson_id):
         or request.user.role == 'admin'
         or Enrollment.objects.filter(user=request.user, course=course).exists()
     ):
-        messages.error(request, "Izoh qoldirish uchun kursga yozilishingiz kerak.")
+        messages.error(request, _("Enroll to leave a comment."))
         return redirect('courses:detail', course_slug=course_slug)
 
     content = (request.POST.get('content') or '').strip()
     if not content:
-        messages.error(request, "Izoh matni bo‘sh bo‘lishi mumkin emas.")
+        messages.error(request, _("Comment cannot be empty."))
     elif len(content) > 2000:
-        messages.error(request, "Izoh 2000 belgidan oshmasligi kerak.")
+        messages.error(request, _("Comment must be at most 2000 characters."))
     else:
         LessonComment.objects.create(lesson=lesson, user=request.user, content=content)
-        messages.success(request, "Izoh qo‘shildi.")
+        messages.success(request, _("Comment added."))
 
     return redirect('courses:lesson_detail', course_slug=course_slug, module_id=module_id, lesson_id=lesson_id)
 
@@ -1020,7 +1031,7 @@ def edit_comment(request, comment_id):
         id=comment_id,
     )
     if comment.user != request.user:
-        messages.error(request, "Bu izohni tahrirlash huquqingiz yo‘q.")
+        messages.error(request, _("You cannot edit this comment."))
         return redirect('courses:list')
 
     lesson = comment.lesson
@@ -1030,13 +1041,13 @@ def edit_comment(request, comment_id):
     if request.method == 'POST':
         content = (request.POST.get('content') or '').strip()
         if not content:
-            messages.error(request, "Izoh matni bo‘sh bo‘lishi mumkin emas.")
+            messages.error(request, _("Comment cannot be empty."))
         elif len(content) > 2000:
-            messages.error(request, "Izoh 2000 belgidan oshmasligi kerak.")
+            messages.error(request, _("Comment must be at most 2000 characters."))
         else:
             comment.content = content
             comment.save(update_fields=['content', 'updated_at'])
-            messages.success(request, "Izoh yangilandi.")
+            messages.success(request, _("Comment updated."))
             return redirect(
                 'courses:lesson_detail',
                 course_slug=course.slug,
@@ -1060,14 +1071,14 @@ def delete_comment(request, comment_id):
         id=comment_id,
     )
     if comment.user != request.user and request.user.role != 'admin' and not request.user.is_staff:
-        messages.error(request, "Bu izohni o‘chirish huquqingiz yo‘q.")
+        messages.error(request, _("You cannot delete this comment."))
         return redirect('courses:list')
 
     lesson = comment.lesson
     course = lesson.module.course
     module = lesson.module
     comment.delete()
-    messages.success(request, "Izoh o‘chirildi.")
+    messages.success(request, _("Comment deleted."))
     return redirect(
         'courses:lesson_detail',
         course_slug=course.slug,

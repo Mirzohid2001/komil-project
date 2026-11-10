@@ -1,6 +1,7 @@
 {% extends 'base.html' %}
 
-{% block title %}Shaxsiy kabinet{% endblock %}
+{% load i18n %}
+{% block title %}{% trans "Personal cabinet" %}{% endblock %}
 
 {% block extra_css %}
 <style>
@@ -13,22 +14,33 @@
   }
   .profile-info {
     text-align: center;
-    padding: 1.75rem 1.25rem 1.25rem;
+    padding: 2rem 1.25rem 1.5rem;
     border-bottom: 1px solid rgba(201, 162, 39, 0.2);
     background:
       radial-gradient(280px 120px at 100% 0%, rgba(201, 162, 39, 0.28), transparent 60%),
       linear-gradient(180deg, var(--zl-forest) 0%, var(--zl-forest-deep) 100%);
     color: #f7f4ec;
   }
-  .profile-info h5 { color: var(--zl-brass-light); font-family: var(--zl-display); font-weight: 600; }
+  .profile-info h5 {
+    color: var(--zl-brass-light);
+    font-family: var(--zl-display);
+    font-weight: 600;
+    font-size: 1.35rem;
+    margin-top: 0.35rem;
+  }
   .profile-avatar {
-    width: 88px;
-    height: 88px;
-    border-radius: 50%;
-    object-fit: cover;
-    border: 3px solid var(--zl-brass);
-    box-shadow: 0 0 0 4px rgba(201, 162, 39, 0.2);
-    margin-bottom: 0.75rem;
+    width: min(220px, 86%) !important;
+    height: auto !important;
+    aspect-ratio: 1 !important;
+    max-width: 220px;
+    border-radius: 50% !important;
+    object-fit: cover !important;
+    border: 4px solid var(--zl-brass) !important;
+    box-shadow: 0 0 0 6px rgba(201, 162, 39, 0.22) !important;
+    margin-bottom: 1rem !important;
+  }
+  .profile-avatar .fa-user-circle {
+    font-size: 7rem !important;
   }
   .profile-role {
     display: inline-block;
@@ -170,8 +182,9 @@
 
   @media (max-width: 991.98px) {
     .profile-sidebar { margin-bottom: 0.25rem; }
-    .profile-info { padding: 1.25rem 1rem 1rem; }
-    .profile-avatar { width: 72px; height: 72px; }
+    .profile-info { padding: 1.5rem 1rem 1.25rem; }
+    .profile-avatar { width: min(180px, 70%) !important; max-width: 180px; }
+    .profile-avatar .fa-user-circle { font-size: 5.5rem !important; }
     .profile-nav {
       display: grid;
       grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -211,7 +224,7 @@
           <img src="{{ user.profile_image.url }}" alt="{{ user.username }}" class="profile-avatar">
         {% else %}
           <div class="profile-avatar d-inline-flex align-items-center justify-content-center" style="background:#0a1812;">
-            <i class="fas fa-user-circle fa-3x" style="color:var(--zl-brass);"></i>
+            <i class="fas fa-user-circle" style="color:var(--zl-brass);"></i>
           </div>
         {% endif %}
         <h5 class="fw-bold mb-0">{{ user.get_full_name|default:user.username }}</h5>
@@ -219,47 +232,44 @@
       </div>
       <nav class="profile-nav nav flex-column">
         <a href="{% url 'accounts:profile' %}" class="nav-link {% if request.resolver_match.url_name == 'profile' %}active{% endif %}">
-          <i class="fas fa-user"></i> Mening profilim
-        </a>
+          <i class="fas fa-user"></i>{% trans "My profile" %}</a>
         <a href="{% url 'accounts:profile_edit' %}" class="nav-link {% if request.resolver_match.url_name == 'profile_edit' %}active{% endif %}">
-          <i class="fas fa-edit"></i> Tahrirlash
-        </a>
+          <i class="fas fa-edit"></i>{% trans "Edit" %}</a>
         <a href="{% url 'accounts:change_password' %}" class="nav-link {% if request.resolver_match.url_name == 'change_password' %}active{% endif %}">
-          <i class="fas fa-key"></i> Parolni o‘zgartirish
-        </a>
+          <i class="fas fa-key"></i>{% trans "Change password" %}</a>
         <a href="{% url 'accounts:favorites' %}" class="nav-link {% if request.resolver_match.url_name == 'favorites' %}active{% endif %}">
-          <i class="fas fa-bookmark"></i> Saqlanganlar
+          <i class="fas fa-bookmark"></i> {% trans "Saved materials" %}
         </a>
         <a href="{% url 'accounts:activity_history' %}" class="nav-link {% if request.resolver_match.url_name == 'activity_history' %}active{% endif %}">
-          <i class="fas fa-history"></i> Faollik tarixi
+          <i class="fas fa-history"></i> {% trans "Activity history" %}
         </a>
         <div class="border-top"></div>
         <a href="{% url 'accounts:learning_progress' %}" class="nav-link {% if request.resolver_match.url_name == 'learning_progress' %}active{% endif %}">
-          <i class="fas fa-graduation-cap"></i> O‘quv jarayoni
+          <i class="fas fa-graduation-cap"></i> {% trans "Learning progress" %}
         </a>
         <a href="{% url 'accounts:user_certificates' %}" class="nav-link {% if request.resolver_match.url_name == 'user_certificates' %}active{% endif %}">
-          <i class="fas fa-certificate"></i> Sertifikatlar
+          <i class="fas fa-certificate"></i> {% trans "Certificates" %}
         </a>
         <a href="{% url 'accounts:user_achievements' %}" class="nav-link {% if request.resolver_match.url_name == 'user_achievements' %}active{% endif %}">
-          <i class="fas fa-trophy"></i> Yutuqlar
+          <i class="fas fa-trophy"></i> {% trans "Achievements" %}
         </a>
         <a href="{% url 'accounts:user_statistics' %}" class="nav-link {% if request.resolver_match.url_name == 'user_statistics' %}active{% endif %}">
-          <i class="fas fa-chart-line"></i> Statistika
+          <i class="fas fa-chart-line"></i> {% trans "Statistics" %}
         </a>
         <div class="border-top"></div>
-        <a href="{% url 'blog:home' %}" class="nav-link"><i class="fas fa-home"></i> Bosh sahifa</a>
-        <a href="{% url 'accounts:logout' %}" class="nav-link text-danger"><i class="fas fa-sign-out-alt"></i> Chiqish</a>
+        <a href="{% url 'blog:home' %}" class="nav-link"><i class="fas fa-home"></i> {% trans "Home" %}</a>
+        <a href="{% url 'accounts:logout' %}" class="nav-link text-danger"><i class="fas fa-sign-out-alt"></i> {% trans "Logout" %}</a>
       </nav>
     </aside>
   </div>
   <div class="col-12 col-lg-9">
     <div class="profile-content">
-      <h2 class="h4 fw-bold mb-3" style="font-family:var(--zl-display);color:var(--zl-forest-deep);">{% block profile_title %}Shaxsiy kabinet{% endblock %}</h2>
+      <h2 class="h4 fw-bold mb-3" style="font-family:var(--zl-display);color:var(--zl-forest-deep);">{% block profile_title %}{% trans "Personal cabinet" %}{% endblock %}</h2>
       {% if messages %}
         {% for message in messages %}
           <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
             {{ message }}
-            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="{% trans 'Close' %}"></button>
           </div>
         {% endfor %}
       {% endif %}

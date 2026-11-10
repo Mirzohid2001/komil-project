@@ -1,12 +1,13 @@
 {% extends 'base.html' %}
 
+{% load i18n %}
 {% block title %}HR compliance{% endblock %}
 
 {% block content %}
 <div class="zl-page-head">
   <div>
     <h1 class="zl-section-title mb-1">HR compliance</h1>
-    <p class="zl-section-lead mb-0">Majburiy testlar, hujjat tasdiqlari va sertifikat muddatlari.</p>
+    <p class="zl-section-lead mb-0">{% trans "Mandatory tests, document acknowledgments and certificate deadlines." %}</p>
   </div>
   <div class="d-flex flex-wrap gap-2">
     <a class="btn btn-sm btn-outline-primary" href="{% url 'blog:hr_reports' %}">Test hisobot</a>
@@ -40,9 +41,9 @@
 <div class="zl-card p-3 mb-3">
   <form method="get" class="row g-2 align-items-end">
     <div class="col-md-4">
-      <label class="form-label small fw-semibold">Rol</label>
+      <label class="form-label small fw-semibold">{% trans "Role" %}</label>
       <select name="role" class="form-select form-select-sm">
-        <option value="">Barcha rollar</option>
+        <option value="">{% trans "All roles" %}</option>
         {% for value, label in roles %}
           {% if value != 'admin' %}
           <option value="{{ value }}" {% if selected_role == value %}selected{% endif %}>{{ label }}</option>
@@ -62,12 +63,12 @@
       <thead class="table-light">
         <tr>
           <th>Tabel</th>
-          <th>Xodim</th>
-          <th>Rol / Bo‘lim</th>
-          <th>Muddati o‘tgan testlar</th>
+          <th>{% trans "Employee" %}</th>
+          <th>{% trans "Role / Department" %}</th>
+          <th>{% trans "Overdue tests" %}</th>
           <th>Tasdiq kerak</th>
-          <th>Sertifikat</th>
-          <th>Holat</th>
+          <th>{% trans "Certificate" %}</th>
+          <th>{% trans "Status" %}</th>
         </tr>
       </thead>
       <tbody>
@@ -115,7 +116,7 @@
           </td>
         </tr>
         {% empty %}
-        <tr><td colspan="7" class="text-center text-muted py-4">Ma’lumot yo‘q</td></tr>
+        <tr><td colspan="7" class="text-center text-muted py-4">{% trans "No data" %}</td></tr>
         {% endfor %}
       </tbody>
     </table>

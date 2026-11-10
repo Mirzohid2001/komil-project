@@ -1,9 +1,10 @@
 {% extends 'accounts/profile_base.html' %}
 
+{% load i18n %}
 {% block profile_title %}Faollik tarixi{% endblock %}
 
 {% block profile_content %}
-<p class="zl-section-lead mb-4">Kirish, ko‘rish va profil o‘zgarishlari jurnali.</p>
+<p class="zl-section-lead mb-4">{% trans "Log of logins, views and profile changes." %}</p>
 
 {% if page_obj %}
   <div class="zl-card overflow-hidden p-0">
@@ -12,7 +13,7 @@
         <thead>
           <tr>
             <th scope="col">Sana va vaqt</th>
-            <th scope="col">Harakat</th>
+            <th scope="col">{% trans "Action" %}</th>
             <th scope="col">Material</th>
             <th scope="col">IP manzil</th>
           </tr>
@@ -122,8 +123,8 @@
 {% else %}
   <div class="zl-empty">
     <i class="fas fa-history"></i>
-    <h4 class="h5 fw-bold mb-2">Faollik yo‘q</h4>
-    <p class="mb-0">Harakatlaringiz shu yerda ko‘rinadi</p>
+    <h4 class="h5 fw-bold mb-2">{% trans "No activity" %}</h4>
+    <p class="mb-0">{% trans "Your activity will appear here." %}</p>
   </div>
 {% endif %}
 {% endblock %}

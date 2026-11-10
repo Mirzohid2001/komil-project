@@ -18,6 +18,7 @@ from io import BytesIO, StringIO
 import csv
 import random
 from django.db import models
+from django.utils.translation import gettext as _
 import uuid
 
 User = get_user_model()
@@ -126,7 +127,7 @@ def post_detail(request, post_id):
     # Проверка доступа: только админы могут видеть посты любой роли
     if request.user.role != 'admin' and post.role != request.user.role:
         # Перенаправляем на страницу категорий, если пользователь не имеет доступа
-        messages.error(request, "У вас нет доступа к этому посту")
+        messages.error(request, _("You do not have access to this post"))
         return redirect('blog:category_list')
     
     # Получаем IP адрес пользователя
@@ -201,8 +202,10 @@ def post_detail(request, post_id):
                 check_category_completion_achievement(request.user)
                 
                 messages.success(
-                    request, 
-                    f"Поздравляем! Вы завершили категорию '{post.category.name}' и получили сертификат."
+                    request,
+                    _("Congratulations! You finished category '%(name)s' and received a certificate.") % {
+                        "name": post.category.name,
+                    },
                 )
     
     # Video ko'rganlar ro'yxati
@@ -227,7 +230,7 @@ def analytics_dashboard(request):
     """Страница аналитики просмотров видео"""
     # Проверка доступа - только для администраторов
     if request.user.role != 'admin':
-        messages.error(request, "У вас нет доступа к аналитике")
+        messages.error(request, _("You do not have access to analytics"))
         return redirect('blog:home')
     
     # Получаем общее количество постов с видео
@@ -454,18 +457,18 @@ def test_start(request, test_id):
     
     # Проверяем, соответствует ли тест роли пользователя
     if test.role != request.user.role and request.user.role != 'admin':
-        messages.error(request, "У вас нет доступа к этому тесту")
+        messages.error(request, _("You do not have access to this test"))
         return redirect('blog:test_list')
     
     # Проверяем, активен ли тест
     if not test.is_active:
-        messages.error(request, "Этот тест в настоящее время недоступен")
+        messages.error(request, _("This test is currently unavailable"))
         return redirect('blog:test_list')
     
     # Проверяем предварительно количество вопросов в тесте
     total_questions = test.get_total_questions()
     if total_questions == 0:
-        messages.error(request, "В этом тесте нет вопросов")
+        messages.error(request, _("This test has no questions"))
         return redirect('blog:test_list')
     
     # Savol bankidan tasodifiy N ta (questions_per_attempt)
@@ -474,7 +477,7 @@ def test_start(request, test_id):
 
     # Если нет логически правильных вопросов, возвращаем ошибку
     if not filtered_questions:
-        messages.error(request, "В тесте недостаточно корректных вопросов. Пожалуйста, обратитесь к администратору.")
+        messages.error(request, _("Not enough valid questions in the test. Please contact the administrator."))
         return redirect('blog:test_list')
 
     # Har urinishda to‘plamni qayta aralashtiramiz
@@ -574,7 +577,7 @@ def test_question(request):
     """Отображение текущего вопроса теста"""
     # Проверяем, есть ли активный тест
     if 'current_test' not in request.session:
-        messages.error(request, "Нет активного теста")
+        messages.error(request, _("No active test"))
         return redirect('blog:test_list')
     
     test_data = request.session['current_test']
@@ -582,7 +585,7 @@ def test_question(request):
 
     remaining = _test_time_remaining_seconds(test_data, test)
     if remaining <= 0:
-        messages.warning(request, "Vaqt tugadi — test yakunlandi.")
+        messages.warning(request, _("Time is up — test finished."))
         return redirect('blog:test_finish')
     
     # Проверка на корректность индекса текущего вопроса
@@ -591,7 +594,7 @@ def test_question(request):
     total_questions = len(question_ids)
     
     if current_idx < 0 or current_idx >= total_questions:
-        messages.error(request, "Ошибка при загрузке вопроса")
+        messages.error(request, _("Error loading question"))
         return redirect('blog:test_list')
     
     # Получаем текущий вопрос
@@ -628,22 +631,22 @@ def test_question(request):
         if qtype == Question.Q_SHORT:
             raw = (request.POST.get('text_answer') or '').strip()
             if not raw:
-                messages.error(request, "Javob yozing.")
+                messages.error(request, _("Enter an answer."))
                 raw = None
         elif qtype == Question.Q_MULTI:
             raw = request.POST.getlist('options')
             if not raw:
-                messages.error(request, "Kamida bitta variant tanlang.")
+                messages.error(request, _("Select at least one option."))
                 raw = None
         else:
             selected_option_id = request.POST.get('option')
             if not selected_option_id:
-                messages.error(request, "Javob variantini tanlang.")
+                messages.error(request, _("Select an answer option."))
             else:
                 try:
                     raw = int(selected_option_id)
                 except (ValueError, TypeError):
-                    messages.error(request, "Noto‘g‘ri javob formati.")
+                    messages.error(request, _("Invalid answer format."))
                     raw = None
 
         if raw is not None:
@@ -674,7 +677,7 @@ def test_finish(request):
     """Завершение тестирования и сохранение результатов"""
     # Проверяем, есть ли активный тест
     if 'current_test' not in request.session:
-        messages.error(request, "Нет активного теста")
+        messages.error(request, _("No active test"))
         return redirect('blog:test_list')
     
     test_data = request.session['current_test']
@@ -829,14 +832,18 @@ def test_finish(request):
         if created:
             messages.success(
                 request,
-                f"Sertifikat berildi: {test.certificate_category.name} "
-                f"(amal: {cert.valid_until:%d.%m.%Y}).",
+                _("Certificate issued: %(name)s (valid until %(date)s).") % {
+                    "name": test.certificate_category.name,
+                    "date": cert.valid_until.strftime("%d.%m.%Y"),
+                },
             )
         else:
             messages.success(
                 request,
-                f"Sertifikat yangilandi: {test.certificate_category.name} "
-                f"(amal: {cert.valid_until:%d.%m.%Y}).",
+                _("Certificate renewed: %(name)s (valid until %(date)s).") % {
+                    "name": test.certificate_category.name,
+                    "date": cert.valid_until.strftime("%d.%m.%Y"),
+                },
             )
     
     # Очищаем данные о текущем тесте в сессии
@@ -856,7 +863,7 @@ def test_result(request, result_id):
     
     # Проверяем, принадлежит ли результат текущему пользователю
     if result.user != request.user and request.user.role != 'admin':
-        messages.error(request, "У вас нет доступа к этому результату")
+        messages.error(request, _("You do not have access to this result"))
         return redirect('blog:test_list')
     
     # Получаем ответы пользователя с дополнительной предзагрузкой для оптимизации
@@ -969,7 +976,7 @@ def test_analytics(request):
     """Аналитика тестирования (только для админов)"""
     # Проверка доступа - только для администраторов
     if request.user.role != 'admin':
-        messages.error(request, "У вас нет доступа к этой странице")
+        messages.error(request, _("You do not have access to this page"))
         return redirect('blog:home')
     
     # Получаем все результаты тестов
@@ -1071,7 +1078,7 @@ def test_analytics(request):
 def weak_questions_report(request):
     """Zaif savollar: qaysi savolda eng ko‘p xato qilinadi."""
     if request.user.role != 'admin' and not request.user.is_staff:
-        messages.error(request, "Faqat admin ko‘ra oladi.")
+        messages.error(request, _("Admins only."))
         return redirect('blog:home')
 
     test_id = request.GET.get('test')
@@ -1290,7 +1297,7 @@ def document_detail(request, document_id):
     
     # Check if user can access this document
     if not document.can_user_access(request.user):
-        messages.error(request, "Sizga bu hujjatga ruxsat yo'q")
+        messages.error(request, _("You do not have access to this document."))
         return redirect('blog:document_list')
     
     # Track view
@@ -1322,11 +1329,11 @@ def document_acknowledge(request, document_id):
 
     document = get_object_or_404(Document, id=document_id)
     if not document.can_user_access(request.user):
-        messages.error(request, "Sizga bu hujjatga ruxsat yo'q")
+        messages.error(request, _("You do not have access to this document."))
         return redirect('blog:document_list')
 
     if not document.requires_acknowledgment:
-        messages.info(request, "Bu hujjat uchun tasdiq talab qilinmaydi.")
+        messages.info(request, _("Acknowledgment is not required for this document."))
         return redirect('blog:document_detail', document_id=document.id)
 
     ack, created = DocumentAcknowledgment.objects.get_or_create(
@@ -1346,7 +1353,7 @@ def document_acknowledge(request, document_id):
             payload={'document_id': document.id, 'title': document.title},
             request=request,
         )
-    messages.success(request, "Hujjat bilan tanishganingiz tasdiqlandi.")
+    messages.success(request, _("Document acknowledgment confirmed."))
     return redirect('blog:document_detail', document_id=document.id)
 
 @login_required
@@ -1356,7 +1363,7 @@ def document_download(request, document_id):
     
     # Check if user can access this document
     if not document.can_user_access(request.user):
-        messages.error(request, "Sizga bu hujjatga ruxsat yo'q")
+        messages.error(request, _("You do not have access to this document."))
         return redirect('blog:document_list')
     
     # Track download
@@ -1378,7 +1385,7 @@ def document_download(request, document_id):
         response['Content-Disposition'] = f'attachment; filename="{os.path.basename(file_path)}"'
         return response
     else:
-        messages.error(request, "Fayl topilmadi")
+        messages.error(request, _("File not found"))
         return redirect('blog:document_detail', document_id=document_id)
 
 @login_required
@@ -1387,7 +1394,7 @@ def document_upload(request):
     from .forms import DocumentUploadForm
 
     if request.user.role != 'admin':
-        messages.error(request, "Sizga bu sahifaga ruxsat yo'q")
+        messages.error(request, _("You do not have access to this page"))
         return redirect('blog:home')
 
     if request.method == 'POST':
@@ -1398,9 +1405,9 @@ def document_upload(request):
             document.allowed_roles = form.cleaned_data['allowed_roles']
             document.save()
 
-            messages.success(request, f"Hujjat '{document.title}' muvaffaqiyatli yuklandi")
+            messages.success(request, _("Document '%(title)s' uploaded successfully") % {"title": document.title})
             return redirect('blog:document_list')
-        messages.error(request, "Xatolik yuz berdi. Iltimos, ma'lumotlarni tekshiring")
+        messages.error(request, _("An error occurred. Please check the data."))
     else:
         form = DocumentUploadForm()
 
@@ -1411,7 +1418,7 @@ def document_analytics(request):
     """Admin view for document analytics"""
     # Check if user is admin
     if request.user.role != 'admin':
-        messages.error(request, "Sizga bu sahifaga ruxsat yo'q")
+        messages.error(request, _("You do not have access to this page"))
         return redirect('blog:home')
     
     # Get analytics data
@@ -1465,7 +1472,7 @@ def document_analytics(request):
 def hr_reports(request):
     """Admin HR report page + CSV/PDF export by role."""
     if request.user.role != 'admin' and not request.user.is_staff:
-        messages.error(request, "Sizga bu sahifaga ruxsat yo'q")
+        messages.error(request, _("You do not have access to this page"))
         return redirect('blog:home')
 
     role = request.GET.get('role', '')
@@ -1535,7 +1542,7 @@ def hr_reports(request):
         result_buf = BytesIO()
         pdf = pisa.pisaDocument(BytesIO(html.encode('utf-8')), result_buf)
         if pdf.err:
-            messages.error(request, "PDF yaratib bo'lmadi")
+            messages.error(request, _("Could not create PDF"))
             return redirect('blog:hr_reports')
         response = HttpResponse(result_buf.getvalue(), content_type='application/pdf')
         response['Content-Disposition'] = 'attachment; filename="hr_test_report.pdf"'
@@ -1564,7 +1571,7 @@ def hr_reports(request):
 def hr_compliance(request):
     """Birlashtirilgan HR compliance: majburiy testlar, hujjat tasdiqlari, sertifikat muddati."""
     if request.user.role != 'admin' and not request.user.is_staff:
-        messages.error(request, "Sizga bu sahifaga ruxsat yo'q")
+        messages.error(request, _("You do not have access to this page"))
         return redirect('blog:home')
 
     today = timezone.localdate()

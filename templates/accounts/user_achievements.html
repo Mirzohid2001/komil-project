@@ -1,5 +1,6 @@
 {% extends 'accounts/profile_base.html' %}
 
+{% load i18n %}
 {% block profile_title %}Yutuqlar{% endblock %}
 
 {% block profile_content %}
@@ -7,9 +8,9 @@
 
 <section class="zl-panel mb-3">
   <div class="zl-stats mb-3">
-    <div class="zl-stat"><span>Qo‘lga kiritilgan</span><strong>{{ earned_achievements }}</strong></div>
+    <div class="zl-stat"><span>{% trans "Earned" %}</span><strong>{{ earned_achievements }}</strong></div>
     <div class="zl-stat"><span>Jami mavjud</span><strong>{{ total_achievements }}</strong></div>
-    <div class="zl-stat"><span>Progress</span><strong class="text-gradient">{{ completion_percentage|floatformat:0 }}%</strong></div>
+    <div class="zl-stat"><span>{% trans "Progress" %}</span><strong class="text-gradient">{{ completion_percentage|floatformat:0 }}%</strong></div>
     <div class="zl-stat"><span>XP olindi</span><strong>{{ total_experience_gained }}</strong></div>
   </div>
   <div class="progress" style="height: 8px;">
@@ -21,8 +22,8 @@
 <section class="zl-panel mb-4">
   <div class="d-flex justify-content-between flex-wrap gap-3 align-items-center">
     <div class="d-flex flex-wrap gap-2">
-      <button type="button" id="all-achievements" class="btn btn-primary btn-sm">Barchasi</button>
-      <button type="button" id="earned-achievements" class="btn btn-outline-secondary btn-sm">Qo‘lga kiritilganlar</button>
+      <button type="button" id="all-achievements" class="btn btn-primary btn-sm">{% trans "All" %}</button>
+      <button type="button" id="earned-achievements" class="btn btn-outline-secondary btn-sm">{% trans "Earned ones" %}</button>
       <button type="button" id="locked-achievements" class="btn btn-outline-secondary btn-sm">Qulflanganlar</button>
     </div>
     <div class="flex-grow-1" style="max-width: 220px;">
@@ -32,7 +33,7 @@
 </section>
 
 <div class="mb-2">
-  <h3 class="zl-section-title h5 mb-3">Toifalar bo‘yicha yutuqlar</h3>
+  <h3 class="zl-section-title h5 mb-3">{% trans "Achievements by category" %}</h3>
 
   {% for category, achievements_list in achievements_by_type.items %}
     <div class="mb-4 achievement-category">
@@ -50,7 +51,7 @@
                 <p class="zl-meta small mb-3">{{ achievement_data.achievement.description }}</p>
                 {% if achievement_data.is_earned %}
                   <div class="d-flex justify-content-between align-items-center small">
-                    <span class="zl-chip ok"><i class="fas fa-check-circle me-1"></i> Qo‘lga kiritilgan</span>
+                    <span class="zl-chip ok"><i class="fas fa-check-circle me-1"></i>{% trans "Earned" %}</span>
                     <span class="zl-meta">{{ achievement_data.earned_at|date:"d.m.Y" }}</span>
                   </div>
                 {% else %}

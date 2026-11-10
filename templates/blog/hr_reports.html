@@ -1,12 +1,13 @@
 {% extends 'base.html' %}
 
-{% block title %}HR hisobotlari{% endblock %}
+{% load i18n %}
+{% block title %}{% trans "HR reports" %}{% endblock %}
 
 {% block content %}
 <div class="zl-page-head">
   <div>
-    <h1 class="zl-section-title mb-1">HR hisobotlari</h1>
-    <p class="zl-section-lead mb-0">Test natijalari bo‘lim (rol) bo‘yicha.</p>
+    <h1 class="zl-section-title mb-1">{% trans "HR reports" %}</h1>
+    <p class="zl-section-lead mb-0">{% trans "Test results by department (role)." %}</p>
   </div>
   <div class="d-flex flex-wrap gap-2">
     <a class="btn btn-sm btn-outline-primary" href="?role={{ selected_role }}&export=csv">
@@ -21,9 +22,9 @@
 <div class="zl-card p-3 mb-3">
   <form method="get" class="row g-2 align-items-end">
     <div class="col-md-4">
-      <label class="form-label small fw-semibold">Rol</label>
+      <label class="form-label small fw-semibold">{% trans "Role" %}</label>
       <select name="role" class="form-select form-select-sm">
-        <option value="">Barcha rollar</option>
+        <option value="">{% trans "All roles" %}</option>
         {% for value, label in roles %}
           <option value="{{ value }}" {% if selected_role == value %}selected{% endif %}>{{ label }}</option>
         {% endfor %}
@@ -50,7 +51,7 @@
   <div class="col-12">
     <div class="zl-empty">
       <i class="fas fa-chart-bar d-block"></i>
-      <p class="mb-0">Ma’lumot topilmadi.</p>
+      <p class="mb-0">{% trans "No data found." %}</p>
     </div>
   </div>
   {% endfor %}
@@ -61,12 +62,12 @@
     <table class="table table-sm table-hover align-middle mb-0">
       <thead class="table-light">
         <tr>
-          <th>Foydalanuvchi</th>
-          <th>Rol</th>
-          <th>Test</th>
+          <th>{% trans "User" %}</th>
+          <th>{% trans "Role" %}</th>
+          <th>{% trans "Test" %}</th>
           <th>%</th>
-          <th>O‘tdi</th>
-          <th>Sana</th>
+          <th>{% trans "Passed?" %}</th>
+          <th>{% trans "Date" %}</th>
         </tr>
       </thead>
       <tbody>
@@ -78,16 +79,16 @@
           <td>{{ r.percentage|floatformat:1 }}%</td>
           <td>
             {% if r.is_passed %}
-              <span class="zl-chip ok">Ha</span>
+              <span class="zl-chip ok">{% trans "Yes" %}</span>
             {% else %}
-              <span class="zl-chip danger">Yo‘q</span>
+              <span class="zl-chip danger">{% trans "No" %}</span>
             {% endif %}
           </td>
           <td class="zl-meta">{{ r.completed_at|date:"d.m.Y H:i" }}</td>
         </tr>
         {% empty %}
         <tr>
-          <td colspan="6" class="text-center py-4 zl-meta">Natijalar yo‘q.</td>
+          <td colspan="6" class="text-center py-4 zl-meta">{% trans "No results." %}</td>
         </tr>
         {% endfor %}
       </tbody>

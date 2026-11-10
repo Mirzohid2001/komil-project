@@ -1,7 +1,8 @@
 {% extends 'base.html' %}
+{% load i18n %}
 {% load static %}
 
-{% block title %}Test tahlili{% endblock %}
+{% block title %}{% trans "Test analytics" %}{% endblock %}
 
 {% block extra_css %}
 <style>
@@ -30,34 +31,33 @@
 {% block content %}
 <div class="zl-page-head">
   <div>
-    <h1 class="zl-section-title mb-1">Test tahlili</h1>
-    <p class="zl-section-lead mb-0">Urinishlar, rollar va testlar bo‘yicha umumiy ko‘rsatkichlar.</p>
+    <h1 class="zl-section-title mb-1">{% trans "Test analytics" %}</h1>
+    <p class="zl-section-lead mb-0">{% trans "Attempts, roles and overall test metrics." %}</p>
   </div>
   <div class="d-flex gap-2">
-    <a href="{% url 'blog:weak_questions' %}" class="btn btn-sm btn-primary">Zaif savollar</a>
+    <a href="{% url 'blog:weak_questions' %}" class="btn btn-sm btn-primary">{% trans "Weak questions" %}</a>
     <a href="{% url 'blog:test_list' %}" class="btn btn-sm btn-outline-primary">
-      <i class="fas fa-arrow-left me-1"></i> Testlar
-    </a>
+      <i class="fas fa-arrow-left me-1"></i>{% trans "Tests" %}</a>
   </div>
 </div>
 
 <div class="zl-stat-grid mb-4">
   <div class="zl-card p-3 text-center">
-    <div class="zl-meta mb-1">Topshirilgan testlar</div>
+    <div class="zl-meta mb-1">{% trans "Submitted tests" %}</div>
     <div class="zl-stat-num">{{ total_tests_taken }}</div>
   </div>
   <div class="zl-card p-3 text-center">
-    <div class="zl-meta mb-1">Faol foydalanuvchilar</div>
+    <div class="zl-meta mb-1">{% trans "Active users" %}</div>
     <div class="zl-stat-num">{{ total_users }}</div>
   </div>
   <div class="zl-card p-3 text-center">
-    <div class="zl-meta mb-1">Jami testlar</div>
+    <div class="zl-meta mb-1">{% trans "Total tests" %}</div>
     <div class="zl-stat-num">{{ total_tests }}</div>
   </div>
 </div>
 
 <section class="zl-card p-4 mb-4">
-  <h2 class="h5 fw-bold mb-3">Test dinamikasi</h2>
+  <h2 class="h5 fw-bold mb-3">{% trans "Test dynamics" %}</h2>
   <div class="zl-chart-wrap">
     <canvas id="testsChart"></canvas>
   </div>
@@ -66,7 +66,7 @@
 <div class="row g-3 mb-4">
   <div class="col-lg-6">
     <section class="zl-card p-4 h-100">
-      <h2 class="h5 fw-bold mb-3">Rollar bo‘yicha</h2>
+      <h2 class="h5 fw-bold mb-3">{% trans "By role" %}</h2>
       {% if role_stats %}
         {% for stat in role_stats %}
         <div class="zl-role-block">
@@ -85,7 +85,7 @@
         {% endfor %}
       {% else %}
         <div class="zl-empty py-4">
-          <p class="mb-0">Ko‘rsatish uchun ma’lumot yo‘q</p>
+          <p class="mb-0">{% trans "No data to display" %}</p>
         </div>
       {% endif %}
     </section>
@@ -95,14 +95,10 @@
     <section class="zl-card p-4 h-100">
       <ul class="nav nav-tabs mb-3" id="testsTabs" role="tablist">
         <li class="nav-item" role="presentation">
-          <button class="nav-link active" id="hardest-tab" data-bs-toggle="tab" data-bs-target="#hardest" type="button" role="tab" aria-controls="hardest" aria-selected="true">
-            Eng qiyin
-          </button>
+          <button class="nav-link active" id="hardest-tab" data-bs-toggle="tab" data-bs-target="#hardest" type="button" role="tab" aria-controls="hardest" aria-selected="true">{% trans "Hardest" %}</button>
         </li>
         <li class="nav-item" role="presentation">
-          <button class="nav-link" id="easiest-tab" data-bs-toggle="tab" data-bs-target="#easiest" type="button" role="tab" aria-controls="easiest" aria-selected="false">
-            Eng oson
-          </button>
+          <button class="nav-link" id="easiest-tab" data-bs-toggle="tab" data-bs-target="#easiest" type="button" role="tab" aria-controls="easiest" aria-selected="false">{% trans "Easiest" %}</button>
         </li>
       </ul>
 
@@ -122,7 +118,7 @@
             </div>
             {% endfor %}
           {% else %}
-            <p class="zl-meta text-center py-3 mb-0">Ma’lumot yo‘q</p>
+            <p class="zl-meta text-center py-3 mb-0">{% trans "No data" %}</p>
           {% endif %}
         </div>
 
@@ -141,7 +137,7 @@
             </div>
             {% endfor %}
           {% else %}
-            <p class="zl-meta text-center py-3 mb-0">Ma’lumot yo‘q</p>
+            <p class="zl-meta text-center py-3 mb-0">{% trans "No data" %}</p>
           {% endif %}
         </div>
       </div>
@@ -151,7 +147,7 @@
 
 <section class="zl-card overflow-hidden">
   <div class="p-3 border-bottom">
-    <h2 class="h5 fw-bold mb-0">Eng faol foydalanuvchilar</h2>
+    <h2 class="h5 fw-bold mb-0">{% trans "Most active users" %}</h2>
   </div>
   {% if top_users %}
   <div class="table-responsive">
@@ -159,10 +155,10 @@
       <thead class="table-light">
         <tr>
           <th style="width: 50px;">#</th>
-          <th>Foydalanuvchi</th>
-          <th>Rol</th>
-          <th>Topshirilgan</th>
-          <th>O‘rt. ball</th>
+          <th>{% trans "User" %}</th>
+          <th>{% trans "Role" %}</th>
+          <th>{% trans "Submitted" %}</th>
+          <th>{% trans "Avg. score" %}</th>
         </tr>
       </thead>
       <tbody>
@@ -196,7 +192,7 @@
   </div>
   {% else %}
   <div class="zl-empty">
-    <p class="mb-0">Ko‘rsatish uchun ma’lumot yo‘q</p>
+    <p class="mb-0">{% trans "No data to display" %}</p>
   </div>
   {% endif %}
 </section>

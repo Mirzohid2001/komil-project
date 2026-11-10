@@ -52,7 +52,7 @@ class User(AbstractUser):
         max_length=20,
         choices=ROLE_CHOICES,
         default='офисный-персонал',
-        verbose_name="Foydalanuvchi roli"
+        verbose_name="Lavozim"
     )
     employee_id = models.CharField(
         max_length=40, blank=True, db_index=True, verbose_name="Tabel raqami"
@@ -441,7 +441,7 @@ class RegistrationRequest(models.Model):
     telegram_username = models.CharField(max_length=64, blank=True, verbose_name="Telegram")
     full_name = models.CharField(max_length=200, verbose_name="F.I.O.")
     employee_id = models.CharField(max_length=40, blank=True, verbose_name="Tabel raqami")
-    role = models.CharField(max_length=20, choices=User.ROLE_CHOICES, verbose_name="Rol")
+    role = models.CharField(max_length=20, choices=User.ROLE_CHOICES, verbose_name="Lavozim")
     phone_number = models.CharField(max_length=20, blank=True, verbose_name="Telefon")
     status = models.CharField(
         max_length=20, choices=STATUS_CHOICES, default='pending',

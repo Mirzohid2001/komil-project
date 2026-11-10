@@ -1,21 +1,22 @@
 {% extends 'base.html' %}
 
-{% block title %}Zaif savollar{% endblock %}
+{% load i18n %}
+{% block title %}{% trans "Weak questions" %}{% endblock %}
 
 {% block content %}
 <div class="zl-page-head">
   <div>
-    <h1 class="zl-section-title mb-1">Zaif savollar</h1>
-    <p class="zl-section-lead mb-0">Qaysi savolda eng ko‘p xato qilinadi — o‘quv materialini yangilash uchun.</p>
+    <h1 class="zl-section-title mb-1">{% trans "Weak questions" %}</h1>
+    <p class="zl-section-lead mb-0">{% trans "Which questions fail most — for updating training materials." %}</p>
   </div>
-  <a href="{% url 'blog:test_analytics' %}" class="btn btn-sm btn-outline-primary">Test tahlili</a>
+  <a href="{% url 'blog:test_analytics' %}" class="btn btn-sm btn-outline-primary">{% trans "Test analytics" %}</a>
 </div>
 
 <form method="get" class="zl-card p-3 mb-3 d-flex flex-wrap gap-2 align-items-end">
   <div>
-    <label class="form-label small fw-semibold mb-1">Test</label>
+    <label class="form-label small fw-semibold mb-1">{% trans "Test" %}</label>
     <select name="test" class="form-select form-select-sm" onchange="this.form.submit()">
-      <option value="">Barcha testlar</option>
+      <option value="">{% trans "All tests" %}</option>
       {% for t in tests %}
       <option value="{{ t.id }}" {% if selected_test == t.id %}selected{% endif %}>{{ t.title }}</option>
       {% endfor %}
@@ -26,16 +27,16 @@
 <div class="row g-3">
   <div class="col-lg-8">
     <div class="zl-card p-0 overflow-hidden">
-      <div class="p-3 border-bottom"><strong>Savollar bo‘yicha xato foizi</strong></div>
+      <div class="p-3 border-bottom"><strong>{% trans "Error rate by question" %}</strong></div>
       <div class="table-responsive" style="max-height:480px;overflow:auto;">
         <table class="table table-sm mb-0">
           <thead>
             <tr>
-              <th>Test</th>
-              <th>Savol</th>
-              <th>Jami</th>
-              <th>Xato</th>
-              <th>Xato %</th>
+              <th>{% trans "Test" %}</th>
+              <th>{% trans "Question" %}</th>
+              <th>{% trans "Total" %}</th>
+              <th>{% trans "Wrong" %}</th>
+              <th>{% trans "Error %" %}</th>
             </tr>
           </thead>
           <tbody>
@@ -52,7 +53,7 @@
               </td>
             </tr>
           {% empty %}
-            <tr><td colspan="5" class="text-muted p-3">Hali javoblar yo‘q</td></tr>
+            <tr><td colspan="5" class="text-muted p-3">{% trans "No answers yet" %}</td></tr>
           {% endfor %}
           </tbody>
         </table>
@@ -61,10 +62,10 @@
   </div>
   <div class="col-lg-4">
     <div class="zl-card p-0 overflow-hidden">
-      <div class="p-3 border-bottom"><strong>Ko‘p xato qilgan xodimlar</strong></div>
+      <div class="p-3 border-bottom"><strong>{% trans "Employees with most mistakes" %}</strong></div>
       <div class="table-responsive" style="max-height:480px;overflow:auto;">
         <table class="table table-sm mb-0">
-          <thead><tr><th>Xodim</th><th>Xato</th></tr></thead>
+          <thead><tr><th>{% trans "Employee" %}</th><th>{% trans "Wrong" %}</th></tr></thead>
           <tbody>
           {% for u in weak_users %}
             <tr>
@@ -79,7 +80,7 @@
               <td><strong>{{ u.wrong }}</strong></td>
             </tr>
           {% empty %}
-            <tr><td colspan="2" class="text-muted p-3">Ma’lumot yo‘q</td></tr>
+            <tr><td colspan="2" class="text-muted p-3">{% trans "No data" %}</td></tr>
           {% endfor %}
           </tbody>
         </table>

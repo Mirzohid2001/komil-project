@@ -1,11 +1,12 @@
 {% extends 'courses/base.html' %}
+{% load i18n %}
 {% load static %}
 
 {% block title %}{{ module.title }} — {{ course.title }}{% endblock %}
 
 {% block breadcrumb_items %}
 <li class="breadcrumb-item"><a href="{% url 'courses:detail' course.slug %}">{{ course.title }}</a></li>
-<li class="breadcrumb-item"><a href="{% url 'courses:learn' course.slug %}">O'qish</a></li>
+<li class="breadcrumb-item"><a href="{% url 'courses:learn' course.slug %}">{% trans "Study" %}</a></li>
 <li class="breadcrumb-item active" aria-current="page">{{ module.title }}</li>
 {% endblock %}
 
@@ -58,7 +59,7 @@
 
     <section class="zl-card overflow-hidden mb-3">
       <div class="p-3 border-bottom">
-        <h2 class="h5 fw-bold mb-0">Darslar</h2>
+        <h2 class="h5 fw-bold mb-0">{% trans "Lessons" %}</h2>
       </div>
       <div class="p-2 p-md-3">
         {% for lesson in lessons %}
@@ -101,7 +102,7 @@
         {% empty %}
         <div class="zl-empty my-2">
           <i class="fas fa-book-open d-block"></i>
-          <p class="mb-0">Bu modulda hali darslar yo'q.</p>
+          <p class="mb-0">{% trans "No lessons in this module yet." %}</p>
         </div>
         {% endfor %}
       </div>

@@ -3,6 +3,7 @@
 from django.contrib import messages
 from django.shortcuts import redirect
 from django.urls import reverse
+from django.utils.translation import gettext as _
 
 
 # Remediation + auth paths (boshqa LMS yopiq)
@@ -51,7 +52,7 @@ class ComplianceGateMiddleware:
                     n = len(status['items'])
                     messages.warning(
                         request,
-                        f"Compliance: {n} ta majburiy talab bajarilmagan. Avval ularni yoping.",
+                        _("Compliance: %(count)s mandatory requirement(s) unfinished. Complete them first.") % {"count": n},
                     )
                     return redirect('blog:compliance_hub')
 

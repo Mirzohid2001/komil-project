@@ -1,6 +1,7 @@
 {% extends 'base.html' %}
 
-{% block title %}Kurslar{% endblock %}
+{% load i18n %}
+{% block title %}{% trans "Courses" %}{% endblock %}
 
 {% block extra_css %}
 <style>
@@ -94,7 +95,7 @@
   {% block breadcrumb %}
   <nav aria-label="breadcrumb">
     <ol class="breadcrumb">
-      <li class="breadcrumb-item"><a href="{% url 'courses:list' %}">Kurslar</a></li>
+      <li class="breadcrumb-item"><a href="{% url 'courses:list' %}">{% trans "Courses" %}</a></li>
       {% block breadcrumb_items %}{% endblock %}
     </ol>
   </nav>

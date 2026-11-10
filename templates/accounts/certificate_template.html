@@ -1,9 +1,10 @@
+{% load i18n %}
 <!DOCTYPE html>
 <html lang="ru">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Sertifikat</title>
+    <title>{% trans "Certificate" %}</title>
     <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700&family=Playfair+Display:wght@700&display=swap" rel="stylesheet">
     <style>
         @page {
@@ -197,8 +198,8 @@
                 <div class="logo">
                     <div class="logo-text">Isomer Oil Group</div>
                 </div>
-                <div class="certificate-title">Sertifikat</div>
-                <div class="certificate-subtitle">O'quv dasturi muvaffaqiyatli yakunlanganligi to'g'risida</div>
+                <div class="certificate-title">{% trans "Certificate" %}</div>
+                <div class="certificate-subtitle">{% trans "Successfully completed the training program" %}</div>
             </div>
             
             <div class="main-content">
@@ -214,7 +215,7 @@
                         <div class="date-value">{{ certificate.certificate_id }}</div>
                     </div>
                     <div class="date-item">
-                        <div class="date-label">Berilgan sana</div>
+                        <div class="date-label">{% trans "Issue date" %}</div>
                         <div class="date-value">{{ date }}</div>
                     </div>
                 </div>

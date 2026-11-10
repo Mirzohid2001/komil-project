@@ -10,6 +10,9 @@ msgstr "%(count)s kun"
 msgid "%(progress)s%% complete"
 msgstr "%(progress)s%% tugallandi"
 
+msgid "A certificate appears after you successfully finish a course"
+msgstr "Kursni muvaffaqiyatli yakunlaganingizdan keyin sertifikat paydo bo‘ladi"
+
 msgid "About me"
 msgstr "O‘zim haqimda"
 
@@ -22,11 +25,38 @@ msgstr "Kirmagan"
 msgid "Access"
 msgstr "Ruxsat"
 
+msgid "Achievements"
+msgstr "Yutuqlar"
+
+msgid "Achievements by category"
+msgstr "Toifalar bo‘yicha yutuqlar"
+
+msgid "Acknowledgment is not required for this document."
+msgstr "Bu hujjat uchun tasdiq talab qilinmaydi."
+
+msgid "Action"
+msgstr "Harakat"
+
+msgid "Active roles"
+msgstr "Faol rollar"
+
 msgid "Active test list"
 msgstr "Faol testlar ro‘yxati"
 
+msgid "Active users"
+msgstr "Faol foydalanuvchilar"
+
+msgid "Activity history"
+msgstr "Faollik tarixi"
+
 msgid "Admin"
 msgstr "Admin"
+
+msgid "Administrator"
+msgstr "Administrator"
+
+msgid "Admins only."
+msgstr "Faqat admin ko‘ra oladi."
 
 msgid "All"
 msgstr "Barchasi"
@@ -37,11 +67,23 @@ msgstr "Hammasi joyida"
 msgid "All courses"
 msgstr "Barcha kurslar"
 
+msgid "All notifications marked as read."
+msgstr "Barcha bildirishnomalar o‘qildi."
+
 msgid "All roles"
 msgstr "Barcha rollar"
 
+msgid "All tests"
+msgstr "Barcha testlar"
+
 msgid "Allowed guidelines and files."
 msgstr "Ruxsat berilgan yo‘riqnoma va fayllar."
+
+msgid "An error occurred. Please check the data."
+msgstr "Xatolik yuz berdi. Ma’lumotlarni tekshiring."
+
+msgid "Analysis of scores, activity and courses."
+msgstr "Ballar, faollik va kurslar bo‘yicha tahlil."
 
 msgid "Analytics"
 msgstr "Analitika"
@@ -55,8 +97,32 @@ msgstr "Tasdiqlash"
 msgid "Assignment"
 msgstr "Vazifa"
 
+msgid "Assignment approved — lesson completed."
+msgstr "Vazifa tasdiqlandi — dars yakunlandi."
+
+msgid "Assignment rejected."
+msgstr "Vazifa rad etildi."
+
+msgid "Assignment submitted. Wait for instructor approval."
+msgstr "Vazifa yuborildi. Instruktur tasdiğini kuting."
+
 msgid "Attachments"
 msgstr "Qo‘shimcha fayllar"
+
+msgid "attempt"
+msgstr "urinish"
+
+msgid "Attempts"
+msgstr "Urinishlar"
+
+msgid "attempts"
+msgstr "urinish"
+
+msgid "Attempts, average score and progress."
+msgstr "Urinishlar, o‘rtacha ball va progress."
+
+msgid "Attempts, roles and overall test metrics."
+msgstr "Urinishlar, rollar va testlar bo‘yicha umumiy ko‘rsatkichlar."
 
 msgid "Available tests"
 msgstr "Mavjud testlar"
@@ -64,8 +130,20 @@ msgstr "Mavjud testlar"
 msgid "Available tests for your role. Questions shuffle each time."
 msgstr "Rolingiz uchun mavjud testlar. Har safar savollar aralashadi."
 
+msgid "Average"
+msgstr "O‘rtacha"
+
 msgid "Average score"
 msgstr "O‘rtacha ball"
+
+msgid "Average time"
+msgstr "O‘rtacha vaqt"
+
+msgid "Avg. score"
+msgstr "O‘rt. ball"
+
+msgid "Back"
+msgstr "Orqaga"
 
 msgid "Back to course"
 msgstr "Kursga qaytish"
@@ -79,8 +157,23 @@ msgstr "Kirishga qaytish"
 msgid "Best:"
 msgstr "Eng yaxshi:"
 
+msgid "Blog post videos. Course lessons are separate — LMS Analytics / Courses."
+msgstr "(blog post) videolari. Kurs darslari alohida — LMS Analitika / Kurslar bo‘limida."
+
+msgid "Browse courses"
+msgstr "Kurslarni ko‘rish"
+
+msgid "By role"
+msgstr "Rollar bo‘yicha"
+
 msgid "By selected role"
 msgstr "Tanlangan rol bo‘yicha"
+
+msgid "By tests"
+msgstr "Testlar bo‘yicha"
+
+msgid "Cancel"
+msgstr "Bekor qilish"
 
 msgid "Categories"
 msgstr "Kategoriyalar"
@@ -103,11 +196,23 @@ msgstr "Sertifikat muddati o‘tgan: %(date)s. Qayta testdan o‘ting."
 msgid "Certificate expiry"
 msgstr "Sertifikat muddati"
 
+msgid "Certificate issued: %(name)s (valid until %(date)s)."
+msgstr "Sertifikat berildi: %(name)s (amal: %(date)s)."
+
 msgid "Certificate on completion"
 msgstr "Tugatganda sertifikat"
 
+msgid "Certificate renewed: %(name)s (valid until %(date)s)."
+msgstr "Sertifikat yangilandi: %(name)s (amal: %(date)s)."
+
+msgid "Certificates"
+msgstr "Sertifikatlar"
+
 msgid "Change or clear filters."
 msgstr "Filtrlarni o‘zgartiring yoki tozalang."
+
+msgid "Change password"
+msgstr "Parolni o‘zgartirish"
 
 msgid "Change the filter or come back later."
 msgstr "Filtrni o‘zgartiring yoki keyinroq qayting."
@@ -124,8 +229,26 @@ msgstr "Yopish"
 msgid "Comment (optional)"
 msgstr "Izoh (ixtiyoriy)"
 
+msgid "Comment added."
+msgstr "Izoh qo‘shildi."
+
+msgid "Comment cannot be empty."
+msgstr "Izoh matni bo‘sh bo‘lishi mumkin emas."
+
+msgid "Comment deleted."
+msgstr "Izoh o‘chirildi."
+
+msgid "Comment must be at most 2000 characters."
+msgstr "Izoh 2000 belgidan oshmasligi kerak."
+
+msgid "Comment updated."
+msgstr "Izoh yangilandi."
+
 msgid "Comments"
 msgstr "Izohlar"
+
+msgid "Comments are disabled for this lesson."
+msgstr "Bu dars uchun izohlar o‘chirilgan."
 
 msgid "Complete"
 msgstr "Bajarish"
@@ -133,8 +256,20 @@ msgstr "Bajarish"
 msgid "Completed"
 msgstr "Yakunlangan"
 
+msgid "Completed courses"
+msgstr "Yakunlangan kurslar"
+
 msgid "Compliance"
-msgstr "Compliance"
+msgstr "Muvofiqlik"
+
+msgid "Compliance: %(count)s mandatory requirement(s) unfinished. Complete them first."
+msgstr "Muvofiqlik: %(count)s ta majburiy talab bajarilmagan. Avval ularni yoping."
+
+msgid "Congratulations! You completed '%(title)s'!"
+msgstr "Tabriklaymiz! Siz '%(title)s' kursini muvaffaqiyatli yakunladingiz!"
+
+msgid "Congratulations! You finished category '%(name)s' and received a certificate."
+msgstr "Tabriklaymiz! Siz '%(name)s' kategoriyasini yakunladingiz va sertifikat oldingiz."
 
 msgid "Congratulations! You passed the test."
 msgstr "Tabriklaymiz! Test muvaffaqiyatli o‘tdi."
@@ -154,6 +289,12 @@ msgstr "To‘g‘ri javob:"
 msgid "Correct answers"
 msgstr "To‘g‘ri javoblar"
 
+msgid "Could not create PDF"
+msgstr "PDF yaratib bo‘lmadi"
+
+msgid "Could not download the certificate. Please try again later."
+msgstr "Sertifikatni yuklab bo‘lmadi. Keyinroq urinib ko‘ring."
+
 msgid "Course"
 msgstr "Kurs"
 
@@ -169,11 +310,20 @@ msgstr "Kurs tarkibi"
 msgid "Course deadline: %(date)s"
 msgstr "Kurs muddati: %(date)s"
 
+msgid "Course info"
+msgstr "Kurs ma’lumotlari"
+
 msgid "Course outline"
 msgstr "Kurs dasturi"
 
+msgid "Course progress and recommendations."
+msgstr "Kurslar bo‘yicha progress va tavsiyalar."
+
 msgid "Courses"
 msgstr "Kurslar"
+
+msgid "Daily views"
+msgstr "Kunlik ko‘rishlar"
 
 msgid "Date"
 msgstr "Sana"
@@ -197,7 +347,10 @@ msgid "Difficulty"
 msgstr "Qiyinlik"
 
 msgid "Dispatcher"
-msgstr "Dispatcher"
+msgstr "Dispetcher"
+
+msgid "Document '%(title)s' uploaded successfully"
+msgstr "Hujjat '%(title)s' muvaffaqiyatli yuklandi"
 
 msgid "Document acknowledgment"
 msgstr "Hujjat tasdiqi"
@@ -208,6 +361,9 @@ msgstr "Hujjat bilan tanishganingiz tasdiqlandi."
 msgid "Document acknowledgment required"
 msgstr "Hujjat tasdiqi kerak"
 
+msgid "Document analytics"
+msgstr "Hujjatlar analitikasi"
+
 msgid "Documents"
 msgstr "Hujjatlar"
 
@@ -217,14 +373,29 @@ msgstr "Tayyor"
 msgid "Download"
 msgstr "Yuklab olish"
 
+msgid "download"
+msgstr "yuklab olish"
+
 msgid "Download video"
 msgstr "Videoni yuklab olish"
 
 msgid "Downloads"
 msgstr "Yuklab olishlar"
 
+msgid "Downloads by category"
+msgstr "Kategoriyalar bo‘yicha yuklab olishlar"
+
 msgid "Duration"
 msgstr "Davomiyligi"
+
+msgid "Earned"
+msgstr "Qo‘lga kiritilgan"
+
+msgid "Earned ones"
+msgstr "Qo‘lga kiritilganlar"
+
+msgid "Easiest"
+msgstr "Eng oson"
 
 msgid "Edit"
 msgstr "Tahrirlash"
@@ -236,10 +407,16 @@ msgid "Electrician"
 msgstr "Elektromontyor"
 
 msgid "Email"
-msgstr "Email"
+msgstr "Elektron pochta"
 
 msgid "Email sent"
 msgstr "Email yuborildi"
+
+msgid "Employee"
+msgstr "Xodim"
+
+msgid "Employees with most mistakes"
+msgstr "Ko‘p xato qilgan xodimlar"
 
 msgid "Engineer"
 msgstr "Muhandis"
@@ -247,11 +424,47 @@ msgstr "Muhandis"
 msgid "Enroll"
 msgstr "Kursga yozilish"
 
+msgid "Enroll first to view the course"
+msgstr "Kursni ko‘rish uchun avval ro‘yxatdan o‘ting"
+
+msgid "Enroll in the course first."
+msgstr "Avval kursga yoziling."
+
 msgid "Enroll to complete"
 msgstr "Kursga yozilish"
 
+msgid "Enroll to complete the lesson."
+msgstr "Darsni yakunlash uchun kursga yozilishingiz kerak."
+
+msgid "Enroll to leave a comment."
+msgstr "Izoh qoldirish uchun kursga yozilishingiz kerak."
+
+msgid "Enroll to submit the quiz."
+msgstr "Quiz topshirish uchun kursga yozilishingiz kerak."
+
+msgid "Enter a search term"
+msgstr "Qidiruv so‘zini kiriting"
+
+msgid "Enter a term and press Search to see results."
+msgstr "Natijani ko‘rish uchun so‘zni kiriting va «Qidirish»ni bosing."
+
+msgid "Enter an answer."
+msgstr "Javob yozing."
+
+msgid "Enter course name or keywords."
+msgstr "Kurs nomi yoki kalit so‘zlarini yozing."
+
 msgid "Enter your email — a reset link will be sent."
 msgstr "Emailingizni kiriting — tiklash havolasi yuboriladi."
+
+msgid "Error %"
+msgstr "Xato %"
+
+msgid "Error loading question"
+msgstr "Savolni yuklashda xato"
+
+msgid "Error rate by question"
+msgstr "Savollar bo‘yicha xato foizi"
 
 msgid "Everyone"
 msgstr "Barcha"
@@ -274,8 +487,14 @@ msgstr "Zavod LMS — xodimlar uchun o‘quv, xavfsizlik testlari va hujjatlar."
 msgid "Failed"
 msgstr "O‘tmagan"
 
+msgid "Favorites"
+msgstr "Sevimlilar"
+
 msgid "File"
 msgstr "Fayl"
+
+msgid "File not found"
+msgstr "Fayl topilmadi"
 
 msgid "Filter"
 msgstr "Filtr"
@@ -310,20 +529,32 @@ msgstr "Yashil — shu kuni kirgan. Qizil — kirmagan."
 msgid "Guidelines"
 msgstr "Yo‘riqnomalar"
 
+msgid "Hardest"
+msgstr "Eng qiyin"
+
 msgid "History"
 msgstr "Tarix"
+
+msgid "History is empty"
+msgstr "Tarix bo‘sh"
 
 msgid "Home"
 msgstr "Bosh sahifa"
 
 msgid "HR compliance"
-msgstr "HR compliance"
+msgstr "HR muvofiqlik"
 
 msgid "HR report"
 msgstr "HR hisobot"
 
+msgid "HR reports"
+msgstr "HR hisobotlari"
+
 msgid "I have read and confirm"
 msgstr "Tanishdim, tasdiqlayman"
+
+msgid "If checked, all users can view the document."
+msgstr "Belgilansa, barcha foydalanuvchilar hujjatni ko‘ra oladi."
 
 msgid "If the email is registered, a reset link was sent."
 msgstr "Agar email ro‘yxatda bo‘lsa, tiklash havolasi yuborildi."
@@ -337,6 +568,12 @@ msgstr "Shu kategoriyada"
 msgid "In-progress and completed courses."
 msgstr "Davom etayotgan va yakunlangan kurslar."
 
+msgid "Instructor"
+msgstr "O‘qituvchi"
+
+msgid "Instructor:"
+msgstr "O‘qituvchi:"
+
 msgid "Instrumentation"
 msgstr "KIP va A"
 
@@ -346,8 +583,17 @@ msgstr "Ichki o‘quv, test va hujjatlar platformasi."
 msgid "Internal use"
 msgstr "Ichki foydalanish"
 
+msgid "Invalid action."
+msgstr "Noto‘g‘ri amal."
+
+msgid "Invalid answer format."
+msgstr "Noto‘g‘ri javob formati."
+
 msgid "Isomer Oil employees only · Access via admin"
 msgstr "Faqat Isomer Oil xodimlari · Admin orqali kirish"
+
+msgid "Issue date"
+msgstr "Berilgan sana"
 
 msgid "Joined"
 msgstr "Ro‘yxatdan o‘tgan"
@@ -367,11 +613,14 @@ msgstr "So‘nggi materiallar"
 msgid "Learning posts and videos by category."
 msgstr "Kategoriya bo‘yicha o‘quv postlari va videolar."
 
+msgid "Learning progress"
+msgstr "O‘quv progressi"
+
 msgid "Leave a comment..."
 msgstr "Izohingizni qoldiring..."
 
 msgid "Leave course"
-msgstr "Chiqish"
+msgstr "Kursdan chiqish"
 
 msgid "Leave this course?"
 msgstr "Kursdan chiqasizmi?"
@@ -379,8 +628,17 @@ msgstr "Kursdan chiqasizmi?"
 msgid "Lesson completed"
 msgstr "Dars yakunlandi"
 
+msgid "Lesson completed successfully"
+msgstr "Dars muvaffaqiyatli tugallandi"
+
+msgid "Lesson marked incomplete"
+msgstr "Dars tugallanmagan deb belgilandi"
+
+msgid "Lessons"
+msgstr "Darslar"
+
 msgid "Lessons and quizzes"
-msgstr "Darslar va quiz"
+msgstr "Darslar va viktorinalar"
 
 msgid "Lifetime access"
 msgstr "Doimiy kirish"
@@ -390,6 +648,9 @@ msgstr "Havola eskirgan yoki noto‘g‘ri. Qayta so‘rang."
 
 msgid "Locked"
 msgstr "Yopiq"
+
+msgid "Log of logins, views and profile changes."
+msgstr "Kirish, ko‘rish va profil o‘zgarishlari jurnali."
 
 msgid "Login"
 msgstr "Kirish"
@@ -403,6 +664,9 @@ msgstr "Kirish kerak"
 msgid "Logout"
 msgstr "Chiqish"
 
+msgid "Lowest"
+msgstr "Eng past"
+
 msgid "Mandatory"
 msgstr "Majburiy"
 
@@ -415,11 +679,17 @@ msgstr "Majburiy topshiriqlar"
 msgid "Mandatory test"
 msgstr "Majburiy test"
 
+msgid "Mandatory tests, document acknowledgments and certificate deadlines."
+msgstr "Majburiy testlar, hujjat tasdiqlari va sertifikat muddatlari."
+
 msgid "Mark all as read"
 msgstr "Barchasini o‘qildi"
 
 msgid "Mark lesson complete"
 msgstr "Dars yakunlandi deb belgilash"
+
+msgid "Material video analytics"
+msgstr "Material video analitika"
 
 msgid "Materials"
 msgstr "Materiallar"
@@ -433,6 +703,18 @@ msgstr "Mexanik"
 msgid "Menu"
 msgstr "Menyu"
 
+msgid "min"
+msgstr "min"
+
+msgid "Most active users"
+msgstr "Eng faol foydalanuvchilar"
+
+msgid "Most downloaded"
+msgstr "Eng ko‘p yuklab olingan"
+
+msgid "Most viewed"
+msgstr "Eng ko‘p ko‘rilgan"
+
 msgid "My courses"
 msgstr "Mening kurslarim"
 
@@ -444,6 +726,9 @@ msgstr "Nomi"
 
 msgid "New"
 msgstr "Yangi"
+
+msgid "New document"
+msgstr "Yangi hujjat"
 
 msgid "New password"
 msgstr "Yangi parol"
@@ -457,14 +742,32 @@ msgstr "Keyingi"
 msgid "Next lesson"
 msgstr "Keyingi dars"
 
+msgid "No"
+msgstr "Yo‘q"
+
+msgid "No active courses right now"
+msgstr "Hozirda faol kurslar yo‘q"
+
+msgid "No active test"
+msgstr "Faol test yo‘q"
+
 msgid "No activity"
 msgstr "Faollik yo‘q"
+
+msgid "No answers yet"
+msgstr "Hali javoblar yo‘q"
 
 msgid "No available tests"
 msgstr "Mavjud testlar yo‘q"
 
 msgid "No categories"
 msgstr "Kategoriya yo‘q"
+
+msgid "No certificate found for this ID."
+msgstr "Bu ID bo‘yicha sertifikat topilmadi."
+
+msgid "No certificates"
+msgstr "Sertifikatlar yo‘q"
 
 msgid "No comments yet. Be the first."
 msgstr "Hali izohlar yo‘q. Birinchi bo‘lib yozing."
@@ -475,14 +778,29 @@ msgstr "Kurslar topilmadi"
 msgid "No courses yet"
 msgstr "Hali kurs yo‘q"
 
+msgid "No data"
+msgstr "Ma’lumot yo‘q"
+
+msgid "No data found."
+msgstr "Ma’lumot topilmadi."
+
+msgid "No data to display"
+msgstr "Ko‘rsatish uchun ma’lumot yo‘q"
+
 msgid "No description"
 msgstr "Tavsif yo‘q"
 
 msgid "No documents"
 msgstr "Hujjatlar yo‘q"
 
+msgid "No downloads yet"
+msgstr "Hali yuklab olishlar yo‘q"
+
 msgid "No files here yet, or you lack access."
 msgstr "Bu bo‘limda hali fayl yo‘q yoki sizga ruxsat berilmagan."
+
+msgid "No lessons in this module yet."
+msgstr "Bu modulda hali darslar yo‘q."
 
 msgid "No materials yet"
 msgstr "Hozircha material yo‘q"
@@ -511,8 +829,14 @@ msgstr "Ochiq ro‘yxatdan o‘tish yo‘q. Yangi xodim uchun admin bilan bog‘
 msgid "No quiz questions for this lesson yet."
 msgstr "Bu dars uchun savollar hali qo‘shilmagan."
 
+msgid "No results."
+msgstr "Natijalar yo‘q."
+
 msgid "No tests for this role yet."
 msgstr "Bu rol uchun hozircha test yo‘q."
+
+msgid "No tests submitted yet."
+msgstr "Hali test topshirilmagan."
 
 msgid "No tests taken yet"
 msgstr "Hali test topshirilmagan"
@@ -520,8 +844,17 @@ msgstr "Hali test topshirilmagan"
 msgid "No video for this lesson"
 msgstr "Bu dars uchun video mavjud emas"
 
+msgid "No views yet"
+msgstr "Hali ko‘rishlar yo‘q"
+
+msgid "Not enough valid questions in the test. Please contact the administrator."
+msgstr "Testda yetarli to‘g‘ri savol yo‘q. Administrator bilan bog‘laning."
+
 msgid "Not passed"
 msgstr "O‘tilmadi"
+
+msgid "Not passed yet"
+msgstr "Hali o‘tilmagan"
 
 msgid "Nothing saved"
 msgstr "Saqlanganlar yo‘q"
@@ -538,8 +871,14 @@ msgstr "Eng eski"
 msgid "On all devices"
 msgstr "Barcha qurilmalarda"
 
+msgid "Only"
+msgstr "Faqat"
+
 msgid "Open"
 msgstr "Ochish"
+
+msgid "Open registration is closed. Request via Telegram bot — admin approves."
+msgstr "Ochiq ro‘yxatdan o‘tish yopilgan. Telegram bot orqali so‘rov yuboring — admin tasdiqlaydi."
 
 msgid "Operator"
 msgstr "Operator"
@@ -550,8 +889,17 @@ msgstr "Umumiy statistika"
 msgid "Overdue"
 msgstr "Muddati o‘tgan"
 
+msgid "Overdue tests"
+msgstr "Muddati o‘tgan testlar"
+
 msgid "Passed"
 msgstr "O‘tgan"
+
+msgid "Passed:"
+msgstr "O‘tilgan:"
+
+msgid "Passed?"
+msgstr "O‘tdi"
 
 msgid "Password"
 msgstr "Parol"
@@ -561,6 +909,12 @@ msgstr "Parol yangilandi"
 
 msgid "Password updated. You can sign in now."
 msgstr "Parol yangilandi. Endi kira olasiz."
+
+msgid "Permission denied."
+msgstr "Ruxsat yo‘q."
+
+msgid "Personal cabinet"
+msgstr "Shaxsiy kabinet"
 
 msgid "Personal info, activity and a short test overview."
 msgstr "Shaxsiy ma’lumotlar, faollik va testlar bo‘yicha qisqa ko‘rinish."
@@ -574,8 +928,17 @@ msgstr "Telefon"
 msgid "Pick a course from the catalog and enroll."
 msgstr "Katalogdan kurs tanlab yoziling."
 
+msgid "Points earned"
+msgstr "To‘plangan ballar"
+
 msgid "Popular"
 msgstr "Mashhur"
+
+msgid "Post added to favorites"
+msgstr "Post sevimlilarga qo‘shildi"
+
+msgid "Post removed from favorites"
+msgstr "Post sevimlilardan olib tashlandi"
 
 msgid "Posts and videos"
 msgstr "Post va videolar"
@@ -613,8 +976,20 @@ msgstr "Ishlab chiqarish"
 msgid "Profile"
 msgstr "Profil"
 
+msgid "Profile updated successfully"
+msgstr "Profil muvaffaqiyatli yangilandi"
+
+msgid "Progress"
+msgstr "Jarayon"
+
+msgid "Progress by courses"
+msgstr "Kurslar bo‘yicha progress"
+
 msgid "Public"
 msgstr "Ochiq"
+
+msgid "Question"
+msgstr "Savol"
 
 msgid "Question %(current)s / %(total)s"
 msgstr "Savol %(current)s / %(total)s"
@@ -626,7 +1001,13 @@ msgid "Quick links"
 msgstr "Tez havolalar"
 
 msgid "Quiz"
-msgstr "Quiz"
+msgstr "Viktorina"
+
+msgid "Quiz result: %(correct)s/%(total)s (%(pct)s%%). Need at least 70%% to pass."
+msgstr "Viktorina natijasi: %(correct)s/%(total)s (%(pct)s%%). O‘tish uchun kamida 70%% kerak."
+
+msgid "Quiz submitted: %(correct)s/%(total)s (%(pct)s%%). Lesson completed."
+msgstr "Viktorina topshirildi: %(correct)s/%(total)s (%(pct)s%%). Dars yakunlandi."
 
 msgid "Railway worker"
 msgstr "Temiryo‘lchi"
@@ -637,8 +1018,14 @@ msgstr "Bu hujjatni o‘qib, tanishganingizni tasdiqlang."
 msgid "Recent activity"
 msgstr "So‘nggi faollik"
 
+msgid "Recent attempts"
+msgstr "So‘nggi urinishlar"
+
 msgid "Recent results"
 msgstr "So‘nggi natijalar"
+
+msgid "Recent viewers"
+msgstr "Oxirgi ko‘rganlar"
 
 msgid "Recommendations"
 msgstr "Tavsiyalar"
@@ -674,7 +1061,10 @@ msgid "Review again"
 msgstr "Qayta o‘qish"
 
 msgid "Role"
-msgstr "Rol"
+msgstr "Lavozim"
+
+msgid "Role / Department"
+msgstr "Lavozim / Bo‘lim"
 
 msgid "Russian"
 msgstr "Русский"
@@ -682,20 +1072,38 @@ msgstr "Русский"
 msgid "Save"
 msgstr "Saqlash"
 
+msgid "Save changes"
+msgstr "O‘zgarishlarni saqlash"
+
+msgid "Save interesting posts"
+msgstr "Qiziqarli postlarni saqlab qo‘ying"
+
 msgid "Save posts to return quickly."
 msgstr "Postlarni saqlab, tezda qaytishingiz mumkin"
 
 msgid "Saved materials"
 msgstr "Saqlangan materiallar"
 
+msgid "Score"
+msgstr "Ball"
+
 msgid "Search"
 msgstr "Qidirish"
+
+msgid "Search by name or keyword."
+msgstr "Nom yoki kalit so‘z bo‘yicha qidiring."
 
 msgid "Search courses..."
 msgstr "Kurs qidirish..."
 
 msgid "Security guard"
 msgstr "Qorovul"
+
+msgid "Select a file."
+msgstr "Fayl tanlang."
+
+msgid "Select an answer option."
+msgstr "Javob variantini tanlang."
 
 msgid "Select at least one option."
 msgstr "Kamida bitta variant tanlang."
@@ -709,11 +1117,17 @@ msgstr "Yuborish"
 msgid "Send a request in the bot — admin approves, then you get login and password."
 msgstr "Botda so‘rov yuboring — admin tasdiqlagach login va parol keladi."
 
+msgid "Set a new password for security."
+msgstr "Xavfsizlik uchun yangi parol o‘rnating."
+
 msgid "Show"
 msgstr "Ko‘rsatish"
 
 msgid "Sign in"
 msgstr "Tizimga kirish"
+
+msgid "Sign in to access this course."
+msgstr "Bu kursga kirish uchun tizimga kiring."
 
 msgid "Similar courses"
 msgstr "O‘xshash kurslar"
@@ -733,11 +1147,20 @@ msgstr "Statistika"
 msgid "Status"
 msgstr "Holat"
 
+msgid "Study"
+msgstr "O‘qish"
+
 msgid "Submit"
 msgstr "Topshirish"
 
 msgid "Submit quiz"
-msgstr "Quizni topshirish"
+msgstr "Viktorinani topshirish"
+
+msgid "Submitted"
+msgstr "Topshirilgan"
+
+msgid "Submitted tests"
+msgstr "Topshirilgan testlar"
 
 msgid "Success rate"
 msgstr "Muvaffaqiyat"
@@ -745,11 +1168,23 @@ msgstr "Muvaffaqiyat"
 msgid "Successful"
 msgstr "Muvaffaqiyatli"
 
+msgid "Successfully completed the training program"
+msgstr "O‘quv dasturi muvaffaqiyatli yakunlanganligi to‘g‘risida"
+
+msgid "Take a test first to see statistics."
+msgstr "Statistika uchun avval test topshiring."
+
 msgid "Taken"
 msgstr "Topshirilgan"
 
 msgid "Test"
 msgstr "Test"
+
+msgid "Test analytics"
+msgstr "Test tahlili"
+
+msgid "Test dynamics"
+msgstr "Test dinamikasi"
 
 msgid "Test history"
 msgstr "Testlar tarixi"
@@ -760,6 +1195,9 @@ msgstr "Testlar ro‘yxati"
 msgid "Test results"
 msgstr "Test natijalari"
 
+msgid "Test results by department (role)."
+msgstr "Test natijalari bo‘lim (rol) bo‘yicha."
+
 msgid "Test statistics"
 msgstr "Test statistikasi"
 
@@ -769,20 +1207,65 @@ msgstr "Testlar"
 msgid "Text"
 msgstr "Matn"
 
+msgid "This certificate is inactive because the course is not completed"
+msgstr "Bu sertifikat faol emas, chunki kurs tugallanmagan"
+
+msgid "This course is not available for your role."
+msgstr "Bu kurs sizning rolingiz uchun ochiq emas."
+
 msgid "This is a free preview. Enroll to complete the lesson."
 msgstr "Bu bepul preview. Kursni to‘liq o‘tish va darsni yakunlash uchun kursga yoziling."
+
+msgid "This lesson has no quiz questions."
+msgstr "Bu darsda quiz savollari yo‘q."
+
+msgid "This lesson is not a practical assignment."
+msgstr "Bu dars amaliy vazifa emas."
+
+msgid "This test has no questions"
+msgstr "Bu testda savollar yo‘q"
+
+msgid "This test is currently unavailable"
+msgstr "Bu test hozircha mavjud emas"
+
+msgid "Time is up — test finished."
+msgstr "Vaqt tugadi — test yakunlandi."
 
 msgid "To"
 msgstr "Gacha"
 
+msgid "To list"
+msgstr "Ro‘yxatga"
+
 msgid "today"
 msgstr "bugun"
+
+msgid "Top-5 active viewers"
+msgstr "Top-5 faol tomoshabinlar"
+
+msgid "Top-5 videos"
+msgstr "Top-5 videolar"
 
 msgid "Total"
 msgstr "Jami"
 
+msgid "Total attempts"
+msgstr "Jami urinishlar"
+
+msgid "Total documents"
+msgstr "Jami hujjatlar"
+
+msgid "Total downloads"
+msgstr "Jami yuklab olishlar"
+
 msgid "Total tests"
 msgstr "Jami testlar"
+
+msgid "Total videos"
+msgstr "Jami video"
+
+msgid "Total views"
+msgstr "Jami ko‘rishlar"
 
 msgid "Tracked days"
 msgstr "Hisoblangan kunlar"
@@ -793,8 +1276,17 @@ msgstr "Zavod xodimlari uchun o‘quv dasturlari."
 msgid "Try again"
 msgstr "Qayta"
 
+msgid "Try other words or pick a category."
+msgstr "Boshqa so‘zlarni sinab ko‘ring yoki kategoriyalardan tanlang."
+
 msgid "Type your answer…"
 msgstr "Javobni yozing…"
+
+msgid "Unique viewers"
+msgstr "Alohida foydalanuvchilar"
+
+msgid "Unique watchers"
+msgstr "Noyob tomoshabinlar"
 
 msgid "Upcoming"
 msgstr "Yaqinlashayotgan"
@@ -805,10 +1297,16 @@ msgstr "Yaqin muddatlar"
 msgid "Upload"
 msgstr "Yuklash"
 
+msgid "Upload a file for the assignment and wait for instructor approval."
+msgstr "Amaliy vazifa uchun fayl yuklang va instruktur tasdiğini kuting."
+
 msgid "Upload a file. Lesson completes after instructor approval."
 msgstr "Fayl yuklang. Instruktur tasdiqlagach dars yakunlanadi."
 
 msgid "Upload document"
+msgstr "Hujjat yuklash"
+
+msgid "Upload document page"
 msgstr "Hujjat yuklash"
 
 msgid "Uploaded by:"
@@ -816,6 +1314,9 @@ msgstr "Yuklagan:"
 
 msgid "Uploaded file"
 msgstr "Yuklangan fayl"
+
+msgid "User"
+msgstr "Foydalanuvchi"
 
 msgid "Username"
 msgstr "Foydalanuvchi nomi"
@@ -826,8 +1327,14 @@ msgstr "Login va parolni administrator beradi."
 msgid "Uzbek"
 msgstr "Oʻzbek"
 
+msgid "Verify certificate"
+msgstr "Sertifikatni tekshirish"
+
 msgid "Video"
 msgstr "Video"
+
+msgid "Video statistics"
+msgstr "Video statistikasi"
 
 msgid "Video watch:"
 msgstr "Video ko‘rish:"
@@ -835,11 +1342,23 @@ msgstr "Video ko‘rish:"
 msgid "View"
 msgstr "Ko‘rish"
 
+msgid "view"
+msgstr "ko‘rish"
+
 msgid "View by role"
 msgstr "Rol bo‘yicha ko‘rish"
 
 msgid "Views"
 msgstr "Ko‘rishlar"
+
+msgid "Views by category"
+msgstr "Kategoriyalar bo‘yicha ko‘rishlar"
+
+msgid "Views by role"
+msgstr "Rollar bo‘yicha ko‘rishlar"
+
+msgid "Views, downloads and category breakdown."
+msgstr "Ko‘rishlar, yuklab olishlar va kategoriyalar bo‘yicha tahlil."
 
 msgid "Warehouse"
 msgstr "Ombor"
@@ -847,17 +1366,71 @@ msgstr "Ombor"
 msgid "Watch at least %(percent)s%% of the video to enable the button."
 msgstr "Tugmani faollashtirish uchun videoni kamida %(percent)s%% ko‘ring."
 
+msgid "Watch at least %(required)s%% of the video (now: %(current)s%%)."
+msgstr "Videoni kamida %(required)s%% ko‘ring (hozir: %(current)s%%)."
+
+msgid "Weak questions"
+msgstr "Zaif savollar"
+
+msgid "Weekly views"
+msgstr "Haftalik ko‘rishlar"
+
 msgid "Welder"
 msgstr "Payvandlovchi"
+
+msgid "Which questions fail most — for updating training materials."
+msgstr "Qaysi savolda eng ko‘p xato qilinadi — o‘quv materialini yangilash uchun."
+
+msgid "Wrong"
+msgstr "Xato"
+
+msgid "Yes"
+msgstr "Ha"
+
+msgid "You are already enrolled in '%(title)s'."
+msgstr "Siz allaqachon '%(title)s' kursiga yozilgansiz."
 
 msgid "You are enrolled — %(progress)s%% complete"
 msgstr "Ro‘yxatdan o‘tgansiz — %(progress)s%% tugallandi"
 
+msgid "You are not enrolled in this course."
+msgstr "Siz bu kursga yozilmagansiz."
+
+msgid "You can search by course name, topic or keywords."
+msgstr "Kurs nomi, mavzu yoki kalit so‘zlar bo‘yicha qidirish mumkin."
+
+msgid "You cannot delete this comment."
+msgstr "Bu izohni o‘chirish huquqingiz yo‘q."
+
+msgid "You cannot edit this comment."
+msgstr "Bu izohni tahrirlash huquqingiz yo‘q."
+
+msgid "You do not have access to analytics"
+msgstr "Sizga analitikaga ruxsat yo‘q"
+
 msgid "You do not have access to this document."
 msgstr "Sizga bu hujjatga ruxsat yo‘q"
 
+msgid "You do not have access to this page"
+msgstr "Sizga bu sahifaga ruxsat yo‘q"
+
+msgid "You do not have access to this post"
+msgstr "Sizga bu postga ruxsat yo‘q"
+
+msgid "You do not have access to this result"
+msgstr "Sizga bu natijaga ruxsat yo‘q"
+
+msgid "You do not have access to this test"
+msgstr "Sizga bu testga ruxsat yo‘q"
+
+msgid "You do not have permission to view this certificate"
+msgstr "Sizda bu sertifikatni ko‘rish huquqi yo‘q"
+
 msgid "You have acknowledged this document."
 msgstr "Siz bu hujjat bilan tanishganingizni tasdiqlagansiz."
+
+msgid "You left the course '%(title)s'."
+msgstr "Siz '%(title)s' kursidan chiqdingiz."
 
 msgid "You may select multiple options."
 msgstr "Bir nechta variantni belgilashingiz mumkin."
@@ -865,8 +1438,14 @@ msgstr "Bir nechta variantni belgilashingiz mumkin."
 msgid "You must enroll in the course to view this lesson."
 msgstr "Bu darsni ko‘rish uchun kursga yozilishingiz kerak."
 
+msgid "You must enroll to view this lesson."
+msgstr "Bu darsni ko‘rish uchun kursga yozilishingiz kerak."
+
 msgid "You must sign in to view the lesson."
 msgstr "Darsni ko‘rish uchun avval tizimga kirishingiz kerak."
+
+msgid "You successfully enrolled in '%(title)s'!"
+msgstr "Siz muvaffaqiyatli ravishda '%(title)s' kursiga yozildingiz!"
 
 msgid "Your activity will appear here."
 msgstr "Harakatlaringiz shu yerda ko‘rinadi"
@@ -879,4 +1458,7 @@ msgstr "Sizning javobingiz:"
 
 msgid "Your answers"
 msgstr "Sizning javoblaringiz"
+
+msgid "Your password was changed successfully"
+msgstr "Parolingiz muvaffaqiyatli o‘zgartirildi"
 

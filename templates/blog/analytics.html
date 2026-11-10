@@ -1,6 +1,7 @@
 {% extends 'base.html' %}
 
-{% block title %}Material video analitika{% endblock %}
+{% load i18n %}
+{% block title %}{% trans "Material video analytics" %}{% endblock %}
 
 {% block extra_css %}
 <style>
@@ -17,25 +18,22 @@
 {% block content %}
 <div class="zl-page-head">
   <div>
-    <h1 class="zl-section-title mb-1">Material video analitika</h1>
-    <p class="zl-section-lead mb-0">
-      Faqat <strong>Materiallar</strong> (blog post) videolari.
-      Kurs darslari alohida — LMS Analitika / Kurslar bo‘limida.
-    </p>
+    <h1 class="zl-section-title mb-1">{% trans "Material video analytics" %}</h1>
+    <p class="zl-section-lead mb-0">{% trans "Only" %}<strong>{% trans "Materials" %}</strong>{% trans "Blog post videos. Course lessons are separate — LMS Analytics / Courses." %}</p>
   </div>
 </div>
 
 <div class="zl-stat-grid mb-4">
   <div class="zl-card p-3">
-    <div class="zl-meta">Jami video</div>
+    <div class="zl-meta">{% trans "Total videos" %}</div>
     <strong class="fs-4">{{ video_posts_count }}</strong>
   </div>
   <div class="zl-card p-3">
-    <div class="zl-meta">Jami ko‘rishlar</div>
+    <div class="zl-meta">{% trans "Total views" %}</div>
     <strong class="fs-4">{{ total_views }}</strong>
   </div>
   <div class="zl-card p-3">
-    <div class="zl-meta">Noyob tomoshabinlar</div>
+    <div class="zl-meta">{% trans "Unique watchers" %}</div>
     <strong class="fs-4">{{ unique_viewers }}</strong>
   </div>
 </div>
@@ -43,7 +41,7 @@
 <div class="row g-3 mb-4">
   <div class="col-lg-6">
     <section class="zl-card p-4 h-100">
-      <h2 class="h5 fw-bold mb-3">Kunlik ko‘rishlar</h2>
+      <h2 class="h5 fw-bold mb-3">{% trans "Daily views" %}</h2>
       <div class="zl-chart-box">
         <canvas id="dailyChart"></canvas>
       </div>
@@ -51,7 +49,7 @@
   </div>
   <div class="col-lg-6">
     <section class="zl-card p-4 h-100">
-      <h2 class="h5 fw-bold mb-3">Rollar bo‘yicha</h2>
+      <h2 class="h5 fw-bold mb-3">{% trans "By role" %}</h2>
       <div class="zl-chart-box">
         <canvas id="roleChart"></canvas>
       </div>
@@ -60,7 +58,7 @@
 </div>
 
 <section class="zl-card p-4 mb-4">
-  <h2 class="h5 fw-bold mb-3">Haftalik ko‘rishlar</h2>
+  <h2 class="h5 fw-bold mb-3">{% trans "Weekly views" %}</h2>
   <div class="zl-chart-box tall">
     <canvas id="weeklyChart"></canvas>
   </div>
@@ -68,16 +66,16 @@
 
 <section class="zl-card overflow-hidden mb-4">
   <div class="p-3 border-bottom">
-    <h2 class="h5 fw-bold mb-0">Top-5 videolar</h2>
+    <h2 class="h5 fw-bold mb-0">{% trans "Top-5 videos" %}</h2>
   </div>
   <div class="table-responsive">
     <table class="table table-hover align-middle mb-0">
       <thead class="table-light">
         <tr>
-          <th>Nomi</th>
-          <th>Kategoriya</th>
-          <th>Rol</th>
-          <th>Ko‘rishlar</th>
+          <th>{% trans "Name" %}</th>
+          <th>{% trans "Category" %}</th>
+          <th>{% trans "Role" %}</th>
+          <th>{% trans "Views" %}</th>
         </tr>
       </thead>
       <tbody>
@@ -91,7 +89,7 @@
           <td><strong>{{ video.view_count }}</strong></td>
         </tr>
         {% empty %}
-        <tr><td colspan="4" class="text-center py-4 zl-meta">Ma’lumot yo‘q</td></tr>
+        <tr><td colspan="4" class="text-center py-4 zl-meta">{% trans "No data" %}</td></tr>
         {% endfor %}
       </tbody>
     </table>
@@ -100,15 +98,15 @@
 
 <section class="zl-card overflow-hidden">
   <div class="p-3 border-bottom">
-    <h2 class="h5 fw-bold mb-0">Top-5 faol tomoshabinlar</h2>
+    <h2 class="h5 fw-bold mb-0">{% trans "Top-5 active viewers" %}</h2>
   </div>
   <div class="table-responsive">
     <table class="table table-hover align-middle mb-0">
       <thead class="table-light">
         <tr>
-          <th>Foydalanuvchi</th>
-          <th>Rol</th>
-          <th>Ko‘rishlar</th>
+          <th>{% trans "User" %}</th>
+          <th>{% trans "Role" %}</th>
+          <th>{% trans "Views" %}</th>
         </tr>
       </thead>
       <tbody>
@@ -119,7 +117,7 @@
           <td><strong>{{ user.view_count }}</strong></td>
         </tr>
         {% empty %}
-        <tr><td colspan="3" class="text-center py-4 zl-meta">Ma’lumot yo‘q</td></tr>
+        <tr><td colspan="3" class="text-center py-4 zl-meta">{% trans "No data" %}</td></tr>
         {% endfor %}
       </tbody>
     </table>

@@ -1,11 +1,12 @@
 {% extends 'courses/base.html' %}
+{% load i18n %}
 {% load static %}
 
 {% block title %}{{ course.title }} - O‘qish{% endblock %}
 
 {% block breadcrumb_items %}
 <li class="breadcrumb-item"><a href="{% url 'courses:detail' course.slug %}">{{ course.title }}</a></li>
-<li class="breadcrumb-item active" aria-current="page">O‘qish</li>
+<li class="breadcrumb-item active" aria-current="page">{% trans "Study" %}</li>
 {% endblock %}
 
 {% block courses_content %}
@@ -14,7 +15,7 @@
     <section class="zl-card p-4 mb-3">
       <div class="d-flex flex-wrap justify-content-between align-items-start gap-2 mb-3">
         <h1 class="h4 mb-0">{{ course.title }}</h1>
-        <a href="{% url 'courses:detail' course.slug %}" class="btn btn-sm btn-outline-primary">Kurs haqida</a>
+        <a href="{% url 'courses:detail' course.slug %}" class="btn btn-sm btn-outline-primary">{% trans "About the course" %}</a>
       </div>
       <div class="d-flex justify-content-between zl-meta mb-2">
         <span><strong>{{ completed_count }}</strong> / {{ total_lessons }} dars</span>
@@ -24,14 +25,12 @@
         <div class="progress-bar" style="width: {{ progress_percent }}%; background: linear-gradient(90deg, var(--zl-forest-mid), var(--zl-brass));"></div>
       </div>
       {% if next_lesson %}
-        <a href="{% url 'courses:lesson_detail' course.slug next_lesson.module.id next_lesson.id %}" class="btn btn-primary">
-          Davom ettirish
-        </a>
+        <a href="{% url 'courses:lesson_detail' course.slug next_lesson.module.id next_lesson.id %}" class="btn btn-primary">{% trans "Continue" %}</a>
         <p class="zl-meta mt-2 mb-0">Keyingi: <strong>{{ next_lesson.title }}</strong></p>
       {% elif enrollment.is_completed %}
         <div class="alert alert-success mb-2">Kurs yakunlandi.</div>
         {% if enrollment.certificate %}
-        <a href="{% url 'courses:view_certificate' enrollment.certificate.certificate_id %}" class="btn btn-outline-primary btn-sm">Sertifikat</a>
+        <a href="{% url 'courses:view_certificate' enrollment.certificate.certificate_id %}" class="btn btn-outline-primary btn-sm">{% trans "Certificate" %}</a>
         {% endif %}
       {% endif %}
     </section>
@@ -81,15 +80,15 @@
 
   <aside class="col-lg-3">
     <div class="zl-card p-3 mb-3">
-      <h2 class="h6 fw-bold mb-3">Kurs ma’lumotlari</h2>
+      <h2 class="h6 fw-bold mb-3">{% trans "Course info" %}</h2>
       <ul class="list-unstyled mb-0">
         <li class="d-flex justify-content-between py-2 border-bottom"><span class="zl-meta">Modullar</span><strong>{{ course.total_modules }}</strong></li>
-        <li class="d-flex justify-content-between py-2 border-bottom"><span class="zl-meta">Darslar</span><strong>{{ total_lessons }}</strong></li>
+        <li class="d-flex justify-content-between py-2 border-bottom"><span class="zl-meta">{% trans "Lessons" %}</span><strong>{{ total_lessons }}</strong></li>
         <li class="d-flex justify-content-between py-2 border-bottom"><span class="zl-meta">Davomiylik</span><strong>{{ course.total_duration }} daq</strong></li>
         <li class="d-flex justify-content-between py-2"><span class="zl-meta">Boshlangan</span><strong>{{ enrollment.enrolled_at|date:"d.m.Y" }}</strong></li>
       </ul>
     </div>
-    <a href="{% url 'courses:my_courses' %}" class="btn btn-outline-primary btn-sm w-100">Mening kurslarim</a>
+    <a href="{% url 'courses:my_courses' %}" class="btn btn-outline-primary btn-sm w-100">{% trans "My courses" %}</a>
   </aside>
 </div>
 {% endblock %}

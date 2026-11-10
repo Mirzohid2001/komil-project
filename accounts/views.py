@@ -25,6 +25,7 @@ from PIL import Image, ImageDraw, ImageFont
 import base64
 from django.urls import reverse
 from django.templatetags.static import static
+from django.utils.translation import gettext as _
 
 from .forms import SignUpForm, ProfileUpdateForm
 
@@ -77,7 +78,7 @@ def signup(request):
     """Public signup is disabled — Telegram bot so‘rovi + admin tasdiq."""
     messages.info(
         request,
-        "Ochiq ro'yxatdan o'tish yopilgan. Telegram bot orqali so‘rov yuboring — admin tasdiqlaydi.",
+        _("Open registration is closed. Request via Telegram bot — admin approves."),
     )
     return redirect('accounts:login')
 
@@ -166,7 +167,7 @@ def profile_edit(request):
                 ip_address=request.META.get('REMOTE_ADDR')
             )
             
-            messages.success(request, 'Профиль успешно обновлен')
+            messages.success(request, _("Profile updated successfully"))
             return redirect('accounts:profile')
     else:
         form = ProfileUpdateForm(instance=request.user)
@@ -192,7 +193,7 @@ def change_password(request):
                 details={'action': 'password_change'}
             )
             
-            messages.success(request, 'Ваш пароль успешно изменен')
+            messages.success(request, _("Your password was changed successfully"))
             return redirect('accounts:profile')
     else:
         form = PasswordChangeForm(request.user)
@@ -222,12 +223,12 @@ def toggle_favorite(request, post_id):
     if created:
         # Если запись создана - пост добавлен в избранное
         activity_type = 'favorite_add'
-        messages.success(request, 'Пост добавлен в избранное')
+        messages.success(request, _("Post added to favorites"))
     else:
         # Если запись уже существовала - удаляем из избранного
         favorite.delete()
         activity_type = 'favorite_remove'
-        messages.info(request, 'Пост удален из избранного')
+        messages.info(request, _("Post removed from favorites"))
     
     # Записываем активность пользователя
     UserActivity.objects.create(
@@ -571,7 +572,7 @@ def download_certificate(request, certificate_id):
         )
     
     # Если что-то пошло не так, возвращаем ошибку
-    messages.error(request, "Не удалось скачать сертификат. Пожалуйста, попробуйте позже.")
+    messages.error(request, _("Could not download the certificate. Please try again later."))
     return redirect('accounts:user_certificates')
 
 
@@ -981,7 +982,7 @@ def notifications_mark_all_read(request):
     from .models import Notification
     if request.method == 'POST':
         Notification.objects.filter(user=request.user, is_read=False).update(is_read=True)
-        messages.success(request, "Barcha bildirishnomalar o‘qildi.")
+        messages.success(request, _("All notifications marked as read."))
     return redirect('accounts:notifications')
 
 

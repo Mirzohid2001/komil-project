@@ -1,7 +1,8 @@
 {% extends 'base.html' %}
+{% load i18n %}
 {% load static %}
 
-{% block title %}Testlar tarixi{% endblock %}
+{% block title %}{% trans "Test history" %}{% endblock %}
 
 {% block extra_css %}
 <style>
@@ -17,17 +18,17 @@
 {% block content %}
 <div class="zl-page-head">
   <div>
-    <h1 class="zl-section-title mb-1">Testlar tarixi</h1>
-    <p class="zl-section-lead mb-0">Urinishlar, o‘rtacha ball va progress.</p>
+    <h1 class="zl-section-title mb-1">{% trans "Test history" %}</h1>
+    <p class="zl-section-lead mb-0">{% trans "Attempts, average score and progress." %}</p>
   </div>
-  <a href="{% url 'blog:test_list' %}" class="btn btn-sm btn-outline-primary">Testlar ro‘yxati</a>
+  <a href="{% url 'blog:test_list' %}" class="btn btn-sm btn-outline-primary">{% trans "Test list" %}</a>
 </div>
 
 {% if total_tests > 0 %}
 <div class="zl-stat-grid mb-3">
-  <div class="zl-card p-3"><div class="zl-meta">Jami</div><strong class="fs-4">{{ total_tests }}</strong></div>
-  <div class="zl-card p-3"><div class="zl-meta">O‘tilgan</div><strong class="fs-4">{{ tests_passed }}</strong></div>
-  <div class="zl-card p-3"><div class="zl-meta">O‘rtacha</div><strong class="fs-4">{{ avg_score|floatformat:0 }}%</strong></div>
+  <div class="zl-card p-3"><div class="zl-meta">{% trans "Total" %}</div><strong class="fs-4">{{ total_tests }}</strong></div>
+  <div class="zl-card p-3"><div class="zl-meta">{% trans "Passed" %}</div><strong class="fs-4">{{ tests_passed }}</strong></div>
+  <div class="zl-card p-3"><div class="zl-meta">{% trans "Average" %}</div><strong class="fs-4">{{ avg_score|floatformat:0 }}%</strong></div>
   <div class="zl-card p-3"><div class="zl-meta">Eng yaxshi</div><strong class="fs-4 text-success">{{ best_score|floatformat:0 }}%</strong></div>
 </div>
 {% endif %}
@@ -35,17 +36,17 @@
 <div class="row g-3 mb-4">
   <div class="col-lg-8">
     <section class="zl-card p-4 h-100">
-      <h2 class="h5 fw-bold mb-3">Umumiy statistika</h2>
+      <h2 class="h5 fw-bold mb-3">{% trans "Overall statistics" %}</h2>
       {% if total_tests > 0 %}
       <div class="row g-4">
         <div class="col-md-6">
           <ul class="list-unstyled mb-0">
-            <li class="d-flex justify-content-between py-2 border-bottom"><span class="zl-meta">Jami urinishlar</span><strong>{{ total_tests }}</strong></li>
-            <li class="d-flex justify-content-between py-2 border-bottom"><span class="zl-meta">Muvaffaqiyat</span><strong>{{ tests_passed }} ({{ pass_rate|floatformat:1 }}%)</strong></li>
-            <li class="d-flex justify-content-between py-2 border-bottom"><span class="zl-meta">O‘rtacha ball</span><strong>{{ avg_score|floatformat:1 }}%</strong></li>
+            <li class="d-flex justify-content-between py-2 border-bottom"><span class="zl-meta">{% trans "Total attempts" %}</span><strong>{{ total_tests }}</strong></li>
+            <li class="d-flex justify-content-between py-2 border-bottom"><span class="zl-meta">{% trans "Success rate" %}</span><strong>{{ tests_passed }} ({{ pass_rate|floatformat:1 }}%)</strong></li>
+            <li class="d-flex justify-content-between py-2 border-bottom"><span class="zl-meta">{% trans "Average score" %}</span><strong>{{ avg_score|floatformat:1 }}%</strong></li>
             <li class="d-flex justify-content-between py-2 border-bottom"><span class="zl-meta">Eng yaxshi</span><strong class="text-success">{{ best_score|floatformat:1 }}%</strong></li>
-            <li class="d-flex justify-content-between py-2 border-bottom"><span class="zl-meta">Eng past</span><strong class="text-danger">{{ worst_score|floatformat:1 }}%</strong></li>
-            <li class="d-flex justify-content-between py-2"><span class="zl-meta">O‘rtacha vaqt</span><strong>{{ avg_duration_minutes|floatformat:1 }} min</strong></li>
+            <li class="d-flex justify-content-between py-2 border-bottom"><span class="zl-meta">{% trans "Lowest" %}</span><strong class="text-danger">{{ worst_score|floatformat:1 }}%</strong></li>
+            <li class="d-flex justify-content-between py-2"><span class="zl-meta">{% trans "Average time" %}</span><strong>{{ avg_duration_minutes|floatformat:1 }} min</strong></li>
           </ul>
         </div>
         <div class="col-md-6">
@@ -57,21 +58,21 @@
       {% else %}
       <div class="zl-empty border-0 p-4">
         <i class="fas fa-chart-pie d-block"></i>
-        <p class="mb-0">Statistika uchun avval test topshiring.</p>
+        <p class="mb-0">{% trans "Take a test first to see statistics." %}</p>
       </div>
       {% endif %}
     </section>
   </div>
   <div class="col-lg-4">
     <section class="zl-card p-4 h-100">
-      <h2 class="h5 fw-bold mb-3">Testlar bo‘yicha</h2>
+      <h2 class="h5 fw-bold mb-3">{% trans "By tests" %}</h2>
       {% if tests_data %}
         {% for test_id, data in tests_data.items %}
         <div class="mb-3 pb-3 {% if not forloop.last %}border-bottom{% endif %}">
           <div class="fw-semibold mb-1">{{ data.test.title }}</div>
           <div class="d-flex justify-content-between zl-meta mb-2">
-            <span>{{ data.attempts }} urinish</span>
-            <span>{% if data.passed > 0 %}O‘tilgan: {{ data.passed }}{% else %}Hali o‘tilmagan{% endif %}</span>
+            <span>{{ data.attempts }} {% trans "attempts" %}</span>
+            <span>{% if data.passed > 0 %}{% trans "Passed:" %} {{ data.passed }}{% else %}{% trans "Not passed yet" %}{% endif %}</span>
           </div>
           <div class="progress" style="height: 7px;">
             <div class="progress-bar" style="width: {{ data.avg_score }}%; background: linear-gradient(90deg, var(--zl-forest-mid), var(--zl-brass));"></div>
@@ -80,13 +81,13 @@
         </div>
         {% endfor %}
       {% else %}
-        <p class="zl-meta mb-0">Ma’lumot yo‘q</p>
+        <p class="zl-meta mb-0">{% trans "No data" %}</p>
       {% endif %}
     </section>
   </div>
 </div>
 
-<h2 class="h5 fw-bold mb-3">So‘nggi urinishlar</h2>
+<h2 class="h5 fw-bold mb-3">{% trans "Recent attempts" %}</h2>
 {% if results %}
   {% for result in results %}
   <article class="zl-row-card">
@@ -103,16 +104,16 @@
         {{ result.percentage|floatformat:0 }}%
         {% if result.is_passed %} · O‘tdi{% else %} · O‘tmadi{% endif %}
       </span>
-      <a href="{% url 'blog:test_result' result.id %}" class="btn btn-sm btn-outline-primary">Batafsil</a>
+      <a href="{% url 'blog:test_result' result.id %}" class="btn btn-sm btn-outline-primary">{% trans "Details" %}</a>
     </div>
   </article>
   {% endfor %}
 {% else %}
   <div class="zl-empty">
     <i class="fas fa-history d-block"></i>
-    <h2 class="h5 text-dark">Tarix bo‘sh</h2>
-    <p class="mb-3">Hali test topshirilmagan.</p>
-    <a href="{% url 'blog:test_list' %}" class="btn btn-primary btn-sm">Testlarga o‘tish</a>
+    <h2 class="h5 text-dark">{% trans "History is empty" %}</h2>
+    <p class="mb-3">{% trans "No tests submitted yet." %}</p>
+    <a href="{% url 'blog:test_list' %}" class="btn btn-primary btn-sm">{% trans "Go to tests" %}</a>
   </div>
 {% endif %}
 {% endblock %}

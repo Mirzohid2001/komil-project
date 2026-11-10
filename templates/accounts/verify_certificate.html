@@ -1,5 +1,6 @@
 {% extends 'base.html' %}
 
+{% load i18n %}
 {% block title %}Sertifikat tekshirish{% endblock %}
 
 {% block content %}
@@ -7,7 +8,7 @@
   <div class="col-lg-7">
     <div class="text-center mb-4">
       <span class="zl-brand-mark mb-3 d-inline-grid" style="place-items:center;color:var(--zl-brass);font-size:1.4rem;"><i class="fas fa-certificate"></i></span>
-      <h1 class="zl-section-title mb-1">Sertifikatni tekshirish</h1>
+      <h1 class="zl-section-title mb-1">{% trans "Verify certificate" %}</h1>
       <p class="zl-section-lead mb-0 mx-auto">ID raqam orqali sertifikat haqiqiyligini tasdiqlang.</p>
     </div>
 
@@ -34,13 +35,11 @@
           <li class="mb-2"><span class="zl-meta d-block">ID</span>{{ certificate.certificate_id }}</li>
           <li class="mb-2"><span class="zl-meta d-block">Egasi</span>{{ user.get_full_name|default:user.username }}</li>
           <li class="mb-2"><span class="zl-meta d-block">Kurs / kategoriya</span>{{ title }}</li>
-          <li><span class="zl-meta d-block">Berilgan sana</span>{{ issued_at|date:"d.m.Y" }}</li>
+          <li><span class="zl-meta d-block">{% trans "Issue date" %}</span>{{ issued_at|date:"d.m.Y" }}</li>
         </ul>
       </div>
       {% elif not_found %}
-      <div class="alert alert-danger mb-0">
-        Bu ID bo‘yicha sertifikat topilmadi.
-      </div>
+      <div class="alert alert-danger mb-0">{% trans "No certificate found for this ID." %}</div>
       {% endif %}
     {% endif %}
   </div>

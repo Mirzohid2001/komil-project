@@ -1,4 +1,5 @@
 {% extends 'base.html' %}
+{% load i18n %}
 {% load static %}
 
 {% block title %}{{ post.title }}{% endblock %}
@@ -12,7 +13,7 @@
       {% if post.video %} · {{ view_count }} ko‘rish{% endif %}
     </p>
   </div>
-  <a href="{% url 'blog:post_list' post.category.id %}" class="btn btn-sm btn-outline-primary">Orqaga</a>
+  <a href="{% url 'blog:post_list' post.category.id %}" class="btn btn-sm btn-outline-primary">{% trans "Back" %}</a>
 </div>
 
 <article class="zl-card overflow-hidden mb-3">
@@ -26,7 +27,7 @@
   <div class="p-4">
     <div class="post-content mb-4">{{ post.content|linebreaks }}</div>
     <div class="d-flex flex-wrap gap-2 justify-content-between border-top pt-3">
-      <a href="{% url 'blog:post_list' post.category.id %}" class="btn btn-sm btn-outline-primary">Ro‘yxatga</a>
+      <a href="{% url 'blog:post_list' post.category.id %}" class="btn btn-sm btn-outline-primary">{% trans "To list" %}</a>
       <a href="{% url 'accounts:toggle_favorite' post.id %}"
          class="btn btn-sm {% if is_favorite %}btn-danger{% else %}btn-outline-danger{% endif %}">
         <i class="{% if is_favorite %}fas{% else %}far{% endif %} fa-heart me-1"></i>
@@ -38,23 +39,23 @@
 
 {% if post.video and request.user.role == 'admin' %}
 <section class="zl-card p-4">
-  <h2 class="h5 fw-bold mb-3">Video statistikasi</h2>
+  <h2 class="h5 fw-bold mb-3">{% trans "Video statistics" %}</h2>
   <div class="row g-3 mb-3">
     <div class="col-sm-6">
       <div class="zl-card p-3 border shadow-none">
-        <div class="zl-meta">Jami ko‘rishlar</div>
+        <div class="zl-meta">{% trans "Total views" %}</div>
         <strong class="fs-3">{{ view_count }}</strong>
       </div>
     </div>
     <div class="col-sm-6">
       <div class="zl-card p-3 border shadow-none">
-        <div class="zl-meta">Alohida foydalanuvchilar</div>
+        <div class="zl-meta">{% trans "Unique viewers" %}</div>
         <strong class="fs-3">{{ unique_viewers }}</strong>
       </div>
     </div>
   </div>
   {% if video_views %}
-  <h3 class="h6 fw-bold mb-2">Oxirgi ko‘rganlar</h3>
+  <h3 class="h6 fw-bold mb-2">{% trans "Recent viewers" %}</h3>
   {% for view in video_views %}
   <div class="zl-row-card py-2">
     <div>

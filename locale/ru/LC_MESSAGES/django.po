@@ -10,6 +10,9 @@ msgstr "%(count)s дн."
 msgid "%(progress)s%% complete"
 msgstr "Выполнено %(progress)s%%"
 
+msgid "A certificate appears after you successfully finish a course"
+msgstr "Сертификат появится после успешного завершения курса"
+
 msgid "About me"
 msgstr "О себе"
 
@@ -22,11 +25,38 @@ msgstr "Не был"
 msgid "Access"
 msgstr "Доступ"
 
+msgid "Achievements"
+msgstr "Достижения"
+
+msgid "Achievements by category"
+msgstr "Достижения по категориям"
+
+msgid "Acknowledgment is not required for this document."
+msgstr "Для этого документа подтверждение не требуется."
+
+msgid "Action"
+msgstr "Действие"
+
+msgid "Active roles"
+msgstr "Активные роли"
+
 msgid "Active test list"
 msgstr "Список активных тестов"
 
+msgid "Active users"
+msgstr "Активные пользователи"
+
+msgid "Activity history"
+msgstr "История активности"
+
 msgid "Admin"
 msgstr "Админ"
+
+msgid "Administrator"
+msgstr "Администратор"
+
+msgid "Admins only."
+msgstr "Только для администратора."
 
 msgid "All"
 msgstr "Все"
@@ -37,11 +67,23 @@ msgstr "Всё в порядке"
 msgid "All courses"
 msgstr "Все курсы"
 
+msgid "All notifications marked as read."
+msgstr "Все уведомления отмечены прочитанными."
+
 msgid "All roles"
 msgstr "Все роли"
 
+msgid "All tests"
+msgstr "Все тесты"
+
 msgid "Allowed guidelines and files."
 msgstr "Разрешённые инструкции и файлы."
+
+msgid "An error occurred. Please check the data."
+msgstr "Произошла ошибка. Проверьте данные."
+
+msgid "Analysis of scores, activity and courses."
+msgstr "Анализ баллов, активности и курсов."
 
 msgid "Analytics"
 msgstr "Аналитика"
@@ -55,8 +97,32 @@ msgstr "Утвердить"
 msgid "Assignment"
 msgstr "Задание"
 
+msgid "Assignment approved — lesson completed."
+msgstr "Задание одобрено — урок завершён."
+
+msgid "Assignment rejected."
+msgstr "Задание отклонено."
+
+msgid "Assignment submitted. Wait for instructor approval."
+msgstr "Задание отправлено. Дождитесь одобрения инструктора."
+
 msgid "Attachments"
 msgstr "Вложения"
+
+msgid "attempt"
+msgstr "попытка"
+
+msgid "Attempts"
+msgstr "Попытки"
+
+msgid "attempts"
+msgstr "попыток"
+
+msgid "Attempts, average score and progress."
+msgstr "Попытки, средний балл и прогресс."
+
+msgid "Attempts, roles and overall test metrics."
+msgstr "Попытки, роли и общие показатели по тестам."
 
 msgid "Available tests"
 msgstr "Доступные тесты"
@@ -64,8 +130,20 @@ msgstr "Доступные тесты"
 msgid "Available tests for your role. Questions shuffle each time."
 msgstr "Доступные тесты для вашей роли. Вопросы перемешиваются каждый раз."
 
+msgid "Average"
+msgstr "Средний"
+
 msgid "Average score"
 msgstr "Средний балл"
+
+msgid "Average time"
+msgstr "Среднее время"
+
+msgid "Avg. score"
+msgstr "Ср. балл"
+
+msgid "Back"
+msgstr "Назад"
 
 msgid "Back to course"
 msgstr "К курсу"
@@ -79,8 +157,23 @@ msgstr "Назад ко входу"
 msgid "Best:"
 msgstr "Лучший:"
 
+msgid "Blog post videos. Course lessons are separate — LMS Analytics / Courses."
+msgstr "Видео материалов (постов). Уроки курсов отдельно — в LMS-аналитике / Курсах."
+
+msgid "Browse courses"
+msgstr "Смотреть курсы"
+
+msgid "By role"
+msgstr "По ролям"
+
 msgid "By selected role"
 msgstr "По выбран роли"
+
+msgid "By tests"
+msgstr "По тестам"
+
+msgid "Cancel"
+msgstr "Отмена"
 
 msgid "Categories"
 msgstr "Категории"
@@ -103,11 +196,23 @@ msgstr "Срок сертификата истёк: %(date)s. Пройдите �
 msgid "Certificate expiry"
 msgstr "Срок сертификата"
 
+msgid "Certificate issued: %(name)s (valid until %(date)s)."
+msgstr "Сертификат выдан: %(name)s (до %(date)s)."
+
 msgid "Certificate on completion"
 msgstr "Сертификат по завершении"
 
+msgid "Certificate renewed: %(name)s (valid until %(date)s)."
+msgstr "Сертификат обновлён: %(name)s (до %(date)s)."
+
+msgid "Certificates"
+msgstr "Сертификаты"
+
 msgid "Change or clear filters."
 msgstr "Измените или сбросьте фильтры."
+
+msgid "Change password"
+msgstr "Сменить пароль"
 
 msgid "Change the filter or come back later."
 msgstr "Измените фильтр или зайдите позже."
@@ -124,8 +229,26 @@ msgstr "Закрыть"
 msgid "Comment (optional)"
 msgstr "Комментарий (необязательно)"
 
+msgid "Comment added."
+msgstr "Комментарий добавлен."
+
+msgid "Comment cannot be empty."
+msgstr "Комментарий не может быть пустым."
+
+msgid "Comment deleted."
+msgstr "Комментарий удалён."
+
+msgid "Comment must be at most 2000 characters."
+msgstr "Комментарий не должен превышать 2000 символов."
+
+msgid "Comment updated."
+msgstr "Комментарий обновлён."
+
 msgid "Comments"
 msgstr "Комментарии"
+
+msgid "Comments are disabled for this lesson."
+msgstr "Комментарии к этому уроку отключены."
 
 msgid "Complete"
 msgstr "Выполнить"
@@ -133,8 +256,20 @@ msgstr "Выполнить"
 msgid "Completed"
 msgstr "Завершено"
 
+msgid "Completed courses"
+msgstr "Завершённые курсы"
+
 msgid "Compliance"
 msgstr "Комплаенс"
+
+msgid "Compliance: %(count)s mandatory requirement(s) unfinished. Complete them first."
+msgstr "Комплаенс: не выполнено обязательных требований — %(count)s. Сначала закройте их."
+
+msgid "Congratulations! You completed '%(title)s'!"
+msgstr "Поздравляем! Вы успешно завершили курс «%(title)s»!"
+
+msgid "Congratulations! You finished category '%(name)s' and received a certificate."
+msgstr "Поздравляем! Вы завершили категорию «%(name)s» и получили сертификат."
 
 msgid "Congratulations! You passed the test."
 msgstr "Поздравляем! Тест сдан успешно."
@@ -154,6 +289,12 @@ msgstr "Правильный ответ:"
 msgid "Correct answers"
 msgstr "Правильные ответы"
 
+msgid "Could not create PDF"
+msgstr "Не удалось создать PDF"
+
+msgid "Could not download the certificate. Please try again later."
+msgstr "Не удалось скачать сертификат. Пожалуйста, попробуйте позже."
+
 msgid "Course"
 msgstr "Курс"
 
@@ -169,11 +310,20 @@ msgstr "Содержание курса"
 msgid "Course deadline: %(date)s"
 msgstr "Срок курса: %(date)s"
 
+msgid "Course info"
+msgstr "Информация о курсе"
+
 msgid "Course outline"
 msgstr "Программа курса"
 
+msgid "Course progress and recommendations."
+msgstr "Прогресс по курсам и рекомендации."
+
 msgid "Courses"
 msgstr "Курсы"
+
+msgid "Daily views"
+msgstr "Просмотры за день"
 
 msgid "Date"
 msgstr "Дата"
@@ -199,6 +349,9 @@ msgstr "Сложность"
 msgid "Dispatcher"
 msgstr "Диспетчер"
 
+msgid "Document '%(title)s' uploaded successfully"
+msgstr "Документ «%(title)s» успешно загружен"
+
 msgid "Document acknowledgment"
 msgstr "Подтверждение документа"
 
@@ -207,6 +360,9 @@ msgstr "Ознакомление с документом подтвержден�
 
 msgid "Document acknowledgment required"
 msgstr "Требуется подтверждение документа"
+
+msgid "Document analytics"
+msgstr "Аналитика документов"
 
 msgid "Documents"
 msgstr "Документы"
@@ -217,14 +373,29 @@ msgstr "Готово"
 msgid "Download"
 msgstr "Скачать"
 
+msgid "download"
+msgstr "скачивание"
+
 msgid "Download video"
 msgstr "Скачать видео"
 
 msgid "Downloads"
 msgstr "Скачивания"
 
+msgid "Downloads by category"
+msgstr "Скачивания по категориям"
+
 msgid "Duration"
 msgstr "Длительность"
+
+msgid "Earned"
+msgstr "Получено"
+
+msgid "Earned ones"
+msgstr "Полученные"
+
+msgid "Easiest"
+msgstr "Самые лёгкие"
 
 msgid "Edit"
 msgstr "Редактировать"
@@ -236,10 +407,16 @@ msgid "Electrician"
 msgstr "Электрик"
 
 msgid "Email"
-msgstr "Email"
+msgstr "Электронная почта"
 
 msgid "Email sent"
 msgstr "Письмо отправлено"
+
+msgid "Employee"
+msgstr "Сотрудник"
+
+msgid "Employees with most mistakes"
+msgstr "Сотрудники с наибольшим числом ошибок"
 
 msgid "Engineer"
 msgstr "Инженер"
@@ -247,11 +424,47 @@ msgstr "Инженер"
 msgid "Enroll"
 msgstr "Записаться"
 
+msgid "Enroll first to view the course"
+msgstr "Чтобы смотреть курс, сначала запишитесь"
+
+msgid "Enroll in the course first."
+msgstr "Сначала запишитесь на курс."
+
 msgid "Enroll to complete"
 msgstr "Записаться на курс"
 
+msgid "Enroll to complete the lesson."
+msgstr "Чтобы завершить урок, запишитесь на курс."
+
+msgid "Enroll to leave a comment."
+msgstr "Чтобы оставить комментарий, запишитесь на курс."
+
+msgid "Enroll to submit the quiz."
+msgstr "Чтобы сдать тест, запишитесь на курс."
+
+msgid "Enter a search term"
+msgstr "Введите поисковый запрос"
+
+msgid "Enter a term and press Search to see results."
+msgstr "Введите слово и нажмите «Поиск», чтобы увидеть результаты."
+
+msgid "Enter an answer."
+msgstr "Введите ответ."
+
+msgid "Enter course name or keywords."
+msgstr "Введите название курса или ключевые слова."
+
 msgid "Enter your email — a reset link will be sent."
 msgstr "Введите email — отправим ссылку для сброса."
+
+msgid "Error %"
+msgstr "Ошибки %"
+
+msgid "Error loading question"
+msgstr "Ошибка при загрузке вопроса"
+
+msgid "Error rate by question"
+msgstr "Доля ошибок по вопросам"
 
 msgid "Everyone"
 msgstr "Все"
@@ -274,8 +487,14 @@ msgstr "Заводская СДО — обучение, тесты по безо
 msgid "Failed"
 msgstr "Не сдано"
 
+msgid "Favorites"
+msgstr "Избранное"
+
 msgid "File"
 msgstr "Файл"
+
+msgid "File not found"
+msgstr "Файл не найден"
 
 msgid "Filter"
 msgstr "Фильтр"
@@ -310,8 +529,14 @@ msgstr "Зелёный — вошёл в этот день. Красный — �
 msgid "Guidelines"
 msgstr "Инструкции"
 
+msgid "Hardest"
+msgstr "Самые сложные"
+
 msgid "History"
 msgstr "История"
+
+msgid "History is empty"
+msgstr "История пуста"
 
 msgid "Home"
 msgstr "Главная"
@@ -322,8 +547,14 @@ msgstr "HR комплаенс"
 msgid "HR report"
 msgstr "HR отчёт"
 
+msgid "HR reports"
+msgstr "HR отчёты"
+
 msgid "I have read and confirm"
 msgstr "Ознакомлен(а), подтверждаю"
+
+msgid "If checked, all users can view the document."
+msgstr "Если отмечено, документ виден всем пользователям."
 
 msgid "If the email is registered, a reset link was sent."
 msgstr "Если email есть в системе, ссылка для сброса отправлена."
@@ -337,6 +568,12 @@ msgstr "В этой категории"
 msgid "In-progress and completed courses."
 msgstr "Курсы в процессе и завершённые."
 
+msgid "Instructor"
+msgstr "Преподаватель"
+
+msgid "Instructor:"
+msgstr "Преподаватель:"
+
 msgid "Instrumentation"
 msgstr "КИП и А"
 
@@ -346,8 +583,17 @@ msgstr "Платформа внутреннего обучения, тестов
 msgid "Internal use"
 msgstr "Для внутреннего пользования"
 
+msgid "Invalid action."
+msgstr "Неверное действие."
+
+msgid "Invalid answer format."
+msgstr "Неверный формат ответа."
+
 msgid "Isomer Oil employees only · Access via admin"
 msgstr "Только сотрудники Isomer Oil · Доступ через администратора"
+
+msgid "Issue date"
+msgstr "Дата выдачи"
 
 msgid "Joined"
 msgstr "Дата регистрации"
@@ -367,6 +613,9 @@ msgstr "Последние материалы"
 msgid "Learning posts and videos by category."
 msgstr "Учебные посты и видео по категориям."
 
+msgid "Learning progress"
+msgstr "Прогресс обучения"
+
 msgid "Leave a comment..."
 msgstr "Оставьте комментарий..."
 
@@ -378,6 +627,15 @@ msgstr "Покинуть этот курс?"
 
 msgid "Lesson completed"
 msgstr "Урок завершён"
+
+msgid "Lesson completed successfully"
+msgstr "Урок успешно завершён"
+
+msgid "Lesson marked incomplete"
+msgstr "Урок отмечен как незавершённый"
+
+msgid "Lessons"
+msgstr "Уроки"
 
 msgid "Lessons and quizzes"
 msgstr "Уроки и тесты"
@@ -391,6 +649,9 @@ msgstr "Ссылка устарела или неверна. Запросите 
 msgid "Locked"
 msgstr "Закрыто"
 
+msgid "Log of logins, views and profile changes."
+msgstr "Журнал входов, просмотров и изменений профиля."
+
 msgid "Login"
 msgstr "Войти"
 
@@ -402,6 +663,9 @@ msgstr "Требуется вход"
 
 msgid "Logout"
 msgstr "Выйти"
+
+msgid "Lowest"
+msgstr "Худший"
 
 msgid "Mandatory"
 msgstr "Обязательно"
@@ -415,11 +679,17 @@ msgstr "Обязательные задания"
 msgid "Mandatory test"
 msgstr "Обязательный тест"
 
+msgid "Mandatory tests, document acknowledgments and certificate deadlines."
+msgstr "Обязательные тесты, подтверждения документов и сроки сертификатов."
+
 msgid "Mark all as read"
 msgstr "Отметить всё прочитанным"
 
 msgid "Mark lesson complete"
 msgstr "Отметить урок завершённым"
+
+msgid "Material video analytics"
+msgstr "Аналитика видео материалов"
 
 msgid "Materials"
 msgstr "Материалы"
@@ -433,6 +703,18 @@ msgstr "Механик"
 msgid "Menu"
 msgstr "Меню"
 
+msgid "min"
+msgstr "мин"
+
+msgid "Most active users"
+msgstr "Самые активные пользователи"
+
+msgid "Most downloaded"
+msgstr "Самые скачиваемые"
+
+msgid "Most viewed"
+msgstr "Самые просматриваемые"
+
 msgid "My courses"
 msgstr "Мои курсы"
 
@@ -444,6 +726,9 @@ msgstr "Название"
 
 msgid "New"
 msgstr "Новое"
+
+msgid "New document"
+msgstr "Новый документ"
 
 msgid "New password"
 msgstr "Новый пароль"
@@ -457,14 +742,32 @@ msgstr "Далее"
 msgid "Next lesson"
 msgstr "Следующий урок"
 
+msgid "No"
+msgstr "Нет"
+
+msgid "No active courses right now"
+msgstr "Сейчас нет активных курсов"
+
+msgid "No active test"
+msgstr "Нет активного теста"
+
 msgid "No activity"
 msgstr "Нет активности"
+
+msgid "No answers yet"
+msgstr "Ответов пока нет"
 
 msgid "No available tests"
 msgstr "Нет доступных тестов"
 
 msgid "No categories"
 msgstr "Нет категорий"
+
+msgid "No certificate found for this ID."
+msgstr "Сертификат с таким ID не найден."
+
+msgid "No certificates"
+msgstr "Нет сертификатов"
 
 msgid "No comments yet. Be the first."
 msgstr "Комментариев пока нет. Напишите первым."
@@ -475,14 +778,29 @@ msgstr "Курсы не найдены"
 msgid "No courses yet"
 msgstr "Курсов пока нет"
 
+msgid "No data"
+msgstr "Нет данных"
+
+msgid "No data found."
+msgstr "Данные не найдены."
+
+msgid "No data to display"
+msgstr "Нет данных для отображения"
+
 msgid "No description"
 msgstr "Нет описания"
 
 msgid "No documents"
 msgstr "Нет документов"
 
+msgid "No downloads yet"
+msgstr "Скачиваний пока нет"
+
 msgid "No files here yet, or you lack access."
 msgstr "В этом разделе пока нет файлов или у вас нет доступа."
+
+msgid "No lessons in this module yet."
+msgstr "В этом модуле пока нет уроков."
 
 msgid "No materials yet"
 msgstr "Пока нет материалов"
@@ -511,8 +829,14 @@ msgstr "Открытой регистрации нет. Для нового со
 msgid "No quiz questions for this lesson yet."
 msgstr "Для этого урока вопросы ещё не добавлены."
 
+msgid "No results."
+msgstr "Нет результатов."
+
 msgid "No tests for this role yet."
 msgstr "Для этой роли пока нет тестов."
+
+msgid "No tests submitted yet."
+msgstr "Тесты ещё не сдавались."
 
 msgid "No tests taken yet"
 msgstr "Тесты ещё не сдавались"
@@ -520,8 +844,17 @@ msgstr "Тесты ещё не сдавались"
 msgid "No video for this lesson"
 msgstr "Для этого урока нет видео"
 
+msgid "No views yet"
+msgstr "Просмотров пока нет"
+
+msgid "Not enough valid questions in the test. Please contact the administrator."
+msgstr "В тесте недостаточно корректных вопросов. Пожалуйста, обратитесь к администратору."
+
 msgid "Not passed"
 msgstr "Не сдано"
+
+msgid "Not passed yet"
+msgstr "Ещё не сдано"
 
 msgid "Nothing saved"
 msgstr "Ничего не сохранено"
@@ -538,8 +871,14 @@ msgstr "Сначала старые"
 msgid "On all devices"
 msgstr "На всех устройствах"
 
+msgid "Only"
+msgstr "Только"
+
 msgid "Open"
 msgstr "Открыть"
+
+msgid "Open registration is closed. Request via Telegram bot — admin approves."
+msgstr "Открытая регистрация закрыта. Отправьте заявку через Telegram-бот — админ одобрит."
 
 msgid "Operator"
 msgstr "Оператор"
@@ -550,8 +889,17 @@ msgstr "Общая статистика"
 msgid "Overdue"
 msgstr "Просрочено"
 
+msgid "Overdue tests"
+msgstr "Просроченные тесты"
+
 msgid "Passed"
 msgstr "Сдано"
+
+msgid "Passed:"
+msgstr "Сдано:"
+
+msgid "Passed?"
+msgstr "Сдан"
 
 msgid "Password"
 msgstr "Пароль"
@@ -561,6 +909,12 @@ msgstr "Пароль обновлён"
 
 msgid "Password updated. You can sign in now."
 msgstr "Пароль обновлён. Теперь можно войти."
+
+msgid "Permission denied."
+msgstr "Нет доступа."
+
+msgid "Personal cabinet"
+msgstr "Личный кабинет"
 
 msgid "Personal info, activity and a short test overview."
 msgstr "Личные данные, активность и краткий обзор тестов."
@@ -574,8 +928,17 @@ msgstr "Телефон"
 msgid "Pick a course from the catalog and enroll."
 msgstr "Выберите курс в каталоге и запишитесь."
 
+msgid "Points earned"
+msgstr "Набранные баллы"
+
 msgid "Popular"
 msgstr "Популярные"
+
+msgid "Post added to favorites"
+msgstr "Пост добавлен в избранное"
+
+msgid "Post removed from favorites"
+msgstr "Пост удалён из избранного"
 
 msgid "Posts and videos"
 msgstr "Посты и видео"
@@ -613,8 +976,20 @@ msgstr "Производство"
 msgid "Profile"
 msgstr "Профиль"
 
+msgid "Profile updated successfully"
+msgstr "Профиль успешно обновлён"
+
+msgid "Progress"
+msgstr "Прогресс"
+
+msgid "Progress by courses"
+msgstr "Прогресс по курсам"
+
 msgid "Public"
 msgstr "Открыто"
+
+msgid "Question"
+msgstr "Вопрос"
 
 msgid "Question %(current)s / %(total)s"
 msgstr "Вопрос %(current)s / %(total)s"
@@ -628,6 +1003,12 @@ msgstr "Быстрые ссылки"
 msgid "Quiz"
 msgstr "Тест"
 
+msgid "Quiz result: %(correct)s/%(total)s (%(pct)s%%). Need at least 70%% to pass."
+msgstr "Результат теста: %(correct)s/%(total)s (%(pct)s%%). Для сдачи нужно не менее 70%%."
+
+msgid "Quiz submitted: %(correct)s/%(total)s (%(pct)s%%). Lesson completed."
+msgstr "Тест сдан: %(correct)s/%(total)s (%(pct)s%%). Урок завершён."
+
 msgid "Railway worker"
 msgstr "Железнодорожник"
 
@@ -637,8 +1018,14 @@ msgstr "Прочитайте документ и подтвердите озна
 msgid "Recent activity"
 msgstr "Недавняя активность"
 
+msgid "Recent attempts"
+msgstr "Последние попытки"
+
 msgid "Recent results"
 msgstr "Последние результаты"
+
+msgid "Recent viewers"
+msgstr "Недавние просмотры"
 
 msgid "Recommendations"
 msgstr "Рекомендации"
@@ -674,7 +1061,10 @@ msgid "Review again"
 msgstr "Повторить"
 
 msgid "Role"
-msgstr "Роль"
+msgstr "Должность"
+
+msgid "Role / Department"
+msgstr "Должность / Отдел"
 
 msgid "Russian"
 msgstr "Русский"
@@ -682,20 +1072,38 @@ msgstr "Русский"
 msgid "Save"
 msgstr "Сохранить"
 
+msgid "Save changes"
+msgstr "Сохранить изменения"
+
+msgid "Save interesting posts"
+msgstr "Сохраняйте интересные посты"
+
 msgid "Save posts to return quickly."
 msgstr "Сохраняйте посты, чтобы быстро вернуться"
 
 msgid "Saved materials"
 msgstr "Сохранённые материалы"
 
+msgid "Score"
+msgstr "Балл"
+
 msgid "Search"
 msgstr "Поиск"
+
+msgid "Search by name or keyword."
+msgstr "Ищите по названию или ключевому слову."
 
 msgid "Search courses..."
 msgstr "Поиск курсов..."
 
 msgid "Security guard"
 msgstr "Охранник"
+
+msgid "Select a file."
+msgstr "Выберите файл."
+
+msgid "Select an answer option."
+msgstr "Выберите вариант ответа."
 
 msgid "Select at least one option."
 msgstr "Выберите хотя бы один вариант."
@@ -709,11 +1117,17 @@ msgstr "Отправить"
 msgid "Send a request in the bot — admin approves, then you get login and password."
 msgstr "Отправьте заявку в боте — после одобрения админа придут логин и пароль."
 
+msgid "Set a new password for security."
+msgstr "Задайте новый пароль для безопасности."
+
 msgid "Show"
 msgstr "Показать"
 
 msgid "Sign in"
 msgstr "Вход в систему"
+
+msgid "Sign in to access this course."
+msgstr "Войдите, чтобы открыть этот курс."
 
 msgid "Similar courses"
 msgstr "Похожие курсы"
@@ -733,11 +1147,20 @@ msgstr "Статистика"
 msgid "Status"
 msgstr "Статус"
 
+msgid "Study"
+msgstr "Учить"
+
 msgid "Submit"
 msgstr "Отправить"
 
 msgid "Submit quiz"
 msgstr "Сдать тест"
+
+msgid "Submitted"
+msgstr "Сдано"
+
+msgid "Submitted tests"
+msgstr "Сданные тесты"
 
 msgid "Success rate"
 msgstr "Успешность"
@@ -745,11 +1168,23 @@ msgstr "Успешность"
 msgid "Successful"
 msgstr "Успешно"
 
+msgid "Successfully completed the training program"
+msgstr "Об успешном завершении учебной программы"
+
+msgid "Take a test first to see statistics."
+msgstr "Сначала пройдите тест, чтобы увидеть статистику."
+
 msgid "Taken"
 msgstr "Сдано"
 
 msgid "Test"
 msgstr "Тест"
+
+msgid "Test analytics"
+msgstr "Аналитика тестов"
+
+msgid "Test dynamics"
+msgstr "Динамика тестов"
 
 msgid "Test history"
 msgstr "История тестов"
@@ -760,6 +1195,9 @@ msgstr "Список тестов"
 msgid "Test results"
 msgstr "Результаты теста"
 
+msgid "Test results by department (role)."
+msgstr "Результаты тестов по отделу (роли)."
+
 msgid "Test statistics"
 msgstr "Статистика тестов"
 
@@ -769,20 +1207,65 @@ msgstr "Тесты"
 msgid "Text"
 msgstr "Текст"
 
+msgid "This certificate is inactive because the course is not completed"
+msgstr "Этот сертификат неактивен, так как курс не завершён"
+
+msgid "This course is not available for your role."
+msgstr "Этот курс недоступен для вашей роли."
+
 msgid "This is a free preview. Enroll to complete the lesson."
 msgstr "Это бесплатный просмотр. Чтобы завершить урок, запишитесь на курс."
+
+msgid "This lesson has no quiz questions."
+msgstr "В этом уроке нет вопросов теста."
+
+msgid "This lesson is not a practical assignment."
+msgstr "Этот урок не является практическим заданием."
+
+msgid "This test has no questions"
+msgstr "В этом тесте нет вопросов"
+
+msgid "This test is currently unavailable"
+msgstr "Этот тест в настоящее время недоступен"
+
+msgid "Time is up — test finished."
+msgstr "Время вышло — тест завершён."
 
 msgid "To"
 msgstr "По"
 
+msgid "To list"
+msgstr "К списку"
+
 msgid "today"
 msgstr "сегодня"
+
+msgid "Top-5 active viewers"
+msgstr "Топ-5 активных зрителей"
+
+msgid "Top-5 videos"
+msgstr "Топ-5 видео"
 
 msgid "Total"
 msgstr "Всего"
 
+msgid "Total attempts"
+msgstr "Всего попыток"
+
+msgid "Total documents"
+msgstr "Всего документов"
+
+msgid "Total downloads"
+msgstr "Всего скачиваний"
+
 msgid "Total tests"
 msgstr "Всего тестов"
+
+msgid "Total videos"
+msgstr "Всего видео"
+
+msgid "Total views"
+msgstr "Всего просмотров"
 
 msgid "Tracked days"
 msgstr "Учтённые дни"
@@ -793,8 +1276,17 @@ msgstr "Обучающие программы для сотрудников за
 msgid "Try again"
 msgstr "Повторить"
 
+msgid "Try other words or pick a category."
+msgstr "Попробуйте другие слова или выберите категорию."
+
 msgid "Type your answer…"
 msgstr "Введите ответ…"
+
+msgid "Unique viewers"
+msgstr "Уникальные зрители"
+
+msgid "Unique watchers"
+msgstr "Уникальные зрители"
 
 msgid "Upcoming"
 msgstr "Скоро"
@@ -805,10 +1297,16 @@ msgstr "Ближайшие сроки"
 msgid "Upload"
 msgstr "Загрузить"
 
+msgid "Upload a file for the assignment and wait for instructor approval."
+msgstr "Загрузите файл для задания и дождитесь одобрения инструктора."
+
 msgid "Upload a file. Lesson completes after instructor approval."
 msgstr "Загрузите файл. Урок завершится после одобрения инструктора."
 
 msgid "Upload document"
+msgstr "Загрузить документ"
+
+msgid "Upload document page"
 msgstr "Загрузить документ"
 
 msgid "Uploaded by:"
@@ -816,6 +1314,9 @@ msgstr "Загрузил:"
 
 msgid "Uploaded file"
 msgstr "Загруженный файл"
+
+msgid "User"
+msgstr "Пользователь"
 
 msgid "Username"
 msgstr "Имя пользователя"
@@ -826,8 +1327,14 @@ msgstr "Логин и пароль выдаёт администратор."
 msgid "Uzbek"
 msgstr "Узбекский"
 
+msgid "Verify certificate"
+msgstr "Проверить сертификат"
+
 msgid "Video"
 msgstr "Видео"
+
+msgid "Video statistics"
+msgstr "Статистика видео"
 
 msgid "Video watch:"
 msgstr "Просмотр видео:"
@@ -835,11 +1342,23 @@ msgstr "Просмотр видео:"
 msgid "View"
 msgstr "Смотреть"
 
+msgid "view"
+msgstr "просмотр"
+
 msgid "View by role"
 msgstr "По роли"
 
 msgid "Views"
 msgstr "Просмотры"
+
+msgid "Views by category"
+msgstr "Просмотры по категориям"
+
+msgid "Views by role"
+msgstr "Просмотры по ролям"
+
+msgid "Views, downloads and category breakdown."
+msgstr "Просмотры, скачивания и разбивка по категориям."
 
 msgid "Warehouse"
 msgstr "Склад"
@@ -847,17 +1366,71 @@ msgstr "Склад"
 msgid "Watch at least %(percent)s%% of the video to enable the button."
 msgstr "Чтобы активировать кнопку, посмотрите не менее %(percent)s%% видео."
 
+msgid "Watch at least %(required)s%% of the video (now: %(current)s%%)."
+msgstr "Посмотрите не менее %(required)s%% видео (сейчас: %(current)s%%)."
+
+msgid "Weak questions"
+msgstr "Слабые вопросы"
+
+msgid "Weekly views"
+msgstr "Просмотры за неделю"
+
 msgid "Welder"
 msgstr "Сварщик"
+
+msgid "Which questions fail most — for updating training materials."
+msgstr "На каких вопросах больше всего ошибок — для обновления материалов."
+
+msgid "Wrong"
+msgstr "Ошибки"
+
+msgid "Yes"
+msgstr "Да"
+
+msgid "You are already enrolled in '%(title)s'."
+msgstr "Вы уже записаны на курс «%(title)s»."
 
 msgid "You are enrolled — %(progress)s%% complete"
 msgstr "Вы записаны — выполнено %(progress)s%%"
 
+msgid "You are not enrolled in this course."
+msgstr "Вы не записаны на этот курс."
+
+msgid "You can search by course name, topic or keywords."
+msgstr "Можно искать по названию курса, теме или ключевым словам."
+
+msgid "You cannot delete this comment."
+msgstr "Вы не можете удалить этот комментарий."
+
+msgid "You cannot edit this comment."
+msgstr "Вы не можете редактировать этот комментарий."
+
+msgid "You do not have access to analytics"
+msgstr "У вас нет доступа к аналитике"
+
 msgid "You do not have access to this document."
 msgstr "У вас нет доступа к этому документу"
 
+msgid "You do not have access to this page"
+msgstr "У вас нет доступа к этой странице"
+
+msgid "You do not have access to this post"
+msgstr "У вас нет доступа к этому посту"
+
+msgid "You do not have access to this result"
+msgstr "У вас нет доступа к этому результату"
+
+msgid "You do not have access to this test"
+msgstr "У вас нет доступа к этому тесту"
+
+msgid "You do not have permission to view this certificate"
+msgstr "У вас нет прав на просмотр этого сертификата"
+
 msgid "You have acknowledged this document."
 msgstr "Вы подтвердили ознакомление с этим документом."
+
+msgid "You left the course '%(title)s'."
+msgstr "Вы покинули курс «%(title)s»."
 
 msgid "You may select multiple options."
 msgstr "Можно выбрать несколько вариантов."
@@ -865,8 +1438,14 @@ msgstr "Можно выбрать несколько вариантов."
 msgid "You must enroll in the course to view this lesson."
 msgstr "Чтобы смотреть этот урок, запишитесь на курс."
 
+msgid "You must enroll to view this lesson."
+msgstr "Чтобы смотреть этот урок, запишитесь на курс."
+
 msgid "You must sign in to view the lesson."
 msgstr "Чтобы смотреть урок, сначала войдите в систему."
+
+msgid "You successfully enrolled in '%(title)s'!"
+msgstr "Вы успешно записались на курс «%(title)s»!"
 
 msgid "Your activity will appear here."
 msgstr "Ваши действия появятся здесь"
@@ -879,4 +1458,7 @@ msgstr "Ваш ответ:"
 
 msgid "Your answers"
 msgstr "Ваши ответы"
+
+msgid "Your password was changed successfully"
+msgstr "Ваш пароль успешно изменён"
 
